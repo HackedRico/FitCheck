@@ -48,7 +48,17 @@ class Settings(BaseSettings):
     default_longitude: float = -74.0060
     default_location_name: str = "New York"
     forecast_days: int = 7
-    cors_origins: list[str] = ["*"]
+    # The API has no accounts, so the browsers allowed to call it are the whole guard.
+    # `*` would let any page someone visits read and delete their closet, so the default
+    # is the dev server; `cors_origin_regex` adds the phone and tunnel origins.
+    cors_origins: list[str] = ["http://localhost:5173", "https://localhost:5173"]
+    # Private network addresses and the tunnels `web/README.md` suggests, on any port
+    cors_origin_regex: str = (
+        r"https?://(localhost|127\.0\.0\.1|\[::1\]"
+        r"|10\.[0-9.]+|192\.168\.[0-9.]+|172\.(1[6-9]|2[0-9]|3[01])\.[0-9.]+"
+        r"|[a-z0-9-]+\.trycloudflare\.com|[a-z0-9-]+\.ngrok-free\.app|[a-z0-9-]+\.loca\.lt)"
+        r"(:[0-9]+)?"
+    )
 
     # ---------- open path ----------
     database_url: str = "postgresql://fitcheck:fitcheck@localhost:5432/fitcheck"

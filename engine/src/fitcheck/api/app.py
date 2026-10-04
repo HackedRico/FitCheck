@@ -3,7 +3,7 @@ from __future__ import annotations
 import base64
 import json
 from decimal import Decimal
-from typing import Annotated
+from typing import Annotated, Any
 
 from fastapi import FastAPI, File, Form, Request, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
@@ -39,6 +39,9 @@ from fitcheck.wiring import build_engine
 
 # Starlette spools uploads over 1 MB to disk; keep phone-sized person photos in memory (ADR 0003)
 MultiPartParser.spool_max_size = 20 * 1024 * 1024
+# `spool_max_size` only decides when a body moves to disk, so a cap is a separate guard.
+# Well over a phone photo, well under what would exhaust the process.
+_MAX_UPLOAD_BYTES = 25 * 1024 * 1024
 
 _STATUS_BY_ERROR: dict[type[FitCheckError], int] = {
     InvalidInput: 400,
@@ -146,11 +149,23 @@ def create_app(engine: Engine | None = None, settings: Settings | None = None) -
         version="0.1.0",
         summary="Scan a garment, see it on you, get BUY, SKIP or TRY-WITH.",
     )
+
+    @app.middleware("http")
+    async def _cap_upload(request: Request, call_next: Any) -> Response:
+        """Refuse an oversized body before it is read, so one request cannot fill memory."""
+        declared = request.headers.get("content-length")
+        if declared is not None and declared.isdigit() and int(declared) > _MAX_UPLOAD_BYTES:
+            megabytes = _MAX_UPLOAD_BYTES // (1024 * 1024)
+            return JSONResponse({"detail": f"That upload is over {megabytes} MB."}, status_code=413)
+        response: Response = await call_next(request)
+        return response
+
     app.add_middleware(
         CORSMiddleware,
         allow_origins=settings.cors_origins,
-        allow_methods=["*"],
-        allow_headers=["*"],
+        allow_origin_regex=settings.cors_origin_regex or None,
+        allow_methods=["GET", "POST", "DELETE", "OPTIONS"],
+        allow_headers=["content-type"],
     )
     # Built on first request, so `/openapi.json` works without any backing service
     state: dict[str, Engine] = {"engine": engine} if engine else {}

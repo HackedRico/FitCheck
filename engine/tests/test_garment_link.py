@@ -33,6 +33,16 @@ def public_dns(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setattr(garment_link.socket, "getaddrinfo", fake_getaddrinfo)
 
 
+def _mock(url: str) -> Any:
+    """Mock `url` where the fetcher dials it.
+
+    `fetch_garment` connects to the address it has already checked rather than
+    resolving the name a second time, so the request arrives addressed to the IP
+    with the shop's name in `Host`.
+    """
+    return respx.get(httpx.URL(url).copy_with(host=PUBLIC_IP))
+
+
 def _jpeg(size: tuple[int, int] = (40, 60)) -> bytes:
     buffer = io.BytesIO()
     Image.new("RGB", size, (240, 200, 30)).save(buffer, format="JPEG")
@@ -45,7 +55,7 @@ def _is_png(data: bytes) -> bool:
 
 @respx.mock
 def test_direct_image_link_comes_back_as_png() -> None:
-    respx.get("https://shop.example/coat.jpg").mock(
+    _mock("https://shop.example/coat.jpg").mock(
         return_value=httpx.Response(200, content=_jpeg(), headers={"content-type": "image/jpeg"})
     )
     linked = fetch_garment("https://shop.example/coat.jpg")
@@ -60,10 +70,10 @@ def test_product_page_uses_og_image_resolved_against_the_page() -> None:
         '<meta property="og:title" content="Yellow rain shell">'
         '<meta property="og:image" content="/img/shell.jpg"></head><body></body></html>'
     )
-    respx.get("https://shop.example/p/shell").mock(
+    _mock("https://shop.example/p/shell").mock(
         return_value=httpx.Response(200, text=page, headers={"content-type": "text/html"})
     )
-    respx.get("https://shop.example/img/shell.jpg").mock(
+    _mock("https://shop.example/img/shell.jpg").mock(
         return_value=httpx.Response(200, content=_jpeg(), headers={"content-type": "image/jpeg"})
     )
     linked = fetch_garment("https://shop.example/p/shell")
@@ -79,10 +89,10 @@ def test_json_ld_image_is_used_when_there_is_no_og_image() -> None:
         '{"@type": "Product", "name": "Navy crewneck", "image": ["https://cdn.example/n.jpg"]}'
         "</script>"
     )
-    respx.get("https://shop.example/p/navy").mock(
+    _mock("https://shop.example/p/navy").mock(
         return_value=httpx.Response(200, text=page, headers={"content-type": "text/html"})
     )
-    respx.get("https://cdn.example/n.jpg").mock(
+    _mock("https://cdn.example/n.jpg").mock(
         return_value=httpx.Response(200, content=_jpeg(), headers={"content-type": "image/jpeg"})
     )
     assert _is_png(fetch_garment("https://shop.example/p/navy").image_png)
@@ -90,7 +100,7 @@ def test_json_ld_image_is_used_when_there_is_no_og_image() -> None:
 
 @respx.mock
 def test_large_images_are_shrunk() -> None:
-    respx.get("https://shop.example/big.jpg").mock(
+    _mock("https://shop.example/big.jpg").mock(
         return_value=httpx.Response(
             200, content=_jpeg((4000, 3000)), headers={"content-type": "image/jpeg"}
         )
@@ -101,7 +111,7 @@ def test_large_images_are_shrunk() -> None:
 
 @respx.mock
 def test_page_without_an_image_says_what_to_do() -> None:
-    respx.get("https://shop.example/empty").mock(
+    _mock("https://shop.example/empty").mock(
         return_value=httpx.Response(200, text="<p>hi</p>", headers={"content-type": "text/html"})
     )
     with pytest.raises(InvalidInput, match="paste the image link"):
@@ -121,7 +131,7 @@ def test_private_network_hosts_are_refused() -> None:
 
 @respx.mock
 def test_redirects_into_a_private_network_are_refused() -> None:
-    respx.get("https://shop.example/r").mock(
+    _mock("https://shop.example/r").mock(
         return_value=httpx.Response(302, headers={"location": "https://internal.example/x"})
     )
     with pytest.raises(InvalidInput, match="private network"):
@@ -130,10 +140,37 @@ def test_redirects_into_a_private_network_are_refused() -> None:
 
 @respx.mock
 def test_unreadable_image_is_an_input_error() -> None:
-    respx.get("https://shop.example/x.jpg").mock(
+    _mock("https://shop.example/x.jpg").mock(
         return_value=httpx.Response(
             200, content=b"not an image", headers={"content-type": "image/jpeg"}
         )
     )
     with pytest.raises(InvalidInput, match="cannot read"):
         fetch_garment("https://shop.example/x.jpg")
+
+
+@respx.mock
+def test_a_host_that_turns_private_after_the_check_never_gets_connected_to() -> None:
+    """DNS rebinding: the name passes the check, then resolves to a private address."""
+    answers = iter([PUBLIC_IP, "127.0.0.1", "127.0.0.1"])
+    last = {"ip": PUBLIC_IP}
+
+    def rebinding(host: str, *_: Any, **__: Any) -> list[Any]:
+        last["ip"] = next(answers, last["ip"])
+        return [(socket.AF_INET, socket.SOCK_STREAM, 6, "", (last["ip"], 0))]
+
+    with pytest.MonkeyPatch.context() as patch:
+        patch.setattr(garment_link.socket, "getaddrinfo", rebinding)
+        # Mocked so that a connection to loopback would succeed loudly if it happened
+        _mock("https://rebind.example/coat.jpg").mock(
+            return_value=httpx.Response(
+                200, content=_jpeg(), headers={"content-type": "image/jpeg"}
+            )
+        )
+        respx.get(httpx.URL("https://rebind.example/coat.jpg").copy_with(host="127.0.0.1")).mock(
+            return_value=httpx.Response(
+                200, content=b"internal", headers={"content-type": "image/jpeg"}
+            )
+        )
+        with pytest.raises(InvalidInput, match="private network"):
+            fetch_garment("https://rebind.example/coat.jpg")

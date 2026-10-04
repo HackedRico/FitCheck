@@ -2,13 +2,19 @@
 .DEFAULT_GOAL := help
 ENGINE := cd engine &&
 
-.PHONY: help sync api api-open api-snowflake test test-live check fmt openapi web web-install db-up db-down db-reset ollama-pull worker worker-test
+.PHONY: help sync dev api api-open api-snowflake test test-live check fmt openapi web web-install db-up db-down db-reset ollama-pull worker worker-test
 
 help: ## List targets
 	@grep -E '^[a-z-]+:.*## ' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*## "}; {printf "  %-14s %s\n", $$1, $$2}'
 
 sync: ## Install the engine with every adapter's dependencies
 	$(ENGINE) uv sync --all-extras
+
+dev: ## Run the engine and web app together; Ctrl+C stops both
+	@trap 'kill 0' INT TERM EXIT; \
+	(cd engine && uv run fitcheck serve --reload) & \
+	(cd web && npm run dev) & \
+	wait
 
 api: ## Run the API offline: fakes and fixtures, no accounts, no GPU
 	$(ENGINE) uv run fitcheck serve --reload

@@ -5,12 +5,12 @@ import { readSetting, writeSetting } from "../lib/storage";
 // =============================================================================
 // Module Overview
 // =============================================================================
-// Device settings kept in `localStorage`: whose closet to use (the owner, "maya"
+// Device settings kept in `localStorage`: whose closet to use (the owner, "ricky"
 // by default) and whether to send this device's location for the forecast.
 
 const OWNER_KEY = "fitcheck.owner";
 const LOCATION_KEY = "fitcheck.useLocation";
-export const DEFAULT_OWNER = "maya";
+export const DEFAULT_OWNER = "ricky";
 
 // Mirrors `_OWNER_PATTERN` in `engine/src/fitcheck/engine.py`, which names folders on disk
 export const OWNER_PATTERN = /^[a-z0-9][a-z0-9_-]{0,63}$/;

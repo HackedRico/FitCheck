@@ -43,7 +43,7 @@ A title with none of these, such as "Dentist", gets no dress code and does not c
    FITCHECK_CALENDAR_ICS_URL=https://calendar.google.com/calendar/ical/.../private-.../basic.ics
    ```
 
-4. Restart the API and check `GET /week/maya`.
+4. Restart the API and check `GET /week/ricky`.
 
 The secret address works like a password: anyone holding it can read the calendar. Never commit it or paste it in chat. FitCheck keeps it in a `SecretStr` and leaves it out of every log line and error message. If it leaks, reset it on the same Google settings page.
 

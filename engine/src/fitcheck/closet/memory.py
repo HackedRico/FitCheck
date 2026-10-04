@@ -15,7 +15,7 @@ _WORD = re.compile(r"[a-z0-9]+")
 # =============================================================================
 # `MemoryClosetStore` keeps garments in a dict for tests and offline demos; data is
 # gone when the process stops. `build` loads the demo closet from the seed file so a
-# fresh server already has Maya's closet.
+# fresh server already has Ricky's closet.
 
 
 class MemoryClosetStore:

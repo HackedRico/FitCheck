@@ -46,7 +46,7 @@ docker compose down -v   # deletes the volume and every closet in it
 make db-up
 ```
 
-Restart the engine afterwards so it recreates the table, then seed again. To clear one owner only, forget them through the engine, or run `DELETE FROM garments WHERE owner = 'maya';` in `psql`.
+Restart the engine afterwards so it recreates the table, then seed again. To clear one owner only, forget them through the engine, or run `DELETE FROM garments WHERE owner = 'ricky';` in `psql`.
 
 ## Schema
 

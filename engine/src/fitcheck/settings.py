@@ -42,7 +42,7 @@ class Settings(BaseSettings):
     # Garment images only; person photos are never written here or anywhere else
     data_dir: Path = _REPO_ROOT / ".fitcheck"
     seed_path: Path | None = _REPO_ROOT / "demo" / "closet.json"
-    default_owner: str = "maya"
+    default_owner: str = "ricky"
     default_latitude: float = 40.7128
     default_longitude: float = -74.0060
     default_location_name: str = "New York"

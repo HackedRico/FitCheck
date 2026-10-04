@@ -1,8 +1,8 @@
 {
   "garments": [
     {
-      "id": "maya-navy-cable-knit",
-      "owner": "maya",
+      "id": "ricky-navy-cable-knit",
+      "owner": "ricky",
       "source": "closet",
       "tags": {
         "category": "sweater",
@@ -19,8 +19,8 @@
       "created_at": "2023-11-02T12:00:00Z"
     },
     {
-      "id": "maya-navy-merino-crew",
-      "owner": "maya",
+      "id": "ricky-navy-merino-crew",
+      "owner": "ricky",
       "source": "closet",
       "tags": {
         "category": "sweater",
@@ -37,8 +37,8 @@
       "created_at": "2024-01-15T12:00:00Z"
     },
     {
-      "id": "maya-navy-quarter-zip",
-      "owner": "maya",
+      "id": "ricky-navy-quarter-zip",
+      "owner": "ricky",
       "source": "closet",
       "tags": {
         "category": "sweater",
@@ -55,8 +55,8 @@
       "created_at": "2025-02-08T12:00:00Z"
     },
     {
-      "id": "maya-black-jeans",
-      "owner": "maya",
+      "id": "ricky-black-jeans",
+      "owner": "ricky",
       "source": "closet",
       "tags": {
         "category": "bottom",
@@ -73,8 +73,8 @@
       "created_at": "2023-03-21T12:00:00Z"
     },
     {
-      "id": "maya-blue-mom-jeans",
-      "owner": "maya",
+      "id": "ricky-blue-mom-jeans",
+      "owner": "ricky",
       "source": "closet",
       "tags": {
         "category": "bottom",
@@ -91,8 +91,8 @@
       "created_at": "2023-06-10T12:00:00Z"
     },
     {
-      "id": "maya-beige-chinos",
-      "owner": "maya",
+      "id": "ricky-beige-chinos",
+      "owner": "ricky",
       "source": "closet",
       "tags": {
         "category": "bottom",
@@ -109,8 +109,8 @@
       "created_at": "2025-04-19T12:00:00Z"
     },
     {
-      "id": "maya-black-leggings",
-      "owner": "maya",
+      "id": "ricky-black-leggings",
+      "owner": "ricky",
       "source": "closet",
       "tags": {
         "category": "bottom",
@@ -127,8 +127,8 @@
       "created_at": "2024-02-03T12:00:00Z"
     },
     {
-      "id": "maya-white-oxford",
-      "owner": "maya",
+      "id": "ricky-white-oxford",
+      "owner": "ricky",
       "source": "closet",
       "tags": {
         "category": "shirt",
@@ -145,8 +145,8 @@
       "created_at": "2023-09-12T12:00:00Z"
     },
     {
-      "id": "maya-white-tee",
-      "owner": "maya",
+      "id": "ricky-white-tee",
+      "owner": "ricky",
       "source": "closet",
       "tags": {
         "category": "top",
@@ -163,8 +163,8 @@
       "created_at": "2024-05-27T12:00:00Z"
     },
     {
-      "id": "maya-grey-tank",
-      "owner": "maya",
+      "id": "ricky-grey-tank",
+      "owner": "ricky",
       "source": "closet",
       "tags": {
         "category": "top",
@@ -181,8 +181,8 @@
       "created_at": "2024-03-30T12:00:00Z"
     },
     {
-      "id": "maya-black-blazer",
-      "owner": "maya",
+      "id": "ricky-black-blazer",
+      "owner": "ricky",
       "source": "closet",
       "tags": {
         "category": "outerwear",
@@ -199,8 +199,8 @@
       "created_at": "2025-09-01T12:00:00Z"
     },
     {
-      "id": "maya-denim-jacket",
-      "owner": "maya",
+      "id": "ricky-denim-jacket",
+      "owner": "ricky",
       "source": "closet",
       "tags": {
         "category": "outerwear",
@@ -217,8 +217,8 @@
       "created_at": "2023-04-14T12:00:00Z"
     },
     {
-      "id": "maya-camel-coat",
-      "owner": "maya",
+      "id": "ricky-camel-coat",
+      "owner": "ricky",
       "source": "closet",
       "tags": {
         "category": "outerwear",
@@ -235,8 +235,8 @@
       "created_at": "2024-10-20T12:00:00Z"
     },
     {
-      "id": "maya-white-sneakers",
-      "owner": "maya",
+      "id": "ricky-white-sneakers",
+      "owner": "ricky",
       "source": "closet",
       "tags": {
         "category": "shoes",
@@ -253,8 +253,8 @@
       "created_at": "2023-07-04T12:00:00Z"
     },
     {
-      "id": "maya-brown-chelsea-boots",
-      "owner": "maya",
+      "id": "ricky-brown-chelsea-boots",
+      "owner": "ricky",
       "source": "closet",
       "tags": {
         "category": "shoes",

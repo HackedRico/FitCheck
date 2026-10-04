@@ -12,6 +12,7 @@ import { useObjectUrl } from "../lib/objectUrl";
 import { formatMs, useElapsed } from "../lib/time";
 import { useApp } from "../state/app";
 import type { Step } from "../state/candidate";
+import { candidateWearable } from "../state/outfit";
 import { photoLeftOurHardware } from "../state/pipelines";
 
 // =============================================================================
@@ -33,7 +34,7 @@ const REASON_LABEL: Record<Reason["code"], string> = {
 
 /** The story of the current scan. */
 export function ResultScreen(): ReactNode {
-  const { flow, navigate, settings } = useApp();
+  const { flow, outfit, navigate, settings } = useApp();
   const onYouRef = useRef<HTMLElement | null>(null);
   const frameUrl = useObjectUrl(flow.frame);
 
@@ -56,6 +57,12 @@ export function ResultScreen(): ReactNode {
   const scanAnother = (): void => {
     flow.reset();
     navigate("home");
+  };
+
+  const tryLive = (): void => {
+    const candidate = flow.scan.status === "done" ? candidateWearable(flow.scan.value) : null;
+    if (candidate) outfit.wear(candidate);
+    navigate("live");
   };
 
   return (
@@ -116,7 +123,7 @@ export function ResultScreen(): ReactNode {
             type="button"
             className="fc-btn is-primary"
             disabled={flow.scan.status !== "done"}
-            onClick={() => navigate("live")}
+            onClick={tryLive}
           >
             <Icon name="live" /> Try it live
           </button>

@@ -4,6 +4,7 @@ import { api, errorMessage, type HealthOut } from "../api/client";
 import { useRoute, type Route } from "../lib/route";
 import { useCandidateFlow, type Flow } from "./candidate";
 import { useDeviceLocation, type LocationState } from "./location";
+import { useOutfit, type OutfitState } from "./outfit";
 import { usePersonPhoto, type PersonState } from "./person";
 import { usePipelines, type PipelinesState } from "./pipelines";
 import { useSettings, type SettingsState } from "./settings";
@@ -13,7 +14,8 @@ import { useSettings, type SettingsState } from "./settings";
 // =============================================================================
 // One React context that every screen reads through `useApp`: the route, the
 // owner settings, device location, the person photo, the candidate `Flow`, the
-// recorded pipelines, engine health, and which sheet or drawer is open.
+// outfit in the live preview, the recorded pipelines, engine health, and which
+// sheet or drawer is open.
 
 export type Sheet = "pipeline" | "settings" | "stylist" | null;
 
@@ -31,6 +33,7 @@ export interface AppState {
   person: PersonState;
   pipelines: PipelinesState;
   flow: Flow;
+  outfit: OutfitState;
   engine: EngineHealth;
   sheet: Sheet;
   openSheet: (sheet: Sheet) => void;
@@ -46,6 +49,7 @@ export function AppProvider({ children }: { children: ReactNode }): ReactNode {
   const person = usePersonPhoto();
   const pipelines = usePipelines();
   const engine = useEngineHealth();
+  const outfit = useOutfit();
   const [sheet, openSheet] = useState<Sheet>(null);
 
   const flow = useCandidateFlow({
@@ -56,7 +60,7 @@ export function AppProvider({ children }: { children: ReactNode }): ReactNode {
   });
 
   // The hooks above return fresh objects each render, so memoising this bundle would buy nothing
-  const value: AppState = { route, navigate, settings, location, person, pipelines, flow, engine, sheet, openSheet };
+  const value: AppState = { route, navigate, settings, location, person, pipelines, flow, outfit, engine, sheet, openSheet };
 
   return <AppContext.Provider value={value}>{children}</AppContext.Provider>;
 }

@@ -12,7 +12,8 @@ import { useApp } from "../state/app";
 // =============================================================================
 // The camera, full screen, and the only thing on it is the shutter. A snap, a
 // picked photo or a pasted shop link starts the flow and moves straight to the
-// result. The corners hold the closet, the owner's photo and the last verdict.
+// result. The corners hold the live preview, the closet, the owner's photo and
+// the last verdict.
 
 /** Point at a garment and snap, or bring one in by link or photo. */
 export function HomeScreen(): ReactNode {
@@ -67,6 +68,9 @@ export function HomeScreen(): ReactNode {
           Fit<span>Check</span>
         </p>
         <div className="fc-topbar-actions">
+          <button type="button" className="fc-round" onClick={() => navigate("live")} aria-label="Try clothes on live">
+            <Icon name="live" />
+          </button>
           <button type="button" className="fc-round" onClick={() => navigate("closet")} aria-label="Closet">
             <Icon name="hanger" />
           </button>

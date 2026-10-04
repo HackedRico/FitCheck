@@ -1,16 +1,17 @@
-import { useCallback, useEffect, useRef, useState, type ChangeEvent, type ReactNode } from "react";
+import { useCallback, useEffect, useState, type ReactNode } from "react";
 
 import { api, errorMessage, type Garment } from "../api/client";
+import { AddGarmentSheet } from "../components/AddGarmentSheet";
 import { GarmentThumb } from "../components/GarmentThumb";
 import { Icon } from "../components/Icons";
-import { shrinkImage } from "../lib/camera";
 import { useApp } from "../state/app";
 
 // =============================================================================
 // Module Overview
 // =============================================================================
-// The owner's closet as a grid. Add a garment by photo (the engine cuts it out
-// and tags it) or delete everything, which takes a second tap to confirm.
+// The owner's closet as a grid. Add a garment by shop link, a photo taken now or
+// one from the device (the engine cuts it out and tags it), or delete
+// everything, which takes a second tap to confirm.
 
 /** The closet grid with add and delete-all. */
 export function ClosetScreen(): ReactNode {
@@ -20,7 +21,7 @@ export function ClosetScreen(): ReactNode {
   const [error, setError] = useState<string | null>(null);
   const [adding, setAdding] = useState(false);
   const [armed, setArmed] = useState(false);
-  const fileRef = useRef<HTMLInputElement | null>(null);
+  const [sheetOpen, setSheetOpen] = useState(false);
 
   const load = useCallback(() => {
     setError(null);
@@ -32,14 +33,12 @@ export function ClosetScreen(): ReactNode {
 
   useEffect(load, [load]);
 
-  const add = async (event: ChangeEvent<HTMLInputElement>): Promise<void> => {
-    const file = event.target.files?.[0];
-    event.target.value = "";
-    if (!file) return;
+  const add = async (image: Blob): Promise<void> => {
+    setSheetOpen(false);
     setAdding(true);
     setError(null);
     try {
-      const out = await api.addToCloset(owner, await shrinkImage(file));
+      const out = await api.addToCloset(owner, image);
       pipelines.record("closet", out.pipeline);
       setGarments((current) => [out.garment, ...(current ?? [])]);
     } catch (cause) {
@@ -85,7 +84,7 @@ export function ClosetScreen(): ReactNode {
           </p>
         </div>
         <div className="closet-actions">
-          <button type="button" className="fc-btn is-primary" disabled={adding} onClick={() => fileRef.current?.click()}>
+          <button type="button" className="fc-btn is-primary" disabled={adding} onClick={() => setSheetOpen(true)}>
             {adding ? <span className="spinner" /> : <Icon name="plus" />} {adding ? "Tagging" : "Add a garment"}
           </button>
           <button
@@ -97,10 +96,9 @@ export function ClosetScreen(): ReactNode {
             <Icon name="trash" /> {armed ? "Tap again to delete all" : "Delete everything"}
           </button>
         </div>
-        <input ref={fileRef} type="file" accept="image/*" capture="environment" hidden onChange={(e) => void add(e)} />
       </header>
       {error && (
-        <p className="error-line">
+        <p className="fc-error">
           {error}
           <button type="button" onClick={load}>
             Retry
@@ -111,7 +109,7 @@ export function ClosetScreen(): ReactNode {
         <div className="closet-empty">
           <p>Nothing here yet.</p>
           <p className="fc-muted">
-            Add a photo of something you already own, and every verdict will weigh it.
+            Add things you already own by shop link or photo, and every verdict will weigh them.
           </p>
         </div>
       )}
@@ -120,6 +118,14 @@ export function ClosetScreen(): ReactNode {
           <GarmentThumb key={garment.id} owner={owner} garment={garment} />
         ))}
       </div>
+      <AddGarmentSheet
+        open={sheetOpen}
+        onClose={() => setSheetOpen(false)}
+        onGarment={(image) => void add(image)}
+        title="Add to your closet"
+        linkLabel="Bought it online? Paste the product link"
+        busy={adding}
+      />
     </section>
   );
 }

@@ -1481,3 +1481,13 @@ body {
     transform var(--medium) var(--ease-out),
     visibility 0s linear var(--medium);
 }
+
+.fc-addsheet-photos {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+.fc-addsheet-photos .fc-btn {
+  padding: 0 12px;
+}

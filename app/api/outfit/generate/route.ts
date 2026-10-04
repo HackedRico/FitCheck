@@ -1,7 +1,7 @@
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { query } from '@/lib/snowflake'
-import { generateOutfit, generateShoppingSuggestions, embedText } from '@/lib/cortex'
+import { generateOutfit, generateShoppingSuggestions, findOwnedMatch } from '@/lib/cortex'
 import { getWeather } from '@/lib/weather'
 import { getTodaysEvents, occasionFromEvents } from '@/lib/calendar'
 import type {
@@ -25,35 +25,6 @@ function toSuggestionPayload(row: ProductSuggestionRow): ShoppingSuggestion {
     search_query:
       row.SEARCH_QUERY?.trim() || [row.BRAND, row.NAME].filter(Boolean).join(' '),
     already_owned: row.ALREADY_OWNED ?? null,
-  }
-}
-
-async function findOwnedMatch(
-  userId: string,
-  s: ShoppingSuggestion
-): Promise<string | null> {
-  try {
-    const text = [s.category, s.name]
-      .filter((v) => typeof v === 'string' && v.trim())
-      .join(' ')
-      .trim()
-    if (!text) return null
-    const vec = await embedText(text)
-    const match = await query<{ SUBCATEGORY: string | null; SCORE: number }>(
-      `SELECT SUBCATEGORY,
-         VECTOR_COSINE_SIMILARITY(EMBEDDING, PARSE_JSON(?)::VECTOR(FLOAT, 768)) AS SCORE
-       FROM CLOSET_ITEMS
-       WHERE USER_ID = ? AND IS_ACTIVE = TRUE AND EMBEDDING IS NOT NULL
-       ORDER BY SCORE DESC
-       LIMIT 1`,
-      [JSON.stringify(vec), userId]
-    )
-    if (match[0] && match[0].SCORE >= 0.8 && match[0].SUBCATEGORY) {
-      return match[0].SUBCATEGORY
-    }
-    return null
-  } catch {
-    return null
   }
 }
 
@@ -178,7 +149,14 @@ async function generateAndPersist(
   if (Array.isArray(suggestions) && suggestions.length > 0) {
     try {
       const ownedMatches = await Promise.all(
-        suggestions.map((s) => findOwnedMatch(userId, s))
+        suggestions.map((s) =>
+          findOwnedMatch(
+            userId,
+            [s.category, s.name]
+              .filter((v) => typeof v === 'string' && v.trim())
+              .join(' ')
+          )
+        )
       )
       for (const [i, s] of suggestions.entries()) {
         const price = Number(s.price)

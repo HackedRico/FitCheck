@@ -1,7 +1,7 @@
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { query } from '@/lib/snowflake'
-import { shoppingAssistant } from '@/lib/cortex'
+import { shoppingAssistant, findOwnedMatch } from '@/lib/cortex'
 import type { ClosetItemRow, TasteProfileRow } from '@/types'
 
 export async function POST(request: Request): Promise<Response> {
@@ -56,9 +56,24 @@ export async function POST(request: Request): Promise<Response> {
       closetSummary,
     })
 
+    const suggestions = Array.isArray(result.suggestions) ? result.suggestions : []
+    const ownedMatches = await Promise.all(
+      suggestions.map((s) =>
+        findOwnedMatch(
+          userId,
+          [s.category, s.name]
+            .filter((v) => typeof v === 'string' && v.trim())
+            .join(' ')
+        )
+      )
+    )
+
     return Response.json({
       advice: typeof result.advice === 'string' ? result.advice : '',
-      suggestions: Array.isArray(result.suggestions) ? result.suggestions : [],
+      suggestions: suggestions.map((s, i) => ({
+        ...s,
+        already_owned: ownedMatches[i] ?? null,
+      })),
     })
   } catch (err) {
     console.error('Shopping assistant failed:', err)

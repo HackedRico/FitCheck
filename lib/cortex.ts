@@ -221,3 +221,31 @@ export async function embedText(text: string): Promise<number[]> {
   `, [text])
   return JSON.parse(rows[0].EMBEDDING) as number[]
 }
+
+export async function findOwnedMatch(
+  userId: string,
+  text: string
+): Promise<string | null> {
+  try {
+    const trimmed = text.trim()
+    if (!trimmed) return null
+    const match = await query<{ SUBCATEGORY: string | null; SCORE: number }>(
+      `SELECT SUBCATEGORY,
+         VECTOR_COSINE_SIMILARITY(
+           EMBEDDING,
+           SNOWFLAKE.CORTEX.EMBED_TEXT_768('snowflake-arctic-embed-m', ?)
+         ) AS SCORE
+       FROM CLOSET_ITEMS
+       WHERE USER_ID = ? AND IS_ACTIVE = TRUE AND EMBEDDING IS NOT NULL
+       ORDER BY SCORE DESC
+       LIMIT 1`,
+      [trimmed, userId]
+    )
+    if (match[0] && match[0].SCORE >= 0.8 && match[0].SUBCATEGORY) {
+      return match[0].SUBCATEGORY
+    }
+    return null
+  } catch {
+    return null
+  }
+}

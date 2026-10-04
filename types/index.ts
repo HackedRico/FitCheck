@@ -1,5 +1,3 @@
-// ─── Snowflake row shapes (columns are UPPERCASE from snowflake-sdk) ──────────
-
 export interface UserRow {
   ID: string
   EMAIL: string
@@ -81,8 +79,6 @@ export interface ProductSuggestionRow {
   CREATED_AT: string
 }
 
-// ─── Domain enums ─────────────────────────────────────────────────────────────
-
 export type ClothingCategory =
   | 'TOP'
   | 'BOTTOM'
@@ -95,8 +91,6 @@ export type ClothingCategory =
 export type Formality = 'CASUAL' | 'SMART_CASUAL' | 'BUSINESS' | 'FORMAL'
 
 export type Season = 'spring' | 'summer' | 'fall' | 'winter'
-
-// ─── API payload shapes ───────────────────────────────────────────────────────
 
 export interface WeatherContext {
   temp: number
@@ -119,8 +113,6 @@ export interface TasteProfilePayload {
   size_bottoms: string
   size_shoes: string
 }
-
-// ─── Cortex AI return shapes ──────────────────────────────────────────────────
 
 export interface ClothingAnalysis {
   category: ClothingCategory
@@ -153,8 +145,6 @@ export interface ShoppingSuggestion {
 export interface ShoppingSuggestionsResult {
   suggestions: ShoppingSuggestion[]
 }
-
-// ─── NextAuth session extension ───────────────────────────────────────────────
 
 declare module 'next-auth' {
   interface Session {

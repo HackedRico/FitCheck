@@ -1593,3 +1593,14 @@ body {
 .fc .shelf-row .thumb {
   flex: none;
 }
+
+.fc-warning {
+  margin: 14px 0 0;
+  padding: 12px 14px;
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--warn) 12%, var(--bg));
+  color: var(--fg);
+  font-size: 14px;
+  line-height: 1.45;
+  text-align: left;
+}

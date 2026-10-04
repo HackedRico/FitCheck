@@ -100,6 +100,22 @@ class Garment(_Value):
     created_at: datetime = Field(default_factory=lambda: datetime.now(UTC))
 
 
+class Box(_Value):
+    """A rectangle in an image as fractions of its width and height, top-left origin."""
+
+    left: Annotated[float, Field(ge=0, le=1)]
+    top: Annotated[float, Field(ge=0, le=1)]
+    right: Annotated[float, Field(ge=0, le=1)]
+    bottom: Annotated[float, Field(ge=0, le=1)]
+
+
+class FoundGarment(_Value):
+    """One garment a tagger found in a photo of several, with where it is."""
+
+    tags: GarmentTags
+    box: Box
+
+
 class TryOnRegion(StrEnum):
     """The body region a try-on model repaints."""
 

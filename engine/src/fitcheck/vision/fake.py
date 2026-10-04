@@ -4,7 +4,16 @@ from collections import Counter
 
 from PIL import Image
 
-from fitcheck.domain import AdapterInfo, Category, ColorFamily, GarmentTags, Pattern, RunsOn
+from fitcheck.domain import (
+    AdapterInfo,
+    Box,
+    Category,
+    ColorFamily,
+    FoundGarment,
+    GarmentTags,
+    Pattern,
+    RunsOn,
+)
 from fitcheck.errors import TaggingFailed
 from fitcheck.settings import Settings
 from fitcheck.vision import images
@@ -34,6 +43,7 @@ _OPAQUE_ALPHA = 128
 # `FakeTagger` tags garments with no model, for offline demos and tests. It votes
 # each garment pixel to the nearest `PALETTE` color and reports the winning
 # `ColorFamily`; every other tag is fixed. The same image always gets the same tags.
+# `find_all` treats a whole photo as one garment.
 
 
 class FakeTagger:
@@ -53,6 +63,11 @@ class FakeTagger:
             formality=2,
             description=f"{family.value} top, offline fake tags",
         )
+
+    def find_all(self, image_png: bytes) -> list[FoundGarment]:
+        """Report the whole photo as one garment, since the fake has no detector."""
+        whole = Box(left=0, top=0, right=1, bottom=1)
+        return [FoundGarment(tags=self.tag(image_png), box=whole)]
 
 
 def dominant_family(image: Image.Image) -> ColorFamily:

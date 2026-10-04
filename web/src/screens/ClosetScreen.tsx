@@ -1,17 +1,18 @@
-import { useCallback, useEffect, useState, type ReactNode } from "react";
+import { useCallback, useEffect, useRef, useState, type ChangeEvent, type ReactNode } from "react";
 
 import { api, errorMessage, type Garment } from "../api/client";
 import { AddGarmentSheet } from "../components/AddGarmentSheet";
 import { GarmentThumb } from "../components/GarmentThumb";
 import { Icon } from "../components/Icons";
+import { shrinkImage } from "../lib/camera";
 import { useApp } from "../state/app";
 
 // =============================================================================
 // Module Overview
 // =============================================================================
-// The owner's closet as a grid. Add a garment by shop link, a photo taken now or
-// one from the device (the engine cuts it out and tags it), or delete
-// everything, which takes a second tap to confirm.
+// The owner's closet as a grid. Add one garment by shop link or photo, scan a
+// whole rack or closet in one photo (the engine finds, crops and tags each
+// garment), or delete everything, which takes a second tap to confirm.
 
 /** The closet grid with add and delete-all. */
 export function ClosetScreen(): ReactNode {
@@ -22,6 +23,9 @@ export function ClosetScreen(): ReactNode {
   const [adding, setAdding] = useState(false);
   const [armed, setArmed] = useState(false);
   const [sheetOpen, setSheetOpen] = useState(false);
+  const [scanning, setScanning] = useState(false);
+  const [notice, setNotice] = useState<string | null>(null);
+  const scanRef = useRef<HTMLInputElement | null>(null);
 
   const load = useCallback(() => {
     setError(null);
@@ -45,6 +49,29 @@ export function ClosetScreen(): ReactNode {
       setError(errorMessage(cause));
     } finally {
       setAdding(false);
+    }
+  };
+
+  const scan = async (event: ChangeEvent<HTMLInputElement>): Promise<void> => {
+    const file = event.target.files?.[0];
+    event.target.value = "";
+    if (!file) return;
+    setScanning(true);
+    setError(null);
+    setNotice(null);
+    try {
+      const out = await api.scanCloset(owner, await shrinkImage(file));
+      pipelines.record("closet", out.pipeline);
+      setGarments((current) => [...out.garments, ...(current ?? [])]);
+      setNotice(
+        out.garments.length === 0
+          ? "No garments stood out in that photo. Try closer, with the clothes spread out."
+          : `Added ${out.garments.length} ${out.garments.length === 1 ? "garment" : "garments"} from that photo.`,
+      );
+    } catch (cause) {
+      setError(errorMessage(cause));
+    } finally {
+      setScanning(false);
     }
   };
 
@@ -84,9 +111,18 @@ export function ClosetScreen(): ReactNode {
           </p>
         </div>
         <div className="closet-actions">
-          <button type="button" className="fc-btn is-primary" disabled={adding} onClick={() => setSheetOpen(true)}>
+          <button type="button" className="fc-btn is-primary" disabled={adding || scanning} onClick={() => setSheetOpen(true)}>
             {adding ? <span className="spinner" /> : <Icon name="plus" />} {adding ? "Tagging" : "Add a garment"}
           </button>
+          <button
+            type="button"
+            className="fc-btn is-ghost"
+            disabled={adding || scanning}
+            onClick={() => scanRef.current?.click()}
+          >
+            {scanning ? <span className="spinner" /> : <Icon name="camera" />} {scanning ? "Finding garments" : "Scan your closet"}
+          </button>
+          <input ref={scanRef} type="file" accept="image/*" capture="environment" hidden onChange={(e) => void scan(e)} />
           <button
             type="button"
             className={`fc-btn is-danger${armed ? " is-armed" : ""}`}
@@ -97,6 +133,8 @@ export function ClosetScreen(): ReactNode {
           </button>
         </div>
       </header>
+      {scanning && <p className="closet-notice">Finding each garment in the photo. A full rack takes about half a minute.</p>}
+      {notice && <p className="closet-notice">{notice}</p>}
       {error && (
         <p className="fc-error">
           {error}
@@ -105,11 +143,11 @@ export function ClosetScreen(): ReactNode {
           </button>
         </p>
       )}
-      {garments !== null && garments.length === 0 && (
+      {garments !== null && garments.length === 0 && !scanning && (
         <div className="closet-empty">
           <p>Nothing here yet.</p>
           <p className="fc-muted">
-            Add things you already own by shop link or photo, and every verdict will weigh them.
+            Scan your whole closet in one photo, or add pieces by shop link or photo. Every verdict weighs what is here.
           </p>
         </div>
       )}

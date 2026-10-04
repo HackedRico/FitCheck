@@ -9,6 +9,7 @@ from fitcheck.domain import (
     CalendarEvent,
     ChatTurn,
     Forecast,
+    FoundGarment,
     Garment,
     GarmentTags,
     Location,
@@ -61,6 +62,10 @@ class ClosetStore(_Described, Protocol):
 class GarmentTagger(_Described, Protocol):
     def tag(self, image_png: bytes) -> GarmentTags:
         """Read the garment in `image_png`; raise `TaggingFailed` on unusable model output."""
+        ...
+
+    def find_all(self, image_png: bytes) -> list[FoundGarment]:
+        """Find every separate garment in a photo of a rack, pile or closet, with tags and box."""
         ...
 
 

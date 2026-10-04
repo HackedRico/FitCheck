@@ -1491,3 +1491,24 @@ body {
 .fc-addsheet-photos .fc-btn {
   padding: 0 12px;
 }
+
+.closet-notice {
+  margin: 0 0 16px;
+  padding: 12px 14px;
+  border-radius: 12px;
+  background: var(--bg-2);
+  color: var(--fg-2);
+  font-size: 14px;
+}
+
+/* Show the whole garment in its square, however tall the crop from a closet scan is;
+   pinned to the frame because a percentage height does not resolve against aspect-ratio */
+.fc .thumb-frame img {
+  position: absolute;
+  inset: 0;
+  box-sizing: border-box;
+  width: 100%;
+  height: 100%;
+  padding: 6px;
+  object-fit: contain;
+}

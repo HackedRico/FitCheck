@@ -97,7 +97,25 @@ class Garment(_Value):
     wears: Annotated[int, Field(ge=0)] = 0
     # Key into the engine's garment image folder, never a person photo
     image_ref: str | None = None
+    # The shop or image link the garment was imported from, so the owner can go back to it
+    source_url: str | None = None
     created_at: datetime = Field(default_factory=lambda: datetime.now(UTC))
+
+
+class Box(_Value):
+    """A rectangle in an image as fractions of its width and height, top-left origin."""
+
+    left: Annotated[float, Field(ge=0, le=1)]
+    top: Annotated[float, Field(ge=0, le=1)]
+    right: Annotated[float, Field(ge=0, le=1)]
+    bottom: Annotated[float, Field(ge=0, le=1)]
+
+
+class FoundGarment(_Value):
+    """One garment a tagger found in a photo of several, with where it is."""
+
+    tags: GarmentTags
+    box: Box
 
 
 class TryOnRegion(StrEnum):

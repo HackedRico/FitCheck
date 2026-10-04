@@ -8,24 +8,36 @@ import { Icon } from "./Icons";
 // =============================================================================
 // Module Overview
 // =============================================================================
-// The other ways to bring a garment in when it is not on a rack in front of you:
-// a photo from the device, or a link to a shop page or image for something you
-// are eyeing online. Either one hands a garment image to `onGarment`, which runs
-// the same scan and verdict as a camera snap.
+// Every way to bring a garment in besides the live camera: a link to a shop page
+// or image, a photo taken now, or one from the device. Each hands one garment
+// image to `onGarment`; the camera screen judges it, the closet stores it.
 
 interface AddGarmentSheetProps {
   open: boolean;
   onClose: () => void;
-  onGarment: (image: Blob) => void;
+  // `sourceUrl` is the shop link when the garment came from one
+  onGarment: (image: Blob, sourceUrl?: string) => void;
+  title?: string;
+  linkLabel?: string;
+  // Shown while the caller is still handling the garment, such as tagging it for the closet
+  busy?: boolean;
 }
 
-/** Pick a photo or paste a shop link to judge a garment. */
-export function AddGarmentSheet({ open, onClose, onGarment }: AddGarmentSheetProps): ReactNode {
+/** Paste a shop link, take a photo, or choose one, to bring in a garment. */
+export function AddGarmentSheet({
+  open,
+  onClose,
+  onGarment,
+  title = "Judge a garment",
+  linkLabel = "Shopping online? Paste the product link",
+  busy: callerBusy = false,
+}: AddGarmentSheetProps): ReactNode {
   const { pipelines } = useApp();
   const [url, setUrl] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const fileRef = useRef<HTMLInputElement | null>(null);
+  const cameraRef = useRef<HTMLInputElement | null>(null);
   const inputRef = useRef<HTMLInputElement | null>(null);
 
   useEffect(() => {
@@ -51,7 +63,7 @@ export function AddGarmentSheet({ open, onClose, onGarment }: AddGarmentSheetPro
       const out = await api.link(link);
       pipelines.record("scan", out.pipeline);
       setUrl("");
-      onGarment(pngFromBase64(out.image_png_base64));
+      onGarment(pngFromBase64(out.image_png_base64), out.source_url);
     } catch (cause) {
       setError(errorMessage(cause));
     } finally {
@@ -74,14 +86,14 @@ export function AddGarmentSheet({ open, onClose, onGarment }: AddGarmentSheetPro
       <button type="button" className="fc-addsheet-scrim" tabIndex={-1} aria-label="Close" onClick={onClose} />
       <section className="fc-addsheet-card" role="dialog" aria-label="Add a garment" inert={!open}>
         <header className="fc-addsheet-head">
-          <h2>Judge a garment</h2>
+          <h2>{title}</h2>
           <button type="button" className="fc-round" onClick={onClose} aria-label="Close">
             <Icon name="close" />
           </button>
         </header>
 
         <form className="fc-linkform" onSubmit={(event) => void fetchLink(event)}>
-          <label htmlFor="garment-link">Shopping online? Paste the product link</label>
+          <label htmlFor="garment-link">{linkLabel}</label>
           <div className="fc-linkfield">
             <Icon name="link" />
             <input
@@ -100,17 +112,24 @@ export function AddGarmentSheet({ open, onClose, onGarment }: AddGarmentSheetPro
               </button>
             )}
           </div>
-          <button type="submit" className="fc-btn is-primary" disabled={busy || !url.trim()}>
-            {busy ? "Getting the garment" : "Check this link"}
+          <button type="submit" className="fc-btn is-primary" disabled={busy || callerBusy || !url.trim()}>
+            {busy ? "Getting the garment" : callerBusy ? "Adding it" : "Use this link"}
           </button>
           {error && <p className="fc-error">{error}</p>}
         </form>
 
         <div className="fc-or">or</div>
 
-        <button type="button" className="fc-btn is-ghost" onClick={() => fileRef.current?.click()}>
-          <Icon name="upload" /> Choose a photo
-        </button>
+        <div className="fc-addsheet-photos">
+          <button type="button" className="fc-btn is-ghost" disabled={callerBusy} onClick={() => cameraRef.current?.click()}>
+            <Icon name="camera" /> Take a photo
+          </button>
+          <button type="button" className="fc-btn is-ghost" disabled={callerBusy} onClick={() => fileRef.current?.click()}>
+            <Icon name="upload" /> Choose a photo
+          </button>
+        </div>
+        {/* `capture` opens the rear camera on phones; desktops fall back to a file picker */}
+        <input ref={cameraRef} type="file" accept="image/*" capture="environment" hidden onChange={(event) => void pick(event)} />
         <input ref={fileRef} type="file" accept="image/*" hidden onChange={(event) => void pick(event)} />
       </section>
     </div>

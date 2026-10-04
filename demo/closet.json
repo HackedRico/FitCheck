@@ -11,11 +11,11 @@
         "warmth": 4,
         "waterproof": false,
         "formality": 2,
-        "description": "navy cable-knit wool sweater"
+        "description": "navy rib-knit wool sweater with elbow patches"
       },
       "price": "89.00",
       "wears": 41,
-      "image_ref": null,
+      "image_ref": "seed/ricky-navy-cable-knit.jpg",
       "created_at": "2023-11-02T12:00:00Z"
     },
     {
@@ -29,11 +29,11 @@
         "warmth": 3,
         "waterproof": false,
         "formality": 3,
-        "description": "navy merino crewneck"
+        "description": "navy wool crewneck with shoulder patches"
       },
       "price": "120.00",
       "wears": 28,
-      "image_ref": null,
+      "image_ref": "seed/ricky-navy-merino-crew.jpg",
       "created_at": "2024-01-15T12:00:00Z"
     },
     {
@@ -51,7 +51,7 @@
       },
       "price": "65.00",
       "wears": 17,
-      "image_ref": null,
+      "image_ref": "seed/ricky-navy-quarter-zip.jpg",
       "created_at": "2025-02-08T12:00:00Z"
     },
     {
@@ -69,7 +69,7 @@
       },
       "price": "98.00",
       "wears": 87,
-      "image_ref": null,
+      "image_ref": "seed/ricky-black-jeans.jpg",
       "created_at": "2023-03-21T12:00:00Z"
     },
     {
@@ -87,7 +87,7 @@
       },
       "price": "79.00",
       "wears": 52,
-      "image_ref": null,
+      "image_ref": "seed/ricky-blue-mom-jeans.jpg",
       "created_at": "2023-06-10T12:00:00Z"
     },
     {
@@ -105,7 +105,7 @@
       },
       "price": "70.00",
       "wears": 14,
-      "image_ref": null,
+      "image_ref": "seed/ricky-beige-chinos.jpg",
       "created_at": "2025-04-19T12:00:00Z"
     },
     {
@@ -123,7 +123,7 @@
       },
       "price": "55.00",
       "wears": 60,
-      "image_ref": null,
+      "image_ref": "seed/ricky-black-leggings.jpg",
       "created_at": "2024-02-03T12:00:00Z"
     },
     {
@@ -141,7 +141,7 @@
       },
       "price": "60.00",
       "wears": 33,
-      "image_ref": null,
+      "image_ref": "seed/ricky-white-oxford.jpg",
       "created_at": "2023-09-12T12:00:00Z"
     },
     {
@@ -159,7 +159,7 @@
       },
       "price": "25.00",
       "wears": 70,
-      "image_ref": null,
+      "image_ref": "seed/ricky-white-tee.jpg",
       "created_at": "2024-05-27T12:00:00Z"
     },
     {
@@ -173,11 +173,11 @@
         "warmth": 1,
         "waterproof": false,
         "formality": 1,
-        "description": "grey racerback tank"
+        "description": "grey scoop-neck tank top"
       },
       "price": "30.00",
       "wears": 45,
-      "image_ref": null,
+      "image_ref": "seed/ricky-grey-tank.jpg",
       "created_at": "2024-03-30T12:00:00Z"
     },
     {
@@ -195,7 +195,7 @@
       },
       "price": "180.00",
       "wears": 9,
-      "image_ref": null,
+      "image_ref": "seed/ricky-black-blazer.jpg",
       "created_at": "2025-09-01T12:00:00Z"
     },
     {
@@ -213,7 +213,7 @@
       },
       "price": "90.00",
       "wears": 38,
-      "image_ref": null,
+      "image_ref": "seed/ricky-denim-jacket.jpg",
       "created_at": "2023-04-14T12:00:00Z"
     },
     {
@@ -231,7 +231,7 @@
       },
       "price": "240.00",
       "wears": 22,
-      "image_ref": null,
+      "image_ref": "seed/ricky-camel-coat.jpg",
       "created_at": "2024-10-20T12:00:00Z"
     },
     {
@@ -249,7 +249,7 @@
       },
       "price": "110.00",
       "wears": 95,
-      "image_ref": null,
+      "image_ref": "seed/ricky-white-sneakers.jpg",
       "created_at": "2023-07-04T12:00:00Z"
     },
     {
@@ -267,7 +267,7 @@
       },
       "price": "150.00",
       "wears": 30,
-      "image_ref": null,
+      "image_ref": "seed/ricky-brown-chelsea-boots.jpg",
       "created_at": "2024-11-11T12:00:00Z"
     }
   ]

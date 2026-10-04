@@ -36,6 +36,7 @@ export type RenderOut = Schemas["RenderOut"];
 export type ChatOut = Schemas["ChatOut"];
 export type AddOut = Schemas["AddOut"];
 export type LinkOut = Schemas["LinkOut"];
+export type ClosetScanOut = Schemas["ClosetScanOut"];
 export type ChatIn = Schemas["ChatIn"];
 
 const API_BASE = import.meta.env.VITE_API_BASE ?? "/api";
@@ -187,8 +188,8 @@ export const api = {
       }),
     ),
 
-  /** Add one garment photo to `owner`'s closet, letting the engine tag it. */
-  addToCloset: (owner: string, image: Blob): Promise<AddOut> =>
+  /** Add one garment photo to `owner`'s closet, letting the engine tag it; keeps the shop link. */
+  addToCloset: (owner: string, image: Blob, sourceUrl: string | null = null): Promise<AddOut> =>
     unwrap(() =>
       client.POST("/closet/{owner}", {
         params: { path: { owner } },
@@ -197,8 +198,20 @@ export const api = {
           tags_json: null,
           price: null,
           source: "closet",
+          source_url: sourceUrl,
         }),
         signal: AbortSignal.timeout(TIMEOUT_MS.model),
+      }),
+    ),
+
+  /** Find every garment in a photo of a rack or closet and add them all to `owner`'s closet. */
+  scanCloset: (owner: string, image: Blob): Promise<ClosetScanOut> =>
+    unwrap(() =>
+      client.POST("/closet/{owner}/scan", {
+        params: { path: { owner } },
+        ...multipart<Schemas["Body_scan_closet_closet__owner__scan_post"]>({ image }),
+        // Tagging up to 20 garments in one answer takes far longer than one garment
+        signal: AbortSignal.timeout(TIMEOUT_MS.render),
       }),
     ),
 

@@ -77,6 +77,7 @@ export interface ProductSuggestionRow {
   CATEGORY: string | null
   SUGGESTED_BECAUSE: string | null
   SEARCH_QUERY: string | null
+  ALREADY_OWNED: string | null
   CREATED_AT: string
 }
 
@@ -141,6 +142,7 @@ export interface ShoppingSuggestion {
   store_name: string
   suggested_because: string
   search_query: string
+  already_owned?: string | null
 }
 
 export interface ShoppingSuggestionsResult {

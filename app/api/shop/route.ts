@@ -70,10 +70,28 @@ export async function POST(request: Request): Promise<Response> {
 
     return Response.json({
       advice: typeof result.advice === 'string' ? result.advice : '',
-      suggestions: suggestions.map((s, i) => ({
-        ...s,
-        already_owned: ownedMatches[i] ?? null,
-      })),
+      suggestions: suggestions.map((s, i) => {
+        const price = Number(s.price)
+        const name = typeof s.name === 'string' ? s.name : ''
+        const brand = typeof s.brand === 'string' ? s.brand : ''
+        return {
+          name,
+          brand,
+          price: Number.isFinite(price) ? Math.round(price) : 0,
+          category: typeof s.category === 'string' ? s.category : '',
+          source:
+            typeof s.source === 'string' && s.source.toLowerCase().includes('online')
+              ? 'online'
+              : 'in_store',
+          store_name: typeof s.store_name === 'string' ? s.store_name : '',
+          suggested_because:
+            typeof s.suggested_because === 'string' ? s.suggested_because : '',
+          search_query:
+            (typeof s.search_query === 'string' && s.search_query.trim()) ||
+            [brand, name].filter(Boolean).join(' '),
+          already_owned: ownedMatches[i] ?? null,
+        }
+      }),
     })
   } catch (err) {
     console.error('Shopping assistant failed:', err)

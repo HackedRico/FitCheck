@@ -16,11 +16,13 @@ export default function ShoppingCard({ suggestion }: ShoppingCardProps) {
 
   const shopUrl = queryText
     ? isOnline
-      ? `https://www.google.com/search?tbm=shop&q=${encodeURIComponent(
-          [suggestion.store_name, queryText].filter(Boolean).join(' ')
+      ? `https://www.google.com/search?q=${encodeURIComponent(
+          ['buy', suggestion.store_name, queryText].filter(Boolean).join(' ')
         )}`
-      : `https://www.google.com/maps/search/${encodeURIComponent(
-          suggestion.store_name ? `${suggestion.store_name} near me` : `${queryText} store near me`
+      : `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(
+          suggestion.store_name
+            ? `${suggestion.store_name} near me`
+            : `stores selling ${queryText} near me`
         )}`
     : null
 

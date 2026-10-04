@@ -44,8 +44,12 @@ _Avoid_: mask, segmentation, crop
 The cutout pinned to the owner's body on the live camera feed, tracking their pose in real time on the device.
 _Avoid_: hologram, AR mode, overlay
 
+**Outfit**:
+The garments worn together in the live preview: at most one per body region, so a top with a bottom, or one dress. Any garment can be in it: the candidate, a closet garment, or one brought in by shop link or photo.
+_Avoid_: look, ensemble
+
 **Render**:
-A try-on image of the candidate on the owner, painted by a diffusion model from a person photo.
+A try-on image of the candidate, or of a whole outfit, on the owner, painted by a diffusion model from a person photo. An outfit takes one pass per garment, bottoms first.
 _Avoid_: try-on result, generation, preview
 
 ### Deciding

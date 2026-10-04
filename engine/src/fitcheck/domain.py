@@ -240,6 +240,8 @@ class TryOnResult(_Value):
     image_png: bytes
     # True when a fallback served a pre-computed render; the UI must label it "cached"
     cached: bool = False
+    # True when the backup renderer stood in because the main one was unavailable
+    fallback: bool = False
 
 
 class ChatTurn(_Value):

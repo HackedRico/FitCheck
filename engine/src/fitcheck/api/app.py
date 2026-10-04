@@ -100,6 +100,8 @@ class RenderOut(_Wire):
     image_png_base64: str
     # True when the image is a pre-computed fallback; the UI must label it "cached"
     cached: bool
+    # True when the backup renderer stood in for an unavailable AI renderer
+    fallback: bool
     pipeline: Pipeline
 
 
@@ -216,7 +218,10 @@ def create_app(engine: Engine | None = None, settings: Settings | None = None) -
         """Render the garment on the person."""
         result = get_engine().render(person.file.read(), garment.file.read(), region, seed)
         return RenderOut(
-            image_png_base64=_b64(result.image_png), cached=result.cached, pipeline=result.pipeline
+            image_png_base64=_b64(result.image_png),
+            cached=result.cached,
+            fallback=result.fallback,
+            pipeline=result.pipeline,
         )
 
     @app.post("/chat", response_model=ChatOut)

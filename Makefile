@@ -2,7 +2,7 @@
 .DEFAULT_GOAL := help
 ENGINE := cd engine &&
 
-.PHONY: help sync dev api api-open api-snowflake test test-live check fmt openapi web web-install db-up db-down db-reset ollama-pull worker worker-test
+.PHONY: help sync dev demo demo-install demo-snowflake api api-open api-snowflake test test-live check fmt openapi web web-install db-up db-down db-reset ollama-pull worker worker-test
 
 help: ## List targets
 	@grep -E '^[a-z-]+:.*## ' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*## "}; {printf "  %-14s %s\n", $$1, $$2}'
@@ -14,6 +14,25 @@ dev: ## Run the engine and web app together; Ctrl+C stops both
 	@trap 'kill 0' INT TERM EXIT; \
 	(cd engine && uv run fitcheck serve --reload) & \
 	(cd web && npm run dev) & \
+	wait
+
+demo-install: ## Install everything the combined demo needs
+	$(ENGINE) uv sync --all-extras
+	cd web && npm install
+	npm install
+
+demo: ## Run engine (:8000), in-store PWA (:5173) and morning app (:3000) together
+	@trap 'kill 0' INT TERM EXIT; \
+	(cd engine && uv run fitcheck serve --reload) & \
+	(cd web && npm run dev) & \
+	npm run dev & \
+	wait
+
+demo-snowflake: ## Same as demo, engine on the Snowflake path (env/snowflake.env)
+	@trap 'kill 0' INT TERM EXIT; \
+	(cd engine && uv run --env-file ../env/snowflake.env fitcheck serve --reload) & \
+	(cd web && npm run dev) & \
+	npm run dev & \
 	wait
 
 api: ## Run the API offline: fakes and fixtures, no accounts, no GPU

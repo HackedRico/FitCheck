@@ -3,6 +3,8 @@ import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import { authOptions } from '@/lib/auth'
 
+const STORE_APP_URL = process.env.NEXT_PUBLIC_WEB_URL ?? 'https://localhost:5173'
+
 export default async function AppLayout({ children }: { children: React.ReactNode }) {
   const session = await getServerSession(authOptions)
   if (!session) redirect('/login')
@@ -31,6 +33,14 @@ export default async function AppLayout({ children }: { children: React.ReactNod
             >
               Closet
             </Link>
+            <a
+              href={STORE_APP_URL}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="rounded-full px-4 py-2 text-sm font-medium text-zinc-600 hover:bg-zinc-100 hover:text-zinc-900 transition-colors"
+            >
+              In Store
+            </a>
             <Link
               href="/shop"
               className="rounded-full px-4 py-2 text-sm font-medium text-zinc-600 hover:bg-zinc-100 hover:text-zinc-900 transition-colors"

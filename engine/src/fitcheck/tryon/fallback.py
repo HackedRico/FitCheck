@@ -52,7 +52,7 @@ class FallbackRenderer:
     def render(self, request: TryOnRequest) -> TryOnResult:
         """Return the primary's render, or the backup's while the primary is unavailable."""
         if self._cooling_down():
-            return self._backup.render(request)
+            return self._backup_render(request)
         try:
             return self._primary.render(request)
         except AdapterUnavailable as exc:
@@ -66,7 +66,11 @@ class FallbackRenderer:
                 self._cooldown_s,
                 exc,
             )
-            return self._backup.render(request)
+            return self._backup_render(request)
+
+    def _backup_render(self, request: TryOnRequest) -> TryOnResult:
+        """Render with the backup and mark it, so the app can offer something better."""
+        return self._backup.render(request).model_copy(update={"fallback": True})
 
     def _cooling_down(self) -> bool:
         """Return True while the primary failed less than `cooldown_s` ago."""

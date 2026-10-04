@@ -100,6 +100,7 @@ class Judgement(_Result):
 class RenderResult(_Result):
     image_png: bytes
     cached: bool
+    fallback: bool
     pipeline: Pipeline
 
 
@@ -255,8 +256,12 @@ class Engine:
         with trace.step("render", self._ports.renderer.info, touched_person_image=True) as mark:
             result = self._ports.renderer.render(request)
             mark.cached = result.cached
+        image_png = _match_shape(result.image_png, person_image)
         return RenderResult(
-            image_png=result.image_png, cached=result.cached, pipeline=trace.pipeline
+            image_png=image_png,
+            cached=result.cached,
+            fallback=result.fallback,
+            pipeline=trace.pipeline,
         )
 
     def chat(
@@ -469,6 +474,30 @@ class _Trace:
             return None
         self._steps.append(PipelineStep(step=name, adapter=info, ms=_elapsed_ms(start)))
         return result
+
+
+def _match_shape(render_png: bytes, person_image: bytes) -> bytes:
+    """Trim a renderer's padding and resize so the render matches the person photo exactly."""
+    with (
+        Image.open(io.BytesIO(person_image)) as person,
+        Image.open(io.BytesIO(render_png)) as render,
+    ):
+        target = person.size
+        width, height = render.size
+        want = target[0] / target[1]
+        if abs(width / height - want) < 0.01 and render.size == target:
+            return render_png
+        # Diffusion try-on fits the person into its own frame and pads the rest, centred;
+        # cutting the centre back to the photo's shape removes exactly that padding
+        if width / height > want:
+            inner = round(height * want)
+            box = ((width - inner) // 2, 0, (width - inner) // 2 + inner, height)
+        else:
+            inner = round(width / want)
+            box = (0, (height - inner) // 2, width, (height - inner) // 2 + inner)
+        out = io.BytesIO()
+        render.crop(box).resize(target, Image.Resampling.LANCZOS).save(out, format="PNG")
+    return out.getvalue()
 
 
 def _crop(image: bytes, box: Box) -> bytes:

@@ -59,7 +59,9 @@ def _fallback(
 def test_primary_renders_when_it_works(png_bytes: bytes) -> None:
     renderer, backup = _fallback(_Renderer("primary"))
 
-    assert renderer.render(_request(png_bytes)).image_png == b"primary"
+    result = renderer.render(_request(png_bytes))
+    assert result.image_png == b"primary"
+    assert result.fallback is False
     assert backup.calls == 0
 
 
@@ -67,7 +69,10 @@ def test_backup_renders_when_the_primary_is_unavailable(png_bytes: bytes) -> Non
     primary = _Renderer("primary", AdapterUnavailable("quota spent"))
     renderer, backup = _fallback(primary)
 
-    assert renderer.render(_request(png_bytes)).image_png == b"backup"
+    result = renderer.render(_request(png_bytes))
+    assert result.image_png == b"backup"
+    # The app swaps a marked fallback for its own on-device preview
+    assert result.fallback is True
     assert (primary.calls, backup.calls) == (1, 1)
 
 

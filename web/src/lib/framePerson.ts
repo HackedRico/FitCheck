@@ -26,6 +26,8 @@ export interface FramedPerson {
   found: boolean;
   // The person's height as a share of the original photo's height, 0 when not found
   fill: number;
+  // How many people the photo shows; more than one risks dressing the wrong person
+  people: number;
 }
 
 interface Box {
@@ -48,11 +50,14 @@ export async function framePerson(photo: Blob): Promise<FramedPerson> {
 
   const landmarker = await loadImagePoseLandmarker();
   const boxes: Box[] = [];
+  let people = 0;
   // The detector shrinks its input to a small square, so a small figure in a wide shot
   // vanishes; overlapping square windows across the frame give it room to be seen
   for (const window of searchWindows(width, height)) {
     const view = window.whole ? source : cropCanvas(source, window);
-    for (const pose of landmarker.detect(view).landmarks) {
+    const poses = landmarker.detect(view).landmarks;
+    people = Math.max(people, poses.length);
+    for (const pose of poses) {
       const marks = pose.filter((mark) => (mark.visibility ?? 1) >= MIN_VISIBILITY);
       if (marks.length < 6) continue;
       boxes.push({
@@ -64,7 +69,7 @@ export async function framePerson(photo: Blob): Promise<FramedPerson> {
     }
     if (boxes.length > 0 && window.whole) break;
   }
-  if (boxes.length === 0) return { image: photo, found: false, fill: 0 };
+  if (boxes.length === 0) return { image: photo, found: false, fill: 0, people: 0 };
 
   // The owner is the biggest figure; bystanders in a shared room are smaller or partial
   const person = boxes.reduce((best, box) => (area(box) > area(best) ? box : best));
@@ -76,7 +81,7 @@ export async function framePerson(photo: Blob): Promise<FramedPerson> {
   canvas.height = Math.round(crop.bottom - crop.top);
   canvas.getContext("2d")?.drawImage(source, crop.left, crop.top, canvas.width, canvas.height, 0, 0, canvas.width, canvas.height);
   const image = await new Promise<Blob | null>((resolve) => canvas.toBlob(resolve, "image/jpeg", 0.92));
-  return { image: image ?? photo, found: true, fill };
+  return { image: image ?? photo, found: true, fill, people };
 }
 
 interface SearchWindow {
@@ -117,7 +122,7 @@ function cropCanvas(source: HTMLCanvasElement, window: SearchWindow): HTMLCanvas
 
 /** Whether a framed photo is good enough to promise a convincing render. */
 export function isWellFramed(framed: FramedPerson): boolean {
-  return framed.found && framed.fill >= MIN_FILL;
+  return framed.found && framed.fill >= MIN_FILL && framed.people <= 1;
 }
 
 /** A 3:4 box around `person` with room for head and feet, kept inside the photo. */

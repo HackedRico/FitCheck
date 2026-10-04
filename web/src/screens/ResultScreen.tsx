@@ -242,6 +242,18 @@ function OnYou(): ReactNode {
       <div className="fc-onyou">
         <BeforeAfter before={personUrl} after={renderUrl} beforeLabel="You" afterLabel="With it" />
         {render.value.cached && <p className="fc-note">Cached render, not live.</p>}
+        {render.value.preview && render.value.origin !== "live" && (
+          <div className="fc-onyou-more">
+            <p className="fc-muted">Quick preview made on this phone. The AI renderer is busy right now.</p>
+            <button
+              type="button"
+              className="fc-btn is-ghost"
+              onClick={() => flow.requestRender(render.value.person, "photo")}
+            >
+              Try the AI render again
+            </button>
+          </div>
+        )}
         {render.value.origin === "live" && (
           <div className="fc-onyou-more">
             <p className="fc-muted">Snapped from the live preview, on this phone.</p>

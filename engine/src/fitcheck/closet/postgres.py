@@ -150,7 +150,7 @@ class PostgresClosetStore:
         """Delete everything stored for `owner` and return how many garments went."""
         with self._cursor() as cur:
             cur.execute(_DELETE_OWNER, (owner,))
-            return cur.rowcount
+            return int(cur.rowcount)
 
     @contextmanager
     def _cursor(self) -> Iterator[Cursor[DictRow]]:

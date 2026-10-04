@@ -15,6 +15,16 @@ const REGION_BY_CATEGORY: Record<string, 'upper' | 'lower' | 'full'> = {
 
 const RENDER_ORDER = ['DRESS', 'BOTTOM', 'TOP', 'OUTERWEAR']
 
+async function cutoutGarment(garment: Blob): Promise<Blob> {
+  const form = new FormData()
+  form.append('image', garment, 'garment.jpg')
+  const res = await fetch(`${ENGINE_URL}/scan`, { method: 'POST', body: form })
+  if (!res.ok) return garment
+  const data = (await res.json()) as { cutout_png_base64?: string }
+  if (!data.cutout_png_base64) return garment
+  return new Blob([Buffer.from(data.cutout_png_base64, 'base64')], { type: 'image/png' })
+}
+
 async function renderGarment(
   person: Blob,
   garment: Blob,
@@ -147,7 +157,9 @@ export async function POST(request: Request): Promise<Response> {
       for (const item of renderable) {
         const imgRes = await fetch(item.IMAGE_URL)
         if (!imgRes.ok) continue
-        const garment = new Blob([await imgRes.arrayBuffer()], { type: 'image/png' })
+        const garment = await cutoutGarment(
+          new Blob([await imgRes.arrayBuffer()], { type: 'image/jpeg' })
+        )
         current = await renderGarment(
           current,
           garment,

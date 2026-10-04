@@ -10,6 +10,12 @@ import type { WeatherKind } from "../lib/weather";
 // week strip's weather kinds.
 
 const PATHS = {
+  link: (
+    <>
+      <path d="M10 14a4 4 0 0 0 5.7 0l3-3a4 4 0 0 0-5.7-5.7l-1 1" />
+      <path d="M14 10a4 4 0 0 0-5.7 0l-3 3a4 4 0 0 0 5.7 5.7l1-1" />
+    </>
+  ),
   camera: (
     <>
       <path d="M4 8h3l2-3h6l2 3h3v11H4z" />

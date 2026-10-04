@@ -64,6 +64,45 @@
         }
       }
     },
+    "/link": {
+      "post": {
+        "summary": "Link",
+        "description": "Fetch the garment image from a shop or image link, to scan a garment not owned yet.",
+        "operationId": "link_link_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LinkIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LinkOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/judge": {
       "post": {
         "summary": "Judge",
@@ -1134,6 +1173,59 @@
           "pipeline"
         ],
         "title": "JudgeOut"
+      },
+      "LinkIn": {
+        "properties": {
+          "url": {
+            "type": "string",
+            "maxLength": 2048,
+            "minLength": 1,
+            "title": "Url"
+          }
+        },
+        "type": "object",
+        "required": [
+          "url"
+        ],
+        "title": "LinkIn"
+      },
+      "LinkOut": {
+        "properties": {
+          "image_png_base64": {
+            "type": "string",
+            "title": "Image Png Base64"
+          },
+          "source_url": {
+            "type": "string",
+            "title": "Source Url"
+          },
+          "title": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Title"
+          },
+          "pipeline": {
+            "items": {
+              "$ref": "#/components/schemas/PipelineStep"
+            },
+            "type": "array",
+            "title": "Pipeline"
+          }
+        },
+        "type": "object",
+        "required": [
+          "image_png_base64",
+          "source_url",
+          "title",
+          "pipeline"
+        ],
+        "title": "LinkOut"
       },
       "Location": {
         "properties": {

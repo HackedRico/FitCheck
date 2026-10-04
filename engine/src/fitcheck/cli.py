@@ -77,6 +77,7 @@ def _parser() -> argparse.ArgumentParser:
     source = judge.add_mutually_exclusive_group(required=True)
     source.add_argument("--image", type=Path, help="Garment photo to scan first")
     source.add_argument("--tags", help="GarmentTags as JSON, to skip the scan")
+    source.add_argument("--url", help="Shop or image link for a garment not owned yet")
     _owner_and_location(judge)
 
     week = command("week", _week, "Forecast and calendar for the coming days")
@@ -160,9 +161,14 @@ def _scan(args: argparse.Namespace) -> None:
 def _judge(args: argparse.Namespace) -> None:
     engine = _engine()
     pipeline: list[Any] = []
-    if args.image:
-        scanned = engine.scan(_read(args.image))
-        tags, pipeline = scanned.tags, list(scanned.pipeline)
+    if args.image or args.url:
+        if args.url:
+            linked = engine.import_link(args.url)
+            image, pipeline = linked.image_png, list(linked.pipeline)
+        else:
+            image = _read(args.image)
+        scanned = engine.scan(image)
+        tags, pipeline = scanned.tags, [*pipeline, *scanned.pipeline]
     else:
         tags = _parse_tags(args.tags)
     result = engine.judge(_owner_of(args), tags, _location_of(args))

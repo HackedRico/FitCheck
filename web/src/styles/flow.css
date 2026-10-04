@@ -1184,3 +1184,145 @@ body {
 .fc .week-day {
   border-radius: 12px;
 }
+
+/* ---------- add a garment: shop link or photo ---------- */
+
+.fc-addsheet {
+  position: fixed;
+  inset: 0;
+  z-index: 40;
+  pointer-events: none;
+}
+
+.fc-addsheet[data-open="true"] {
+  pointer-events: auto;
+}
+
+.fc-addsheet-scrim {
+  position: absolute;
+  inset: 0;
+  border: 0;
+  background: rgba(0, 0, 0, 0.45);
+  opacity: 0;
+  transition: opacity var(--medium);
+}
+
+.fc-addsheet[data-open="true"] .fc-addsheet-scrim {
+  opacity: 1;
+}
+
+/* A light card even over the dark camera, so it reads like the rest of the app */
+.fc-addsheet-card {
+  --bg: #f7f6f2;
+  --bg-1: #ffffff;
+  --bg-2: #efede7;
+  --line: rgba(20, 20, 18, 0.09);
+  --line-strong: rgba(20, 20, 18, 0.18);
+  --fg: #141412;
+  --fg-2: #2b2b28;
+  --fog: #6e6c66;
+
+  position: absolute;
+  inset: auto 0 0;
+  display: grid;
+  gap: 14px;
+  max-width: 560px;
+  margin: 0 auto;
+  padding: 18px var(--gutter) calc(22px + env(safe-area-inset-bottom));
+  border-radius: 24px 24px 0 0;
+  background: var(--bg);
+  color: var(--fg);
+  transform: translateY(100%);
+  transition: transform var(--medium) var(--ease-out);
+}
+
+.fc-addsheet[data-open="true"] .fc-addsheet-card {
+  transform: none;
+}
+
+.fc-addsheet-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.fc-addsheet-head h2 {
+  margin: 0;
+  font: 600 20px/1.2 var(--sans);
+  letter-spacing: -0.01em;
+}
+
+.fc-addsheet .fc-round {
+  border-color: var(--line);
+  background: var(--bg-1);
+  color: var(--fg);
+  backdrop-filter: none;
+}
+
+.fc-linkform {
+  display: grid;
+  gap: 10px;
+}
+
+.fc-linkform label {
+  color: var(--fog);
+  font-size: 14px;
+}
+
+.fc-linkfield {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 0 8px 0 14px;
+  border: 1px solid var(--line-strong);
+  border-radius: 14px;
+  background: var(--bg-1);
+}
+
+.fc-linkfield:focus-within {
+  border-color: var(--fg);
+}
+
+.fc-linkfield svg {
+  flex: none;
+  width: 18px;
+  height: 18px;
+  color: var(--fog);
+}
+
+.fc-linkfield input {
+  flex: 1;
+  min-width: 0;
+  height: 52px;
+  border: 0;
+  outline: 0;
+  background: transparent;
+  color: var(--fg);
+  font: 400 16px/1 var(--sans);
+}
+
+.fc-linkpaste {
+  padding: 8px 12px;
+  border: 0;
+  border-radius: 10px;
+  background: var(--bg-2);
+  color: var(--fg);
+  font: 600 14px/1 var(--sans);
+  cursor: pointer;
+}
+
+.fc-or {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  color: var(--fog);
+  font-size: 13px;
+}
+
+.fc-or::before,
+.fc-or::after {
+  content: "";
+  flex: 1;
+  height: 1px;
+  background: var(--line);
+}

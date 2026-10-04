@@ -44,6 +44,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/link": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Link
+         * @description Fetch the garment image from a shop or image link, to scan a garment not owned yet.
+         */
+        post: operations["link_link_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/judge": {
         parameters: {
             query?: never;
@@ -423,6 +443,22 @@ export interface components {
             /** Pipeline */
             pipeline: components["schemas"]["PipelineStep"][];
         };
+        /** LinkIn */
+        LinkIn: {
+            /** Url */
+            url: string;
+        };
+        /** LinkOut */
+        LinkOut: {
+            /** Image Png Base64 */
+            image_png_base64: string;
+            /** Source Url */
+            source_url: string;
+            /** Title */
+            title: string | null;
+            /** Pipeline */
+            pipeline: components["schemas"]["PipelineStep"][];
+        };
         /** Location */
         Location: {
             /** Latitude */
@@ -649,6 +685,39 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["ScanOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    link_link_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["LinkIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["LinkOut"];
                 };
             };
             /** @description Validation Error */

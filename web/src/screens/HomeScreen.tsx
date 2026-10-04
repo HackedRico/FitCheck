@@ -1,7 +1,8 @@
-import { useRef, useState, type ChangeEvent, type ReactNode } from "react";
+import { useState, type ReactNode } from "react";
 
+import { AddGarmentSheet } from "../components/AddGarmentSheet";
 import { Icon } from "../components/Icons";
-import { captureFrame, shrinkImage, useCamera } from "../lib/camera";
+import { captureFrame, useCamera } from "../lib/camera";
 import { decisionWording } from "../lib/garments";
 import { useObjectUrl } from "../lib/objectUrl";
 import { useApp } from "../state/app";
@@ -9,15 +10,15 @@ import { useApp } from "../state/app";
 // =============================================================================
 // Module Overview
 // =============================================================================
-// The camera, full screen, and the only thing on it is the shutter. A snap or a
-// picked photo starts the flow and moves straight to the result. The corners
-// hold the way to the closet, the owner's photo, and the last verdict.
+// The camera, full screen, and the only thing on it is the shutter. A snap, a
+// picked photo or a pasted shop link starts the flow and moves straight to the
+// result. The corners hold the closet, the owner's photo and the last verdict.
 
-/** Point at a garment and snap. */
+/** Point at a garment and snap, or bring one in by link or photo. */
 export function HomeScreen(): ReactNode {
   const { flow, person, navigate } = useApp();
   const camera = useCamera("environment", true);
-  const fileRef = useRef<HTMLInputElement | null>(null);
+  const [adding, setAdding] = useState(false);
   const [flash, setFlash] = useState(0);
   const [error, setError] = useState<string | null>(null);
   const photoUrl = useObjectUrl(person.photo);
@@ -40,19 +41,13 @@ export function HomeScreen(): ReactNode {
     }
   };
 
-  const pick = async (event: ChangeEvent<HTMLInputElement>): Promise<void> => {
-    const file = event.target.files?.[0];
-    event.target.value = "";
-    if (file) begin(await shrinkImage(file));
-  };
-
   const live = camera.status === "live";
   const lastDecision = flow.judge.status === "done" ? flow.judge.value.verdict.decision : null;
   const hint = live
     ? "Fit the garment inside the frame"
     : camera.status === "starting"
       ? "Starting the camera"
-      : "No camera here. Pick a photo of the garment instead.";
+      : "No camera here. Tap + to paste a shop link or pick a photo.";
 
   return (
     <section className="fc-cam is-dark">
@@ -107,11 +102,19 @@ export function HomeScreen(): ReactNode {
         <button type="button" className="fc-shutter" onClick={() => void snap()} disabled={!live} aria-label="Snap the garment">
           <span />
         </button>
-        <button type="button" className="fc-round" onClick={() => fileRef.current?.click()} aria-label="Pick a photo">
-          <Icon name="upload" />
+        <button type="button" className="fc-round" onClick={() => setAdding(true)} aria-label="Paste a shop link or pick a photo">
+          <Icon name="plus" />
         </button>
       </footer>
-      <input ref={fileRef} type="file" accept="image/*" hidden onChange={(event) => void pick(event)} />
+
+      <AddGarmentSheet
+        open={adding}
+        onClose={() => setAdding(false)}
+        onGarment={(image) => {
+          setAdding(false);
+          begin(image);
+        }}
+      />
     </section>
   );
 }

@@ -7,7 +7,16 @@ interface ShoppingCardProps {
 }
 
 export default function ShoppingCard({ suggestion }: ShoppingCardProps) {
-  const searchUrl = `https://www.google.com/search?q=${encodeURIComponent(suggestion.search_query)}`
+  const queryText =
+    suggestion.search_query?.trim() ||
+    [suggestion.brand, suggestion.name].filter(Boolean).join(' ').trim() ||
+    suggestion.store_name
+
+  const searchUrl = queryText
+    ? `https://www.google.com/search?q=${encodeURIComponent(
+        suggestion.source === 'online' ? `${queryText} buy online` : `${queryText} near me`
+      )}`
+    : null
 
   const isOnline = suggestion.source === 'online'
 
@@ -35,9 +44,9 @@ export default function ShoppingCard({ suggestion }: ShoppingCardProps) {
       </div>
 
       <div className="flex items-center gap-3">
-        {suggestion.price != null && (
+        {Number.isFinite(Number(suggestion.price)) && Number(suggestion.price) > 0 && (
           <span className="text-lg font-bold text-zinc-900">
-            ${suggestion.price.toFixed(0)}
+            ${Number(suggestion.price).toFixed(0)}
           </span>
         )}
         {suggestion.store_name && (
@@ -56,17 +65,19 @@ export default function ShoppingCard({ suggestion }: ShoppingCardProps) {
         </p>
       )}
 
-      <a
-        href={searchUrl}
-        target="_blank"
-        rel="noopener noreferrer"
-        className="mt-auto inline-flex w-full items-center justify-center gap-2 rounded-full bg-zinc-900 px-4 py-2.5 text-sm font-medium text-white hover:bg-zinc-700 transition-colors"
-      >
-        <svg className="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-          <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-        </svg>
-        Find It
-      </a>
+      {searchUrl && (
+        <a
+          href={searchUrl}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="mt-auto inline-flex w-full items-center justify-center gap-2 rounded-full bg-zinc-900 px-4 py-2.5 text-sm font-medium text-white hover:bg-zinc-700 transition-colors"
+        >
+          <svg className="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+            <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+          </svg>
+          {isOnline ? 'Shop Online' : 'Find Nearby'}
+        </a>
+      )}
     </div>
   )
 }

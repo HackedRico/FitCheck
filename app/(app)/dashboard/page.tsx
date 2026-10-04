@@ -2,15 +2,16 @@ import { getServerSession } from 'next-auth'
 import { cookies } from 'next/headers'
 import { redirect } from 'next/navigation'
 import { authOptions } from '@/lib/auth'
-import type { OutfitRow, ClosetItemRow, ProductSuggestionRow, WeatherContext, ShoppingSuggestion } from '@/types'
+import type { OutfitRow, ClosetItemRow, WeatherContext, ShoppingSuggestion } from '@/types'
 import OutfitCard from '@/components/OutfitCard'
 import ShoppingCard from '@/components/ShoppingCard'
 import RegenerateButton from '@/components/RegenerateButton'
+import TryOnCard from '@/components/TryOnCard'
 
 interface OutfitPayload {
   outfit: OutfitRow
   items: ClosetItemRow[]
-  suggestions: (ProductSuggestionRow | ShoppingSuggestion)[]
+  suggestions: ShoppingSuggestion[]
   weather: WeatherContext
 }
 
@@ -107,6 +108,8 @@ export default async function DashboardPage() {
         outfitId={outfit.ID}
       />
 
+      <TryOnCard outfitId={outfit.ID} />
+
       {suggestions && suggestions.length > 0 && (
         <details className="group">
           <summary className="cursor-pointer list-none flex items-center justify-between py-2 text-sm font-medium text-zinc-500 hover:text-zinc-700 transition-colors select-none">
@@ -117,7 +120,7 @@ export default async function DashboardPage() {
           </summary>
           <div className="pt-3 grid grid-cols-1 sm:grid-cols-2 gap-3">
             {suggestions.map((s, i) => (
-              <ShoppingCard key={'ID' in s ? s.ID : i} suggestion={s as ShoppingSuggestion} />
+              <ShoppingCard key={`${s.name}-${i}`} suggestion={s} />
             ))}
           </div>
         </details>

@@ -72,10 +72,11 @@ export interface ProductSuggestionRow {
   PRICE: number | null
   IMAGE_URL: string | null
   PRODUCT_URL: string | null
-  SOURCE: 'online' | 'in_store' | null
+  SOURCE: string | null
   STORE_NAME: string | null
   CATEGORY: string | null
   SUGGESTED_BECAUSE: string | null
+  SEARCH_QUERY: string | null
   CREATED_AT: string
 }
 

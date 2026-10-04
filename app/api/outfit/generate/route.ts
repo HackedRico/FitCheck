@@ -8,8 +8,23 @@ import type {
   TasteProfileRow,
   OutfitRow,
   ProductSuggestionRow,
+  ShoppingSuggestion,
   WeatherContext,
 } from '@/types'
+
+function toSuggestionPayload(row: ProductSuggestionRow): ShoppingSuggestion {
+  return {
+    name: row.NAME ?? '',
+    brand: row.BRAND ?? '',
+    price: row.PRICE ?? 0,
+    category: row.CATEGORY ?? '',
+    source: (row.SOURCE ?? '').toLowerCase().includes('online') ? 'online' : 'in_store',
+    store_name: row.STORE_NAME ?? '',
+    suggested_because: row.SUGGESTED_BECAUSE ?? '',
+    search_query:
+      row.SEARCH_QUERY?.trim() || [row.BRAND, row.NAME].filter(Boolean).join(' '),
+  }
+}
 
 async function generateAndPersist(
   userId: string,
@@ -82,30 +97,39 @@ async function generateAndPersist(
   })
 
   let persistedSuggestions: ProductSuggestionRow[] = []
-  if (outfitId && suggestions.length > 0) {
-    for (const s of suggestions) {
-      await query(
-        `INSERT INTO PRODUCT_SUGGESTIONS
-           (ID, OUTFIT_ID, USER_ID, NAME, BRAND, PRICE, SOURCE, STORE_NAME, CATEGORY, SUGGESTED_BECAUSE, CREATED_AT)
-         SELECT ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP()`,
-        [
-          crypto.randomUUID(),
-          outfitId,
-          userId,
-          s.name,
-          s.brand,
-          s.price,
-          s.source,
-          s.store_name,
-          s.category,
-          s.suggested_because,
-        ]
+  if (Array.isArray(suggestions) && suggestions.length > 0) {
+    try {
+      for (const s of suggestions) {
+        const price = Number(s.price)
+        await query(
+          `INSERT INTO PRODUCT_SUGGESTIONS
+             (ID, OUTFIT_ID, USER_ID, NAME, BRAND, PRICE, SOURCE, STORE_NAME, CATEGORY, SUGGESTED_BECAUSE, SEARCH_QUERY, CREATED_AT)
+           SELECT ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP()`,
+          [
+            crypto.randomUUID(),
+            outfitId,
+            userId,
+            typeof s.name === 'string' ? s.name : null,
+            typeof s.brand === 'string' ? s.brand : null,
+            Number.isFinite(price) ? Math.round(price) : null,
+            typeof s.source === 'string' && s.source.toLowerCase().includes('online')
+              ? 'online'
+              : 'in_store',
+            typeof s.store_name === 'string' ? s.store_name : null,
+            typeof s.category === 'string' ? s.category : null,
+            typeof s.suggested_because === 'string' ? s.suggested_because : null,
+            typeof s.search_query === 'string' ? s.search_query : null,
+          ]
+        )
+      }
+      persistedSuggestions = await query<ProductSuggestionRow>(
+        `SELECT * FROM PRODUCT_SUGGESTIONS WHERE OUTFIT_ID = ? ORDER BY CREATED_AT ASC`,
+        [outfitId]
       )
+    } catch (err) {
+      console.error('Suggestion persistence failed:', err)
+      persistedSuggestions = []
     }
-    persistedSuggestions = await query<ProductSuggestionRow>(
-      `SELECT * FROM PRODUCT_SUGGESTIONS WHERE OUTFIT_ID = ? ORDER BY CREATED_AT ASC`,
-      [outfitId]
-    )
   }
 
   const outfitRows = await query<OutfitRow>(
@@ -116,7 +140,7 @@ async function generateAndPersist(
   return Response.json({
     outfit: outfitRows[0] ?? null,
     items: selectedItems,
-    suggestions: persistedSuggestions.length > 0 ? persistedSuggestions : suggestions,
+    suggestions: persistedSuggestions.map(toSuggestionPayload),
     weather,
   })
 }
@@ -140,8 +164,8 @@ export async function GET(): Promise<Response> {
     const [items, suggestions] = await Promise.all([
       itemIds.length > 0
         ? query<ClosetItemRow>(
-            `SELECT * FROM CLOSET_ITEMS WHERE ID IN (${itemIds.map(() => '?').join(',')})`,
-            itemIds
+            `SELECT * FROM CLOSET_ITEMS WHERE ID IN (${itemIds.map(() => '?').join(',')}) AND USER_ID = ?`,
+            [...itemIds, userId]
           )
         : Promise.resolve([] as ClosetItemRow[]),
       query<ProductSuggestionRow>(
@@ -150,7 +174,12 @@ export async function GET(): Promise<Response> {
       ),
     ])
 
-    return Response.json({ outfit, items, suggestions, weather: outfit.WEATHER_CONTEXT })
+    return Response.json({
+      outfit,
+      items,
+      suggestions: suggestions.map(toSuggestionPayload),
+      weather: outfit.WEATHER_CONTEXT,
+    })
   }
 
   return generateAndPersist(userId)

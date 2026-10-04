@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import io
 import logging
 import re
 import shutil
@@ -13,11 +14,13 @@ from pathlib import Path
 from time import perf_counter
 from typing import TypeVar
 
+from PIL import Image
 from pydantic import BaseModel, ConfigDict
 
 from fitcheck import verdict as verdict_rules
 from fitcheck.domain import (
     AdapterInfo,
+    Box,
     ChatTurn,
     Garment,
     GarmentTags,
@@ -114,6 +117,11 @@ class LinkResult(_Result):
 
 class AddResult(_Result):
     garment: Garment
+    pipeline: Pipeline
+
+
+class ClosetScanResult(_Result):
+    garments: tuple[Garment, ...]
     pipeline: Pipeline
 
 
@@ -320,6 +328,22 @@ class Engine:
             self._ports.store.save(garment)
         return AddResult(garment=garment, pipeline=trace.pipeline)
 
+    def scan_closet(self, owner: str, image: bytes) -> ClosetScanResult:
+        """Find every garment in a rack or closet photo and add each to `owner`'s closet."""
+        _require_owner(owner)
+        _require_image(image, "image")
+        trace = _Trace()
+        with trace.step("find_garments", self._ports.tagger.info):
+            found = self._ports.tagger.find_all(image)
+        added: list[Garment] = []
+        steps = list(trace.pipeline)
+        for item in found:
+            crop = _crop(image, item.box)
+            result = self.add_to_closet(owner, crop, tags=item.tags)
+            added.append(result.garment)
+            steps.extend(result.pipeline)
+        return ClosetScanResult(garments=tuple(added), pipeline=tuple(steps))
+
     def garment_image(self, owner: str, garment_id: str) -> bytes:
         """Return the stored PNG for one garment, or raise `NotFound`."""
         _require_owner(owner)
@@ -438,6 +462,24 @@ class _Trace:
             return None
         self._steps.append(PipelineStep(step=name, adapter=info, ms=_elapsed_ms(start)))
         return result
+
+
+def _crop(image: bytes, box: Box) -> bytes:
+    """Cut `box` out of `image` with a small margin, as PNG, so each garment keeps its edges."""
+    with Image.open(io.BytesIO(image)) as source:
+        width, height = source.size
+        # A few percent of slack, because model boxes tend to clip sleeves and hems
+        pad_x = (box.right - box.left) * width * 0.04
+        pad_y = (box.bottom - box.top) * height * 0.04
+        area = (
+            max(0, round(box.left * width - pad_x)),
+            max(0, round(box.top * height - pad_y)),
+            min(width, round(box.right * width + pad_x)),
+            min(height, round(box.bottom * height + pad_y)),
+        )
+        out = io.BytesIO()
+        source.convert("RGBA").crop(area).save(out, format="PNG")
+    return out.getvalue()
 
 
 def _elapsed_ms(start: float) -> int:

@@ -172,6 +172,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/closet/{owner}/scan": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Scan Closet
+         * @description Find every garment in a photo of a rack or closet and add them all.
+         */
+        post: operations["scan_closet_closet__owner__scan_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/closet/{owner}/{garment_id}/image": {
         parameters: {
             query?: never;
@@ -243,6 +263,11 @@ export interface components {
             /** Seed */
             seed?: number | null;
         };
+        /** Body_scan_closet_closet__owner__scan_post */
+        Body_scan_closet_closet__owner__scan_post: {
+            /** Image */
+            image: string;
+        };
         /** Body_scan_scan_post */
         Body_scan_scan_post: {
             /** Image */
@@ -299,6 +324,13 @@ export interface components {
             role: "user" | "stylist";
             /** Text */
             text: string;
+        };
+        /** ClosetScanOut */
+        ClosetScanOut: {
+            /** Garments */
+            garments: components["schemas"]["Garment-Output"][];
+            /** Pipeline */
+            pipeline: components["schemas"]["PipelineStep"][];
         };
         /**
          * ColorFamily
@@ -948,6 +980,41 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["ForgetOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    scan_closet_closet__owner__scan_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                owner: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "multipart/form-data": components["schemas"]["Body_scan_closet_closet__owner__scan_post"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ClosetScanOut"];
                 };
             };
             /** @description Validation Error */

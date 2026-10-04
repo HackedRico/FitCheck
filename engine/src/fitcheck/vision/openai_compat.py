@@ -1,13 +1,21 @@
 from __future__ import annotations
 
 import base64
+from typing import Any
 
-from fitcheck.domain import GarmentTags
+from fitcheck.domain import FoundGarment, GarmentTags
 from fitcheck.errors import TaggingFailed
 from fitcheck.openai_compat import ChatClient, Message, adapter_info
 from fitcheck.settings import Settings
 from fitcheck.vision import images
-from fitcheck.vision.prompts import TAGGING_PROMPT, parse_tags, tags_json_schema
+from fitcheck.vision.prompts import (
+    FIND_ALL_PROMPT,
+    TAGGING_PROMPT,
+    found_json_schema,
+    parse_found,
+    parse_tags,
+    tags_json_schema,
+)
 
 # Qwen-VL spends one visual token per 28 to 32 px square; 768 px keeps weave and print
 # readable at a fraction of the tokens of a 4000 px phone photo
@@ -17,6 +25,10 @@ BACKDROP = (240, 240, 240)
 # Tags are facts, not prose: the same garment should get the same tags on stage as in rehearsal
 TEMPERATURE = 0.0
 MAX_TOKENS = 512
+# Up to 20 garments with tags each need far more room than one garment
+FIND_ALL_MAX_TOKENS = 4096
+# A whole rack needs more pixels than one garment so small items stay legible
+FIND_ALL_MAX_SIDE_PX = 1280
 
 # =============================================================================
 # Module Overview
@@ -24,7 +36,9 @@ MAX_TOKENS = 512
 # `OpenAICompatTagger` reads garment tags with an open-weight vision model on any
 # OpenAI-compatible server. It sends the shrunk cutout as a data URL with
 # `TAGGING_PROMPT`, parses with `parse_tags`, and on bad output retries once with the
-# validation error before raising `TaggingFailed`. Only garment cutouts are sent.
+# validation error before raising `TaggingFailed`. `find_all` asks the same model
+# for every garment in a photo of a rack or closet, with boxes. Only garment photos
+# are sent, never person photos.
 
 
 class OpenAICompatTagger:
@@ -62,13 +76,47 @@ class OpenAICompatTagger:
             ]
             return parse_tags(self._ask(messages))
 
-    def _ask(self, messages: list[Message]) -> str:
+    def find_all(self, image_png: bytes) -> list[FoundGarment]:
+        """Find every garment in a rack or closet photo; retry once if the answer is unusable."""
+        image = images.flatten(images.open_image(image_png), BACKDROP)
+        jpeg = images.encode_jpeg(images.fit_within(image, FIND_ALL_MAX_SIDE_PX))
+        data_url = f"data:image/jpeg;base64,{base64.b64encode(jpeg).decode('ascii')}"
+        messages: list[Message] = [
+            {
+                "role": "user",
+                "content": [
+                    {"type": "text", "text": FIND_ALL_PROMPT + TAGGING_PROMPT},
+                    {"type": "image_url", "image_url": {"url": data_url}},
+                ],
+            }
+        ]
+        schema = found_json_schema()
+        text = self._ask(messages, schema, "closet_scan", FIND_ALL_MAX_TOKENS)
+        try:
+            return parse_found(text)
+        except TaggingFailed as first:
+            messages += [
+                {"role": "assistant", "content": text},
+                {
+                    "role": "user",
+                    "content": f"That answer was invalid: {first}. Reply with only the JSON.",
+                },
+            ]
+            return parse_found(self._ask(messages, schema, "closet_scan", FIND_ALL_MAX_TOKENS))
+
+    def _ask(
+        self,
+        messages: list[Message],
+        schema: dict[str, Any] | None = None,
+        name: str = "garment_tags",
+        max_tokens: int = MAX_TOKENS,
+    ) -> str:
         return self._client.complete(
             messages,
-            schema=self._schema,
-            schema_name="garment_tags",
+            schema=schema or self._schema,
+            schema_name=name,
             temperature=TEMPERATURE,
-            max_tokens=MAX_TOKENS,
+            max_tokens=max_tokens,
         )
 
 

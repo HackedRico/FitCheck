@@ -122,6 +122,11 @@ class AddOut(_Wire):
     pipeline: Pipeline
 
 
+class ClosetScanOut(_Wire):
+    garments: list[Garment]
+    pipeline: Pipeline
+
+
 class ForgetOut(_Wire):
     deleted: int
 
@@ -243,6 +248,12 @@ def create_app(engine: Engine | None = None, settings: Settings | None = None) -
             owner, image.file.read(), tags=tags, price=price, source=source
         )
         return AddOut(garment=result.garment, pipeline=result.pipeline)
+
+    @app.post("/closet/{owner}/scan", response_model=ClosetScanOut)
+    def scan_closet(owner: str, image: Annotated[UploadFile, File()]) -> ClosetScanOut:
+        """Find every garment in a photo of a rack or closet and add them all."""
+        result = get_engine().scan_closet(owner, image.file.read())
+        return ClosetScanOut(garments=list(result.garments), pipeline=result.pipeline)
 
     @app.get("/closet/{owner}/{garment_id}/image", response_class=Response)
     def garment_image(owner: str, garment_id: str) -> Response:

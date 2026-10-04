@@ -422,6 +422,56 @@
         }
       }
     },
+    "/closet/{owner}/scan": {
+      "post": {
+        "summary": "Scan Closet",
+        "description": "Find every garment in a photo of a rack or closet and add them all.",
+        "operationId": "scan_closet_closet__owner__scan_post",
+        "parameters": [
+          {
+            "name": "owner",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Owner"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "$ref": "#/components/schemas/Body_scan_closet_closet__owner__scan_post"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ClosetScanOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/closet/{owner}/{garment_id}/image": {
       "get": {
         "summary": "Garment Image",
@@ -609,6 +659,20 @@
         ],
         "title": "Body_render_render_post"
       },
+      "Body_scan_closet_closet__owner__scan_post": {
+        "properties": {
+          "image": {
+            "type": "string",
+            "contentMediaType": "application/octet-stream",
+            "title": "Image"
+          }
+        },
+        "type": "object",
+        "required": [
+          "image"
+        ],
+        "title": "Body_scan_closet_closet__owner__scan_post"
+      },
       "Body_scan_scan_post": {
         "properties": {
           "image": {
@@ -793,6 +857,30 @@
           "text"
         ],
         "title": "ChatTurn"
+      },
+      "ClosetScanOut": {
+        "properties": {
+          "garments": {
+            "items": {
+              "$ref": "#/components/schemas/Garment-Output"
+            },
+            "type": "array",
+            "title": "Garments"
+          },
+          "pipeline": {
+            "items": {
+              "$ref": "#/components/schemas/PipelineStep"
+            },
+            "type": "array",
+            "title": "Pipeline"
+          }
+        },
+        "type": "object",
+        "required": [
+          "garments",
+          "pipeline"
+        ],
+        "title": "ClosetScanOut"
       },
       "ColorFamily": {
         "type": "string",

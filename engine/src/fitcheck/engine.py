@@ -243,6 +243,11 @@ class Engine:
         with trace.step("closet_search", self._ports.store.info):
             matches = self._ports.store.search(owner, message)
         week = self._gather_week(owner, location, trace)
+        if candidate is not None and verdict is None:
+            # Without the rules' verdict a model invents its own and contradicts BUY or SKIP
+            with trace.step("verdict", RULES_INFO):
+                closet = self._ports.store.garments(owner)
+                verdict = verdict_rules.decide(candidate, closet, week, self._today())
         brief = StylistBrief(
             candidate=candidate, verdict=verdict, closet_matches=tuple(matches), week=week
         )

@@ -3,7 +3,7 @@ import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import { authOptions } from '@/lib/auth'
 import { query } from '@/lib/snowflake'
-import type { ClosetItemRow } from '@/types'
+import type { ClosetItemRow, Season } from '@/types'
 import ClosetGrid from '@/components/ClosetGrid'
 
 async function getClosetItems(userId: string): Promise<ClosetItemRow[]> {
@@ -25,11 +25,11 @@ async function getClosetItems(userId: string): Promise<ClosetItemRow[]> {
       : typeof row.COLORS === 'string'
         ? (JSON.parse(row.COLORS) as string[])
         : null,
-    SEASONS: Array.isArray(row.SEASONS)
+    SEASONS: (Array.isArray(row.SEASONS)
       ? row.SEASONS
       : typeof row.SEASONS === 'string'
-        ? (JSON.parse(row.SEASONS) as string[])
-        : null,
+        ? JSON.parse(row.SEASONS)
+        : null) as Season[] | null,
   }))
 }
 

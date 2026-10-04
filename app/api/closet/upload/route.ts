@@ -3,7 +3,7 @@ import { authOptions } from '@/lib/auth'
 import { uploadImage } from '@/lib/cloudinary'
 import { analyzeClothingImage, embedText } from '@/lib/cortex'
 import { query } from '@/lib/snowflake'
-import type { ClosetItemRow } from '@/types'
+import type { ClosetItemRow, Season } from '@/types'
 
 const MAX_SIZE = 10 * 1024 * 1024
 
@@ -19,7 +19,7 @@ function coerceRow(row: ClosetItemRow): ClosetItemRow {
   return {
     ...row,
     COLORS: parseArrayField(row.COLORS),
-    SEASONS: parseArrayField(row.SEASONS),
+    SEASONS: parseArrayField(row.SEASONS) as Season[] | null,
   }
 }
 

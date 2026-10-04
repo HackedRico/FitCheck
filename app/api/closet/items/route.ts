@@ -1,7 +1,7 @@
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { query } from '@/lib/snowflake'
-import type { ClosetItemRow } from '@/types'
+import type { ClosetItemRow, Season } from '@/types'
 
 function parseArrayField(value: unknown): string[] | null {
   if (Array.isArray(value)) return value as string[]
@@ -15,7 +15,7 @@ function coerceRow(row: ClosetItemRow): ClosetItemRow {
   return {
     ...row,
     COLORS: parseArrayField(row.COLORS),
-    SEASONS: parseArrayField(row.SEASONS),
+    SEASONS: parseArrayField(row.SEASONS) as Season[] | null,
   }
 }
 

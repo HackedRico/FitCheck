@@ -13,7 +13,6 @@ export default function ShoppingCard({ suggestion }: ShoppingCardProps) {
 
   return (
     <div className="flex flex-col rounded-2xl border border-zinc-200 bg-white p-4 shadow-sm gap-3">
-      {/* Header row: name + source badge */}
       <div className="flex items-start justify-between gap-2">
         <div className="min-w-0">
           <p className="font-semibold text-zinc-900 text-sm leading-tight truncate">
@@ -35,7 +34,6 @@ export default function ShoppingCard({ suggestion }: ShoppingCardProps) {
         </span>
       </div>
 
-      {/* Price + store */}
       <div className="flex items-center gap-3">
         {suggestion.price != null && (
           <span className="text-lg font-bold text-zinc-900">
@@ -52,14 +50,12 @@ export default function ShoppingCard({ suggestion }: ShoppingCardProps) {
         )}
       </div>
 
-      {/* Why suggested */}
       {suggestion.suggested_because && (
         <p className="text-xs text-zinc-500 leading-relaxed border-t border-zinc-100 pt-2">
           {suggestion.suggested_because}
         </p>
       )}
 
-      {/* CTA */}
       <a
         href={searchUrl}
         target="_blank"

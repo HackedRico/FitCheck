@@ -11,7 +11,6 @@ export default async function AppLayout({ children }: { children: React.ReactNod
     <div className="min-h-screen bg-white text-zinc-900">
       <nav className="sticky top-0 z-10 border-b border-zinc-200 bg-white/90 backdrop-blur-sm">
         <div className="mx-auto flex max-w-3xl items-center justify-between px-4 py-3">
-          {/* Logo / brand */}
           <Link
             href="/dashboard"
             className="text-lg font-bold tracking-tight text-zinc-900 hover:text-zinc-600 transition-colors"
@@ -19,7 +18,6 @@ export default async function AppLayout({ children }: { children: React.ReactNod
             FitCheck
           </Link>
 
-          {/* Nav links */}
           <div className="flex items-center gap-1">
             <Link
               href="/dashboard"

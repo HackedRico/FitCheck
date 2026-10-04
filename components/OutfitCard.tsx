@@ -16,6 +16,7 @@ export default function OutfitCard({ items, rationale, weather, outfitId }: Outf
   const [worn, setWorn] = useState(false)
   const [savingState, setSavingState] = useState<'idle' | 'saving' | 'error'>('idle')
   const [wornState, setWornState] = useState<'idle' | 'saving' | 'error'>('idle')
+  const [activeItem, setActiveItem] = useState<ClosetItemRow | null>(null)
 
   async function handleSave() {
     if (saved) return
@@ -59,54 +60,71 @@ export default function OutfitCard({ items, rationale, weather, outfitId }: Outf
 
   return (
     <div className="rounded-2xl border border-zinc-200 bg-white overflow-hidden shadow-sm">
-      {/* Item image grid */}
-      <div
-        className={`grid gap-1 p-4 ${
-          items.length <= 2
-            ? 'grid-cols-2'
-            : items.length === 3
-            ? 'grid-cols-3'
-            : 'grid-cols-2 sm:grid-cols-3'
-        }`}
-      >
-        {items.slice(0, 6).map((item) => (
-          <div
+      <div className="flex gap-2 p-4">
+        {items.slice(0, 4).map((item) => (
+          <button
             key={item.ID}
-            className="relative aspect-square rounded-xl overflow-hidden bg-zinc-100"
+            type="button"
+            onClick={() => setActiveItem(activeItem?.ID === item.ID ? null : item)}
+            className={`relative flex-1 aspect-[3/4] rounded-xl overflow-hidden bg-zinc-100 transition-all ${
+              activeItem?.ID === item.ID ? 'ring-2 ring-violet-500 ring-offset-2' : ''
+            }`}
           >
             <Image
               src={item.THUMBNAIL_URL ?? item.IMAGE_URL}
               alt={item.SUBCATEGORY ?? item.CATEGORY ?? 'clothing item'}
               fill
               className="object-cover"
-              sizes="(max-width: 640px) 50vw, 33vw"
+              sizes="(max-width: 640px) 25vw, 20vw"
             />
-            {item.CATEGORY && (
-              <span className="absolute bottom-1 left-1 rounded-md bg-black/50 px-1.5 py-0.5 text-[10px] font-medium text-white backdrop-blur-sm">
-                {item.CATEGORY}
+            <span className="absolute bottom-0 inset-x-0 bg-gradient-to-t from-black/70 to-transparent px-2 py-2">
+              <span className="block text-[10px] font-medium text-white leading-tight">
+                {item.SUBCATEGORY ?? item.CATEGORY}
               </span>
-            )}
-          </div>
+            </span>
+          </button>
         ))}
       </div>
 
-      {/* Rationale and weather */}
-      <div className="px-4 pb-2 space-y-3">
-        {/* Weather pill */}
+      {activeItem && (
+        <div className="mx-4 mb-3 rounded-xl bg-zinc-50 border border-zinc-200 p-3 space-y-1.5">
+          <div className="flex items-center gap-2 flex-wrap">
+            <span className="text-xs font-semibold text-zinc-800 capitalize">
+              {activeItem.SUBCATEGORY ?? activeItem.CATEGORY}
+            </span>
+            {activeItem.FORMALITY && (
+              <span className="rounded-full bg-zinc-200 px-2 py-0.5 text-[10px] text-zinc-600">
+                {activeItem.FORMALITY}
+              </span>
+            )}
+          </div>
+          {activeItem.COLORS && activeItem.COLORS.length > 0 && (
+            <div className="flex items-center gap-1.5">
+              {activeItem.COLORS.map((c) => (
+                <span key={c} className="text-xs text-zinc-500 capitalize">{c}</span>
+              ))}
+            </div>
+          )}
+          {activeItem.AI_DESCRIPTION && (
+            <p className="text-xs text-zinc-500 leading-relaxed">{activeItem.AI_DESCRIPTION}</p>
+          )}
+        </div>
+      )}
+
+      <div className="px-4 pb-3 space-y-2">
         <div className="inline-flex items-center gap-1.5 rounded-full bg-sky-50 border border-sky-200 px-3 py-1 text-xs font-medium text-sky-600">
           <span>🌡</span>
-          <span>{weather.temp}°F</span>
-          <span className="text-sky-400">•</span>
-          <span>{weather.condition}</span>
+          <span>{weather.temp}°F • {weather.condition}</span>
+          {weather.rain_chance > 20 && (
+            <span className="text-sky-400">• {weather.rain_chance}% rain</span>
+          )}
         </div>
 
-        {/* AI rationale */}
         {rationale && (
-          <p className="text-sm text-zinc-600 leading-relaxed">{rationale}</p>
+          <p className="text-sm font-medium text-zinc-700 leading-relaxed">{rationale}</p>
         )}
       </div>
 
-      {/* Actions */}
       <div className="flex items-center gap-2 px-4 py-4 border-t border-zinc-100">
         <button
           onClick={handleSave}
@@ -154,9 +172,7 @@ export default function OutfitCard({ items, rationale, weather, outfitId }: Outf
       </div>
 
       {(savingState === 'error' || wornState === 'error') && (
-        <p className="px-4 pb-3 text-xs text-red-500 text-center">
-          Something went wrong. Please try again.
-        </p>
+        <p className="px-4 pb-3 text-xs text-red-500 text-center">Something went wrong. Please try again.</p>
       )}
     </div>
   )

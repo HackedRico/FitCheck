@@ -33,9 +33,7 @@ const COLOR_OPTIONS = [
 
 const TOPS_SIZES = ['XS', 'S', 'M', 'L', 'XL', 'XXL']
 const BOTTOMS_SIZES = Array.from({ length: 15 }, (_, i) => String(i + 24))
-const SHOE_SIZES = Array.from({ length: 19 }, (_, i) =>
-  String(i + 5 <= 14 ? i + 5 : i + 5)
-).filter((_, i) => i + 5 <= 14)
+const SHOE_SIZES = Array.from({ length: 10 }, (_, i) => String(i + 5))
 
 function toggle(arr: string[], value: string): string[] {
   return arr.includes(value) ? arr.filter((v) => v !== value) : [...arr, value]

@@ -19,15 +19,12 @@ async function fetchTodaysOutfit(): Promise<
 > {
   const baseUrl = process.env.NEXT_PUBLIC_APP_URL ?? 'http://localhost:3000'
   try {
-    const res = await fetch(`${baseUrl}/api/outfit/generate`, {
-      cache: 'no-store',
-    })
+    const res = await fetch(`${baseUrl}/api/outfit/generate`, { cache: 'no-store' })
     if (!res.ok) {
       const body = await res.json().catch(() => ({}))
       return { ok: false, error: (body as { error?: string }).error ?? 'unknown_error' }
     }
-    const data = await res.json()
-    return { ok: true, data: data as OutfitPayload }
+    return { ok: true, data: await res.json() as OutfitPayload }
   } catch {
     return { ok: false, error: 'network_error' }
   }
@@ -39,19 +36,17 @@ export default async function DashboardPage() {
 
   const result = await fetchTodaysOutfit()
 
-  // ─── Error: no location set ────────────────────────────────────────────────
   if (!result.ok && result.error === 'location_required') {
     return (
       <div className="flex flex-col items-center justify-center min-h-[60vh] gap-6 text-center px-4">
         <div className="text-5xl">📍</div>
         <h2 className="text-2xl font-semibold text-zinc-800">Location required</h2>
         <p className="text-zinc-500 max-w-sm">
-          FitCheck needs your location to factor in today&apos;s weather when building your outfit.
-          Add it in your profile settings.
+          FitCheck needs your location to factor in today&apos;s weather. Add it in your profile settings.
         </p>
         <a
           href="/profile"
-          className="inline-flex items-center gap-2 rounded-full bg-zinc-900 px-6 py-3 text-sm font-medium text-white hover:bg-zinc-700 transition-colors"
+          className="rounded-full bg-zinc-900 px-6 py-3 text-sm font-medium text-white hover:bg-zinc-700 transition-colors"
         >
           Go to Profile
         </a>
@@ -59,18 +54,17 @@ export default async function DashboardPage() {
     )
   }
 
-  // ─── Error: not enough closet items ────────────────────────────────────────
   if (!result.ok && result.error === 'insufficient_closet') {
     return (
       <div className="flex flex-col items-center justify-center min-h-[60vh] gap-6 text-center px-4">
         <div className="text-5xl">👗</div>
-        <h2 className="text-2xl font-semibold text-zinc-800">Your closet needs more items</h2>
+        <h2 className="text-2xl font-semibold text-zinc-800">Upload at least 3 items</h2>
         <p className="text-zinc-500 max-w-sm">
-          Upload at least 3 clothing items to your closet so FitCheck can build a complete outfit for you.
+          FitCheck needs at least 3 analyzed pieces to build a real combination for you.
         </p>
         <a
-          href="/closet"
-          className="inline-flex items-center gap-2 rounded-full bg-zinc-900 px-6 py-3 text-sm font-medium text-white hover:bg-zinc-700 transition-colors"
+          href="/closet/upload"
+          className="rounded-full bg-zinc-900 px-6 py-3 text-sm font-medium text-white hover:bg-zinc-700 transition-colors"
         >
           Upload Clothes
         </a>
@@ -78,15 +72,12 @@ export default async function DashboardPage() {
     )
   }
 
-  // ─── Generic error ─────────────────────────────────────────────────────────
-  if (!result.ok) {
+  if (!result.ok || !result.data.outfit) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[60vh] gap-4 text-center px-4">
         <div className="text-5xl">⚠️</div>
         <h2 className="text-2xl font-semibold text-zinc-800">Something went wrong</h2>
-        <p className="text-zinc-500 max-w-sm">
-          We couldn&apos;t generate your outfit right now. Please try again in a moment.
-        </p>
+        <p className="text-zinc-500 max-w-sm">Couldn&apos;t build your outfit right now. Try again.</p>
         <RegenerateButton />
       </div>
     )
@@ -94,63 +85,37 @@ export default async function DashboardPage() {
 
   const { outfit, items, suggestions, weather } = result.data
 
-  // ─── Empty closet (no error but no outfit returned) ────────────────────────
-  if (!outfit) {
-    return (
-      <div className="flex flex-col items-center justify-center min-h-[60vh] gap-6 text-center px-4">
-        <div className="text-5xl">👚</div>
-        <h2 className="text-2xl font-semibold text-zinc-800">Your closet is empty</h2>
-        <p className="text-zinc-500 max-w-sm">
-          Start by uploading photos of your clothes so FitCheck can create personalized outfits for you.
-        </p>
-        <a
-          href="/closet"
-          className="inline-flex items-center gap-2 rounded-full bg-zinc-900 px-6 py-3 text-sm font-medium text-white hover:bg-zinc-700 transition-colors"
-        >
-          Add to Closet
-        </a>
-      </div>
-    )
-  }
-
   return (
-    <div className="max-w-3xl mx-auto px-4 py-8 space-y-8">
-      {/* Weather strip */}
+    <div className="max-w-2xl mx-auto px-4 py-8 space-y-6">
       <div className="flex items-center justify-between">
-        <div className="inline-flex items-center gap-2 rounded-full bg-sky-50 border border-sky-200 px-4 py-2 text-sm text-sky-700 font-medium">
-          <span>🌡</span>
-          <span>{weather.temp}°F, {weather.condition}</span>
-          {weather.rain_chance > 20 && (
-            <span className="text-sky-500">· {weather.rain_chance}% rain</span>
-          )}
+        <div>
+          <h1 className="text-2xl font-bold text-zinc-900">Today&apos;s Fit</h1>
+          <p className="text-sm text-zinc-400 mt-0.5">{weather.temp}°F, {weather.condition}</p>
         </div>
         <RegenerateButton />
       </div>
 
-      {/* Today's Outfit */}
-      <section>
-        <h2 className="text-lg font-semibold text-zinc-800 mb-4">Today&apos;s Outfit</h2>
-        <OutfitCard
-          items={items}
-          rationale={outfit.AI_RATIONALE ?? ''}
-          weather={weather}
-          outfitId={outfit.ID}
-        />
-      </section>
+      <OutfitCard
+        items={items}
+        rationale={outfit.AI_RATIONALE ?? ''}
+        weather={weather}
+        outfitId={outfit.ID}
+      />
 
-      {/* Shopping Suggestions */}
       {suggestions && suggestions.length > 0 && (
-        <section>
-          <h2 className="text-lg font-semibold text-zinc-800 mb-1">Complete the Look</h2>
-          <p className="text-sm text-zinc-500 mb-4">
-            Pieces that would elevate today&apos;s outfit
-          </p>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <details className="group">
+          <summary className="cursor-pointer list-none flex items-center justify-between py-2 text-sm font-medium text-zinc-500 hover:text-zinc-700 transition-colors select-none">
+            <span>Gap Fillers ({suggestions.length})</span>
+            <svg className="h-4 w-4 transition-transform group-open:rotate-180" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+            </svg>
+          </summary>
+          <div className="pt-3 grid grid-cols-1 sm:grid-cols-2 gap-3">
             {suggestions.map((s, i) => (
               <ShoppingCard key={'ID' in s ? s.ID : i} suggestion={s as ShoppingSuggestion} />
             ))}
           </div>
-        </section>
+        </details>
       )}
     </div>
   )

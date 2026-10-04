@@ -24,6 +24,25 @@ Plain rules decide the verdict, so the demo repeats exactly; the stylist model e
 - **Open source:** open-weight models only, Postgres, a public repo under Apache 2.0, and the `fit-check` agent skill in `skills/`.
 - **Snowflake:** the closet lives in Snowflake, Cortex Search retrieves closet garments and Cortex AI_COMPLETE answers as the stylist, a RAG chatbot over your own data. See `docs/snowflake.md`.
 
+## One demo, two moments
+
+FitCheck covers both moments a person decides what to wear.
+
+| Moment | Surface | Port |
+|---|---|---|
+| Morning: "what do I wear today?" | Next.js app at the repo root. Closet, taste profile, live weather, calendar, daily outfit, gap fillers, try-on. | 3000 |
+| In store: "should I buy this?" | PWA in `web/` on the engine in `engine/`. Scan, verdict, stylist chat, live try-on. | 5173 |
+
+Both use the same engine for the weather week, try-on renders and shop links. The morning app's **In Store** link opens the PWA.
+
+```bash
+make demo-install     # once
+make demo             # engine :8000, PWA :5173, morning app :3000
+make demo-snowflake   # same, engine on Snowflake Cortex
+```
+
+Demo script: register in the morning app, upload three garments, open the dashboard for today's fit and the gap fillers, press Try It On, then click In Store and scan one of the gap fillers for a BUY verdict.
+
 ## Morning outfit app (Next.js, Snowflake Cortex)
 
 A second surface in this repo, at the repo root: upload your closet, set a taste profile, and get a daily outfit from live weather plus shopping suggestions for the gaps. Every AI call is Snowflake Cortex SQL (`pixtral-large` for garment vision, `llama3.1-70b` for the outfit and shopping, `EMBED_TEXT_768` for search). It can also call the engine above for try-on renders.

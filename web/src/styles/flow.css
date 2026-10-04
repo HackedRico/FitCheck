@@ -1419,3 +1419,65 @@ body {
   padding: 0 16px;
   font-size: 14px;
 }
+
+/* ---------- closet garment art: a silhouette in the garment's colour when there is no photo ---------- */
+
+.fc .thumb-frame {
+  border: 1px solid var(--line);
+  background: var(--bg-1);
+}
+
+.thumb-art {
+  width: 68%;
+  height: 68%;
+  /* The shadow sits outside the mask, so white garments still read against the white card */
+  filter: drop-shadow(0 0 0.6px rgba(20, 20, 18, 0.55)) drop-shadow(0 3px 6px rgba(20, 20, 18, 0.12));
+}
+
+.thumb-art-fill {
+  display: block;
+  width: 100%;
+  height: 100%;
+  -webkit-mask: var(--shape) center / contain no-repeat;
+  mask: var(--shape) center / contain no-repeat;
+}
+
+.thumb-art[data-category="top"] {
+  --shape: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Cpath d='M30 15 L42 12 Q50 20 58 12 L70 15 L90 30 L80 45 L72 40 L72 90 L28 90 L28 40 L20 45 L10 30 Z' fill='black'/%3E%3C/svg%3E");
+}
+
+.thumb-art[data-category="sweater"] {
+  --shape: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Cpath d='M32 14 L43 11 Q50 18 57 11 L68 14 L84 26 L92 78 L80 80 L72 44 L72 90 L28 90 L28 44 L20 80 L8 78 L16 26 Z' fill='black'/%3E%3C/svg%3E");
+}
+
+.thumb-art[data-category="shirt"] {
+  --shape: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Cpath d='M34 12 L44 10 L50 20 L56 10 L66 12 L84 24 L92 76 L80 78 L72 44 L72 92 L28 92 L28 44 L20 78 L8 76 L16 24 Z' fill='black'/%3E%3C/svg%3E");
+}
+
+.thumb-art[data-category="outerwear"] {
+  --shape: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Cpath d='M33 8 L44 6 L50 16 L56 6 L67 8 L84 20 L94 80 L82 82 L74 40 L76 96 L24 96 L26 40 L18 82 L6 80 L16 20 Z' fill='black'/%3E%3C/svg%3E");
+}
+
+.thumb-art[data-category="bottom"] {
+  --shape: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Cpath d='M28 8 L72 8 L78 94 L58 94 L50 34 L42 94 L22 94 Z' fill='black'/%3E%3C/svg%3E");
+}
+
+.thumb-art[data-category="dress"] {
+  --shape: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Cpath d='M38 8 L46 8 Q50 14 54 8 L62 8 L64 30 L80 94 L20 94 L36 30 Z' fill='black'/%3E%3C/svg%3E");
+}
+
+.thumb-art[data-category="shoes"] {
+  --shape: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Cpath d='M10 60 L10 42 L30 42 Q40 56 60 58 L86 64 Q92 66 92 74 L92 80 L10 80 Z' fill='black'/%3E%3C/svg%3E");
+}
+
+.thumb-art[data-category="accessory"] {
+  --shape: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Cpath d='M25 38 L75 38 L82 88 L18 88 Z M38 38 Q38 18 50 18 Q62 18 62 38 L56 38 Q56 25 50 25 Q44 25 44 38 Z' fill='black'/%3E%3C/svg%3E");
+}
+
+/* Closed panels stay hidden even while a rotation or resize re-runs their slide transition */
+.fc .sheet-layer:not([data-open="true"]) .sheet {
+  visibility: hidden;
+  transition:
+    transform var(--medium) var(--ease-out),
+    visibility 0s linear var(--medium);
+}

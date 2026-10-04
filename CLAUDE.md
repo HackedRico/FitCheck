@@ -71,7 +71,7 @@ All AI calls are plain SQL: `SELECT SNOWFLAKE.CORTEX.COMPLETE('model', prompt)`.
 ### Key library files
 
 - `lib/snowflake.ts` — singleton Snowflake connection + `query<T>(sql, binds)` helper used everywhere
-- `lib/cortex.ts` — **NOT YET WRITTEN** — will contain `analyzeClothingImage()`, `generateOutfit()`, `generateShoppingSuggestions()`, `embedText()`
+- `lib/cortex.ts` — contains `analyzeClothingImage()`, `generateOutfit()`, `generateShoppingSuggestions()`, `embedText()`
 - `lib/weather.ts` — `getWeather(lat, lng)` → Open-Meteo fetch, returns `{ temp, feels_like, rain_chance, condition }`
 - `lib/cloudinary.ts` — `uploadImage(buffer, folder)` → returns `{ url, thumbnail_url, public_id }`
 
@@ -114,35 +114,37 @@ CLOUDINARY_API_SECRET=
 # NextAuth
 NEXTAUTH_SECRET=fitcheck-hackathon-secret-key-2024
 NEXTAUTH_URL=http://localhost:3000
+
+# Team engine (optional, for try-on renders)
+ENGINE_URL=http://localhost:8000
 ```
 
 ---
 
 ## What Is Built vs. What Is Missing
 
-### Done
-- [x] Next.js 16 scaffold (App Router, TypeScript, Tailwind)
-- [x] Dependencies installed: `snowflake-sdk`, `next-auth`, `bcryptjs`, `cloudinary`
-- [x] `lib/snowflake.ts` — Snowflake connection + query helper
-- [x] `lib/weather.ts` — Open-Meteo weather fetch
-- [x] `lib/cloudinary.ts` — Cloudinary image upload
+### Done (all build and type-check clean; `npm run build` passes)
+- [x] Next.js 16 scaffold (App Router, TypeScript, Tailwind v4)
+- [x] `lib/snowflake.ts`, `lib/weather.ts`, `lib/cloudinary.ts`, `lib/cortex.ts`, `lib/auth.ts`
+- [x] Auth: `app/api/auth/[...nextauth]`, `app/api/auth/register`, login + register pages
+- [x] Taste profile: `app/api/taste-profile`, onboarding + profile pages, `app/api/user/location`
+- [x] Closet: upload (Cloudinary + Snowflake stage fallback), Pixtral analyze, items list, upload + grid pages
+- [x] Outfit: `app/api/outfit/generate` (weather + Llama + shopping gap fillers), `app/api/outfit/[id]`, dashboard
+- [x] Try-on: `app/api/tryon` + `components/TryOnCard.tsx` bridge to the team engine (`ENGINE_URL`, default `http://localhost:8000`) for `/render` and `/link`
+- [x] `scripts/setup-schema.mjs` creates/migrates all Snowflake tables + the `CLOSET_IMAGES` stage
 
-### Still needs to be built (in order)
+### Known gaps
+- Try-on needs the Python engine running (`make api` from repo root); the card shows a clear error otherwise.
+- No tests for the Next.js app. CI (`.github/workflows/ci.yml`) covers `engine/` and `web/` only.
+- `PRODUCT_SUGGESTIONS.IMAGE_URL` / `PRODUCT_URL` are never populated; shopping cards link to a Google search built from `SEARCH_QUERY`.
 
-1. **`lib/cortex.ts`** — Snowflake Cortex AI wrappers (see PLAN.md for full implementation)
-2. **`app/api/auth/[...nextauth]/route.ts`** — NextAuth credentials provider (look up user in Snowflake `USERS` table, compare bcrypt hash)
-3. **`app/api/auth/register/route.ts`** — POST: create user in Snowflake
-4. **`app/(auth)/login/page.tsx`** and **`app/(auth)/register/page.tsx`**
-5. **`app/api/taste-profile/route.ts`** — GET + POST: upsert `TASTE_PROFILES` in Snowflake
-6. **`app/(app)/onboarding/page.tsx`** — multi-step taste profile form
-7. **`app/api/closet/upload/route.ts`** — receive image → Cloudinary → Snowflake insert → trigger analyze
-8. **`app/api/closet/analyze/route.ts`** — Pixtral vision call → update CLOSET_ITEMS
-9. **`app/api/closet/items/route.ts`** — GET all closet items for user
-10. **`app/(app)/closet/upload/page.tsx`** — upload UI with drag-and-drop
-11. **`app/(app)/closet/page.tsx`** — closet grid view
-12. **`app/api/outfit/generate/route.ts`** — full outfit generation (weather + Llama + shopping)
-13. **`app/(app)/dashboard/page.tsx`** — morning feed with outfit card + shopping suggestions
-14. **`app/(app)/layout.tsx`** — protected layout (redirect to login if no session)
+---
+
+## Repo Layout Note
+
+This Next.js app lives at the repo root alongside the team's other product surfaces:
+`engine/` (FastAPI, Python), `web/` (Vite PWA), `worker/`. Those have their own
+lint/test setups and are excluded from the root ESLint config. See the root `README.md`.
 
 ---
 

@@ -1,58 +1,70 @@
 /* =============================================================================
    Module Overview
    =============================================================================
-   Design tokens for FitCheck. The chrome is ink and paper so that the one
-   accent of each verdict, lime BUY, vermillion SKIP and cobalt TRY-WITH, owns
-   the projector. Type pairs a condensed display face for verdicts with a serif
-   italic for the stylist's voice and a mono for tags and the pipeline. */
+   Design tokens for FitCheck: black type on warm white, one sans family, and
+   colour reserved for the verdict itself (green BUY, red SKIP, blue TRY-WITH).
+   Camera screens flip to `.is-dark` tokens so controls read over live video. */
 
 :root {
-  /* ---------- surfaces ---------- */
-  --ink: #0e0e0c;
-  --ink-1: #161613;
-  --ink-2: #201f1b;
-  --ink-3: #2e2c27;
-  --line: rgba(242, 237, 227, 0.14);
-  --line-strong: rgba(242, 237, 227, 0.32);
-  --paper: #f2ede3;
-  --paper-2: #e4ddcd;
-  --fog: #a49e90;
-  --ink-muted: #5c574c;
+  /* ---------- surfaces and type colour ---------- */
+  --bg: #f7f6f2;
+  --bg-1: #ffffff;
+  --bg-2: #efede7;
+  --bg-3: #e3e0d8;
+  --line: rgba(20, 20, 18, 0.09);
+  --line-strong: rgba(20, 20, 18, 0.18);
+  --fg: #141412;
+  --fg-2: #2b2b28;
+  --fog: #6e6c66;
+  --fg-muted: #a9a69e;
 
-  /* ---------- accents: one per verdict ---------- */
-  --buy: #c2f74a;
-  --skip: #ff4b2b;
-  --try: #6b80ff;
-  --warn: #ffb21e;
-  --accent: var(--paper);
+  /* ---------- verdict colours, the only accents ---------- */
+  --buy: #1d7a45;
+  --skip: #c8371f;
+  --try: #2846c4;
+  --warn: #a8630a;
+  --accent: var(--fg);
 
-  /* ---------- type ---------- */
-  --display: "Big Shoulders Display", "Arial Narrow", "Helvetica Neue", sans-serif;
-  --serif: "Instrument Serif", "Times New Roman", serif;
-  --sans: "Instrument Sans", "Helvetica Neue", sans-serif;
-  --mono: "DM Mono", ui-monospace, "SF Mono", monospace;
+  /* ---------- type: one family, a serif only for the verdict sentence ---------- */
+  --sans: "Instrument Sans", "Helvetica Neue", Helvetica, Arial, sans-serif;
+  --serif: "Instrument Serif", Georgia, serif;
+  --display: var(--sans);
+  --mono: var(--sans);
 
   /* ---------- motion ---------- */
   --ease-out: cubic-bezier(0.2, 0.8, 0.2, 1);
-  --ease-swing: cubic-bezier(0.34, 1.56, 0.64, 1);
+  --ease-swing: cubic-bezier(0.2, 0.8, 0.2, 1);
   --fast: 160ms;
-  --medium: 320ms;
+  --medium: 280ms;
 
   /* ---------- layout ---------- */
-  --gutter: 16px;
-  --radius: 4px;
-  --tabbar-h: calc(64px + env(safe-area-inset-bottom));
-  --masthead-h: 56px;
+  --gutter: 20px;
+  --radius: 14px;
+  --tabbar-h: 0px;
+  --masthead-h: 0px;
 
-  color-scheme: dark;
+  color-scheme: light;
 }
 
 @media (min-width: 900px) {
   :root {
-    --gutter: 28px;
-    --tabbar-h: 0px;
-    --masthead-h: 68px;
+    --gutter: 32px;
   }
+}
+
+/* Over live video: white controls on dark glass */
+.is-dark {
+  --bg: #000000;
+  --bg-1: #111111;
+  --bg-2: #1c1c1c;
+  --bg-3: #2a2a2a;
+  --line: rgba(255, 255, 255, 0.14);
+  --line-strong: rgba(255, 255, 255, 0.3);
+  --fg: #ffffff;
+  --fg-2: #e8e8e8;
+  --fog: rgba(255, 255, 255, 0.72);
+
+  color-scheme: dark;
 }
 
 [data-decision="buy"] {

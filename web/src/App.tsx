@@ -1,84 +1,60 @@
-import type { ReactNode } from "react";
+import { useState, type ReactNode } from "react";
 
-import { Icon, type IconName } from "./components/Icons";
-import { PipelinePanel, PrivacyRail } from "./components/PipelinePanel";
+import { PipelinePanel } from "./components/PipelinePanel";
 import { SettingsSheet } from "./components/SettingsSheet";
-import { StylistDrawer } from "./components/StylistDrawer";
 import type { Route } from "./lib/route";
+import { readSetting, writeSetting } from "./lib/storage";
 import { ClosetScreen } from "./screens/ClosetScreen";
+import { HomeScreen } from "./screens/HomeScreen";
 import { LiveScreen } from "./screens/LiveScreen";
-import { MeScreen } from "./screens/MeScreen";
-import { RenderScreen } from "./screens/RenderScreen";
-import { ScanScreen } from "./screens/ScanScreen";
+import { ResultScreen } from "./screens/ResultScreen";
+import { WelcomeScreen } from "./screens/WelcomeScreen";
+import { YouScreen } from "./screens/YouScreen";
 import { useApp } from "./state/app";
 
 // =============================================================================
 // Module Overview
 // =============================================================================
-// The app shell: masthead with the tabs, the privacy rail that opens the
-// pipeline panel, the current screen, and the sheets that slide over it.
+// The app shell. There are no tabs: a first visit sees `WelcomeScreen`, then the
+// camera, and every scan moves forward to its result. The pipeline and settings
+// sheets slide over whichever screen is showing.
 
-const TABS: readonly { route: Route; label: string; icon: IconName }[] = [
-  { route: "scan", label: "Scan", icon: "camera" },
-  { route: "live", label: "Live", icon: "live" },
-  { route: "me", label: "Me", icon: "person" },
-  { route: "closet", label: "Closet", icon: "hanger" },
-];
+const WELCOMED_KEY = "fitcheck.welcomed";
 
 function Screen({ route }: { route: Route }): ReactNode {
   switch (route) {
-    case "scan":
-      return <ScanScreen />;
+    case "home":
+      return <HomeScreen />;
+    case "result":
+      return <ResultScreen />;
     case "live":
       return <LiveScreen />;
-    case "me":
-      return <MeScreen />;
+    case "you":
+      return <YouScreen />;
     case "closet":
       return <ClosetScreen />;
-    case "render":
-      return <RenderScreen />;
   }
 }
 
 /** The FitCheck shell around the current screen. */
 export function App(): ReactNode {
-  const { route, navigate, openSheet } = useApp();
-  const tabs = TABS.map((tab) => (
-    <button
-      key={tab.route}
-      type="button"
-      className="tab"
-      aria-current={route === tab.route ? "page" : undefined}
-      onClick={() => navigate(tab.route)}
-    >
-      <Icon name={tab.icon} />
-      <span>{tab.label}</span>
-    </button>
-  ));
+  const { route, person, flow } = useApp();
+  const [welcomed, setWelcomed] = useState(() => readSetting(WELCOMED_KEY, "no") === "yes");
+
+  const finishWelcome = (): void => {
+    writeSetting(WELCOMED_KEY, "yes");
+    setWelcomed(true);
+  };
+
+  const showWelcome = !welcomed && person.photo === null && route === "home";
+  // The page glow takes the verdict's colour while a result is on screen
+  const decision = route === "result" && flow.judge.status === "done" ? flow.judge.value.verdict.decision : undefined;
 
   return (
-    <div className="app" data-route={route}>
-      <header className="masthead">
-        <button type="button" className="wordmark display" onClick={() => navigate("scan")}>
-          Fit<span>Check</span>
-        </button>
-        <nav className="tabs tabs-top" aria-label="Screens">
-          {tabs}
-        </nav>
-        <button type="button" className="icon-btn" onClick={() => openSheet("settings")} aria-label="Settings">
-          <Icon name="gear" />
-        </button>
-      </header>
-      <PrivacyRail />
-      <main className="screen">
-        <Screen route={route} />
-      </main>
-      <nav className="tabs tabs-bottom" aria-label="Screens">
-        {tabs}
-      </nav>
+    <div className="fc" data-route={showWelcome ? "welcome" : route} data-decision={decision}>
+      {showWelcome ? <WelcomeScreen onDone={finishWelcome} /> : <Screen route={route} />}
       <PipelinePanel />
       <SettingsSheet />
-      <StylistDrawer />
     </div>
   );
 }

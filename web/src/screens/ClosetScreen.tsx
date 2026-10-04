@@ -14,7 +14,7 @@ import { useApp } from "../state/app";
 
 /** The closet grid with add and delete-all. */
 export function ClosetScreen(): ReactNode {
-  const { settings, pipelines } = useApp();
+  const { settings, pipelines, navigate, flow } = useApp();
   const owner = settings.owner;
   const [garments, setGarments] = useState<Garment[] | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -64,19 +64,31 @@ export function ClosetScreen(): ReactNode {
   };
 
   return (
-    <section className="closet">
+    <section className="fc-page closet">
+      <header className="fc-topbar is-solid">
+        <button
+          type="button"
+          className="fc-round fc-back"
+          onClick={() => navigate(flow.frame ? "result" : "home")}
+          aria-label="Back"
+        >
+          <Icon name="arrow" />
+        </button>
+        <p className="fc-topbar-title">Closet</p>
+        <span className="fc-round is-ghost" aria-hidden="true" />
+      </header>
       <header className="closet-head">
         <div>
           <p className="kicker">{owner}'s closet</p>
           <h1 className="display">{garments === null ? "Closet" : `${garments.length} garments`}</h1>
         </div>
         <div className="closet-actions">
-          <button type="button" className="btn btn-solid" disabled={adding} onClick={() => fileRef.current?.click()}>
+          <button type="button" className="fc-btn is-primary" disabled={adding} onClick={() => fileRef.current?.click()}>
             {adding ? <span className="spinner" /> : <Icon name="plus" />} {adding ? "Tagging" : "Add a garment"}
           </button>
           <button
             type="button"
-            className={`btn btn-danger${armed ? " is-armed" : ""}`}
+            className={`fc-btn is-danger${armed ? " is-armed" : ""}`}
             onClick={() => void forget()}
             onBlur={() => setArmed(false)}
           >

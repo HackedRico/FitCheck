@@ -2,23 +2,37 @@ import { useEffect, useRef, useState, type ReactNode } from "react";
 
 import { Icon } from "../components/Icons";
 import { captureFrame, useCamera, type Facing } from "../lib/camera";
-import { prepareCutout } from "../lib/cutout";
-import { placeGarment, smoothPlacement, type Placement } from "../lib/fit";
+import { placeGarment, smoothPlacement, type Landmark, type Placement } from "../lib/fit";
+import { extractGarment, type GarmentSprite, type Point } from "../lib/garmentSprite";
 import { loadPoseLandmarker } from "../lib/pose";
 import { useApp } from "../state/app";
 
 // =============================================================================
 // Module Overview
 // =============================================================================
-// The live preview (ADR 0004): the camera feed with the candidate's cutout pinned
-// to the owner's pose by MediaPipe Pose Landmarker, in the browser, every frame.
-// The selfie view is mirrored like a mirror. Snap sends that frame to the
-// diffusion renderer for the real render.
+// The live preview (ADR 0004): the camera feed with the candidate drawn on the
+// owner's body, in the browser, every frame. When the garment photo showed it
+// worn, `extractGarment` kept the wearer's shoulders (or hips), and those map
+// onto the owner's joints so the garment sits the way it was worn; otherwise
+// the cutout is fitted by `placeGarment`. Snap keeps that frame as the owner's
+// "on you" image, no server needed.
 
 // Higher follows faster, lower holds steadier against landmark jitter
 const SMOOTHING = 0.45;
+const MIN_VISIBILITY = 0.5;
+
+// MediaPipe Pose landmark indices
+const LEFT_SHOULDER = 11;
+const RIGHT_SHOULDER = 12;
+const LEFT_HIP = 23;
+const RIGHT_HIP = 24;
 
 type PoseStatus = "loading" | "ready" | "failed";
+
+interface JointPair {
+  left: Point;
+  right: Point;
+}
 
 /** The candidate on the owner, live. */
 export function LiveScreen(): ReactNode {
@@ -40,9 +54,9 @@ export function LiveScreen(): ReactNode {
 
     void (async () => {
       let landmarker;
-      let garment: HTMLCanvasElement;
+      let sprite: GarmentSprite;
       try {
-        [landmarker, garment] = await Promise.all([loadPoseLandmarker(), prepareCutout(candidate.cutout)]);
+        [landmarker, sprite] = await Promise.all([loadPoseLandmarker(), extractGarment(candidate.cutout, region)]);
       } catch (error) {
         console.warn("[live] Pose model failed to load.", error);
         if (!stopped) setPoseStatus("failed");
@@ -50,7 +64,10 @@ export function LiveScreen(): ReactNode {
       }
       if (stopped) return;
       setPoseStatus("ready");
+      const garment = sprite.canvas;
+      const lower = region === "lower";
       let placement: Placement | null = null;
+      let joints: JointPair | null = null;
       let lastVideoTime = -1;
       let frames = 0;
       let fpsSince = performance.now();
@@ -64,22 +81,28 @@ export function LiveScreen(): ReactNode {
         if (video && canvas && context && video.videoWidth > 0) {
           if (canvas.width !== video.videoWidth) canvas.width = video.videoWidth;
           if (canvas.height !== video.videoHeight) canvas.height = video.videoHeight;
+          const frame = { width: canvas.width, height: canvas.height };
           if (video.currentTime !== lastVideoTime) {
             lastVideoTime = video.currentTime;
-            const result = landmarker.detectForVideo(video, performance.now());
-            const pose = result.landmarks[0];
-            const next = pose
-              ? placeGarment(pose, region, { width: canvas.width, height: canvas.height }, garment.width / garment.height)
-              : null;
-            placement = next ? smoothPlacement(placement, next, SMOOTHING) : null;
-            if ((placement !== null) !== lastSeen) {
-              lastSeen = placement !== null;
-              setTracking(lastSeen);
+            const pose = landmarker.detectForVideo(video, performance.now()).landmarks[0];
+            if (sprite.anchors) {
+              const next = pose ? jointPair(pose, lower, frame) : null;
+              joints = next ? smoothJoints(joints, next) : null;
+            } else {
+              const next = pose ? placeGarment(pose, region, frame, garment.width / garment.height) : null;
+              placement = next ? smoothPlacement(placement, next, SMOOTHING) : null;
+            }
+            const seen = joints !== null || placement !== null;
+            if (seen !== lastSeen) {
+              lastSeen = seen;
+              setTracking(seen);
             }
             frames += 1;
           }
           context.drawImage(video, 0, 0, canvas.width, canvas.height);
-          if (placement) {
+          if (sprite.anchors && joints) {
+            drawOnJoints(context, garment, sprite.anchors, joints);
+          } else if (placement) {
             context.save();
             context.translate(placement.topX, placement.topY);
             context.rotate(placement.angle);
@@ -119,8 +142,11 @@ export function LiveScreen(): ReactNode {
 
   const snap = async (): Promise<void> => {
     const video = camera.videoRef.current;
-    if (!video) return;
-    flow.requestRender(await captureFrame(video), "live");
+    const canvas = canvasRef.current;
+    if (!video || !canvas) return;
+    const person = await captureFrame(video);
+    const composite = await new Promise<Blob | null>((resolve) => canvas.toBlob(resolve, "image/png"));
+    if (composite) flow.keepRender(composite, person);
     navigate("result");
   };
 
@@ -176,4 +202,46 @@ export function LiveScreen(): ReactNode {
       <p className="fc-live-note">Snap for the full render, with drape and fit.</p>
     </section>
   );
+}
+
+// -----------------------------------------------------------------
+// Mapping the wearer's joints onto the owner's
+// -----------------------------------------------------------------
+
+/** The owner's shoulders (or hips for bottoms) in frame pixels, or `null` when out of view. */
+function jointPair(pose: readonly Landmark[], lower: boolean, frame: { width: number; height: number }): JointPair | null {
+  const at = (index: number): Point | null => {
+    const mark = pose[index];
+    if (!mark || (mark.visibility ?? 1) < MIN_VISIBILITY) return null;
+    return { x: mark.x * frame.width, y: mark.y * frame.height };
+  };
+  const left = at(lower ? LEFT_HIP : LEFT_SHOULDER);
+  const right = at(lower ? RIGHT_HIP : RIGHT_SHOULDER);
+  return left && right ? { left, right } : null;
+}
+
+function smoothJoints(previous: JointPair | null, next: JointPair): JointPair {
+  if (previous === null) return next;
+  const mix = (a: Point, b: Point): Point => ({
+    x: a.x + (b.x - a.x) * SMOOTHING,
+    y: a.y + (b.y - a.y) * SMOOTHING,
+  });
+  return { left: mix(previous.left, next.left), right: mix(previous.right, next.right) };
+}
+
+/** Draw `garment` so its wearer's joints land on the owner's: one scale, one turn, one shift. */
+function drawOnJoints(context: CanvasRenderingContext2D, garment: HTMLCanvasElement, from: JointPair, to: JointPair): void {
+  const fromSpan = { x: from.left.x - from.right.x, y: from.left.y - from.right.y };
+  const toSpan = { x: to.left.x - to.right.x, y: to.left.y - to.right.y };
+  const fromLength = Math.hypot(fromSpan.x, fromSpan.y);
+  if (fromLength < 1) return;
+  const scale = Math.hypot(toSpan.x, toSpan.y) / fromLength;
+  const angle = Math.atan2(toSpan.y, toSpan.x) - Math.atan2(fromSpan.y, fromSpan.x);
+  context.save();
+  context.translate(to.right.x, to.right.y);
+  context.rotate(angle);
+  context.scale(scale, scale);
+  context.translate(-from.right.x, -from.right.y);
+  context.drawImage(garment, 0, 0);
+  context.restore();
 }

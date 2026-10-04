@@ -68,6 +68,7 @@ export interface Flow extends FlowState {
   start: (frame: Blob) => void;
   retry: () => void;
   requestRender: (person: Blob, origin: RenderOrigin) => void;
+  keepRender: (image: Blob, person: Blob) => void;
   reset: () => void;
 }
 
@@ -233,11 +234,23 @@ export function useCandidateFlow(deps: FlowDeps): Flow {
     [runRender],
   );
 
+  /** Keep a live-preview frame as the render, without a server call; a newer render wins. */
+  const keepRender = useCallback((image: Blob, person: Blob) => {
+    if (stateRef.current.scan.status !== "done") return;
+    // Bumping the sequence drops any diffusion render still in flight for this scan
+    renderSeq.current += 1;
+    lastRender.current = { person, origin: "live" };
+    setState((current) => ({
+      ...current,
+      render: { status: "done", value: { image, person, cached: false, origin: "live" }, ms: 0 },
+    }));
+  }, []);
+
   const reset = useCallback(() => {
     runId.current += 1;
     lastRender.current = null;
     setState({ ...EMPTY, id: runId.current });
   }, []);
 
-  return { ...state, start, retry, requestRender, reset };
+  return { ...state, start, retry, requestRender, keepRender, reset };
 }

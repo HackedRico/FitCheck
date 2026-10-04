@@ -9,6 +9,7 @@ from fastapi import FastAPI, File, Form, Request, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse, Response
 from pydantic import BaseModel, ConfigDict, Field, ValidationError
+from starlette.formparsers import MultiPartParser
 
 from fitcheck.domain import (
     AdapterInfo,
@@ -35,6 +36,9 @@ from fitcheck.wiring import build_engine
 # Images go up as multipart files and come back as base64 PNG strings so every
 # response is plain JSON. `create_app` builds the engine from settings unless a test
 # passes one in; `/openapi.json` is the contract the web app generates types from.
+
+# Starlette spools uploads over 1 MB to disk; keep phone-sized person photos in memory (ADR 0003)
+MultiPartParser.spool_max_size = 20 * 1024 * 1024
 
 _STATUS_BY_ERROR: dict[type[FitCheckError], int] = {
     InvalidInput: 400,

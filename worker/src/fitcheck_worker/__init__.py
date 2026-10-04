@@ -1,0 +1,1 @@
+"""FitCheck try-on worker."""

@@ -2,7 +2,7 @@
 .DEFAULT_GOAL := help
 ENGINE := cd engine &&
 
-.PHONY: help sync api api-open api-snowflake test test-live check fmt openapi web web-install db-up db-down db-reset ollama-pull worker
+.PHONY: help sync api api-open api-snowflake test test-live check fmt openapi web web-install db-up db-down db-reset ollama-pull worker worker-test
 
 help: ## List targets
 	@grep -E '^[a-z-]+:.*## ' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*## "}; {printf "  %-14s %s\n", $$1, $$2}'
@@ -51,6 +51,9 @@ db-reset: ## Wipe Postgres data and start fresh; needed after a schema change
 
 ollama-pull: ## Download an open-weight vision model to serve from this machine
 	ollama pull qwen3-vl:8b
+
+worker-test: ## Run the try-on worker's tests
+	cd worker && uv run pytest -q
 
 worker: ## Run the try-on GPU worker locally (needs a CUDA or Apple GPU)
 	cd worker && uv run fitcheck-worker

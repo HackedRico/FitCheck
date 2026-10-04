@@ -86,11 +86,12 @@ Rules:
 - Must be weather-appropriate for ${weather.temp}°F and ${weather.condition}
 - Colors must complement each other
 - Match the user's aesthetic profile
+- "missing_pieces" must ALWAYS list 1 to 3 item types the user does NOT own that would complete or elevate this look for the occasion (never an empty array)
 - Return ONLY valid JSON:
 {
   "selected_item_ids": ["id1", "id2", "id3"],
   "rationale": "2-3 sentence explanation of why this outfit works",
-  "missing_pieces": ["item type the user is missing for this look"]
+  "missing_pieces": ["item type 1", "item type 2"]
 }
 `.trim()
 

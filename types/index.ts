@@ -147,6 +147,12 @@ export interface ShoppingSuggestionsResult {
   suggestions: ShoppingSuggestion[]
 }
 
+export interface CalendarEvent {
+  title: string
+  start: string
+  formality: string
+}
+
 declare module 'next-auth' {
   interface Session {
     user: {

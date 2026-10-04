@@ -7,18 +7,22 @@ interface ShoppingCardProps {
 }
 
 export default function ShoppingCard({ suggestion }: ShoppingCardProps) {
+  const isOnline = suggestion.source === 'online'
+
   const queryText =
     suggestion.search_query?.trim() ||
     [suggestion.brand, suggestion.name].filter(Boolean).join(' ').trim() ||
     suggestion.store_name
 
-  const searchUrl = queryText
-    ? `https://www.google.com/search?q=${encodeURIComponent(
-        suggestion.source === 'online' ? `${queryText} buy online` : `${queryText} near me`
-      )}`
+  const shopUrl = queryText
+    ? isOnline
+      ? `https://www.google.com/search?tbm=shop&q=${encodeURIComponent(
+          [suggestion.store_name, queryText].filter(Boolean).join(' ')
+        )}`
+      : `https://www.google.com/maps/search/${encodeURIComponent(
+          suggestion.store_name ? `${suggestion.store_name} near me` : `${queryText} store near me`
+        )}`
     : null
-
-  const isOnline = suggestion.source === 'online'
 
   return (
     <div className="flex flex-col rounded-2xl border border-zinc-200 bg-white p-4 shadow-sm gap-3">
@@ -65,17 +69,26 @@ export default function ShoppingCard({ suggestion }: ShoppingCardProps) {
         </p>
       )}
 
-      {searchUrl && (
+      {shopUrl && (
         <a
-          href={searchUrl}
+          href={shopUrl}
           target="_blank"
           rel="noopener noreferrer"
           className="mt-auto inline-flex w-full items-center justify-center gap-2 rounded-full bg-zinc-900 px-4 py-2.5 text-sm font-medium text-white hover:bg-zinc-700 transition-colors"
         >
-          <svg className="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-            <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-          </svg>
-          {isOnline ? 'Shop Online' : 'Find Nearby'}
+          {isOnline ? (
+            <svg className="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
+            </svg>
+          ) : (
+            <svg className="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+              <path strokeLinecap="round" strokeLinejoin="round" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+            </svg>
+          )}
+          {isOnline
+            ? `Shop Online${suggestion.store_name ? ` · ${suggestion.store_name}` : ''}`
+            : `Find ${suggestion.store_name || 'a Store'} Nearby`}
         </a>
       )}
     </div>

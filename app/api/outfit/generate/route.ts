@@ -26,6 +26,41 @@ function toSuggestionPayload(row: ProductSuggestionRow): ShoppingSuggestion {
   }
 }
 
+const DRESSY_OCCASION = /formal|interview|business|dinner|dressy|wedding|date/i
+const DRESSY_FORMALITY = new Set(['FORMAL', 'BUSINESS', 'SMART_CASUAL'])
+
+function ensureCompleteOutfit(
+  ids: string[],
+  closet: ClosetItemRow[],
+  occasion: string
+): string[] {
+  const selected = new Set(
+    ids.filter((id) => closet.some((item) => item.ID === id))
+  )
+  const has = (cat: string) =>
+    closet.some((item) => selected.has(item.ID) && item.CATEGORY === cat)
+  const wantDressy = DRESSY_OCCASION.test(occasion)
+
+  const pick = (cat: string) => {
+    const pool = closet.filter(
+      (item) => item.CATEGORY === cat && !selected.has(item.ID)
+    )
+    if (pool.length === 0) return
+    const ranked = pool.filter((item) =>
+      wantDressy
+        ? DRESSY_FORMALITY.has(item.FORMALITY ?? '')
+        : item.FORMALITY !== 'FORMAL'
+    )
+    selected.add((ranked[0] ?? pool[0]).ID)
+  }
+
+  if (!has('TOP') && !has('DRESS')) pick('TOP')
+  if (!has('BOTTOM') && !has('DRESS')) pick('BOTTOM')
+  if (!has('SHOES')) pick('SHOES')
+
+  return [...selected]
+}
+
 async function generateAndPersist(
   userId: string,
   occasion: string = 'daily'
@@ -70,6 +105,12 @@ async function generateAndPersist(
     occasion,
   })
 
+  const selectedItemIds = ensureCompleteOutfit(
+    outfitResult.selected_item_ids,
+    closetRows,
+    occasion
+  )
+
   const outfitId = crypto.randomUUID()
   await query(
     `INSERT INTO OUTFITS
@@ -78,7 +119,7 @@ async function generateAndPersist(
     [
       outfitId,
       userId,
-      JSON.stringify(outfitResult.selected_item_ids),
+      JSON.stringify(selectedItemIds),
       outfitResult.rationale,
       JSON.stringify(weather),
       occasion,
@@ -86,7 +127,7 @@ async function generateAndPersist(
   )
 
   const selectedItems = closetRows.filter((item) =>
-    outfitResult.selected_item_ids.includes(item.ID)
+    selectedItemIds.includes(item.ID)
   )
 
   const outfitColors = selectedItems.flatMap((item) => item.COLORS ?? [])

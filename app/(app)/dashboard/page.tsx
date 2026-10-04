@@ -7,6 +7,7 @@ import OutfitCard from '@/components/OutfitCard'
 import ShoppingCard from '@/components/ShoppingCard'
 import RegenerateButton from '@/components/RegenerateButton'
 import TryOnCard from '@/components/TryOnCard'
+import EventsCard from '@/components/EventsCard'
 
 interface OutfitPayload {
   outfit: OutfitRow
@@ -96,7 +97,14 @@ export default async function DashboardPage() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold text-zinc-900">Today&apos;s Fit</h1>
-          <p className="text-sm text-zinc-400 mt-0.5">{weather.temp}°F, {weather.condition}</p>
+          <p className="text-sm text-zinc-400 mt-0.5">
+            {weather.temp}°F, {weather.condition}
+            {outfit.OCCASION && outfit.OCCASION !== 'daily' && (
+              <span className="ml-2 inline-flex items-center rounded-full bg-violet-50 px-2.5 py-0.5 text-xs font-medium text-violet-600 capitalize">
+                {outfit.OCCASION}
+              </span>
+            )}
+          </p>
         </div>
         <RegenerateButton />
       </div>
@@ -108,22 +116,27 @@ export default async function DashboardPage() {
         outfitId={outfit.ID}
       />
 
+      <EventsCard />
+
       <TryOnCard outfitId={outfit.ID} />
 
       {suggestions && suggestions.length > 0 && (
-        <details className="group">
-          <summary className="cursor-pointer list-none flex items-center justify-between py-2 text-sm font-medium text-zinc-500 hover:text-zinc-700 transition-colors select-none">
-            <span>Gap Fillers ({suggestions.length})</span>
-            <svg className="h-4 w-4 transition-transform group-open:rotate-180" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
-            </svg>
-          </summary>
-          <div className="pt-3 grid grid-cols-1 sm:grid-cols-2 gap-3">
+        <section>
+          <div className="flex items-baseline justify-between py-2">
+            <h2 className="text-base font-semibold text-zinc-900">Shop the Look</h2>
+            <span className="text-xs text-zinc-400">
+              {suggestions.length} picks · online &amp; in-store
+            </span>
+          </div>
+          <p className="text-xs text-zinc-400 mb-3 -mt-1">
+            Pieces that complete this outfit — buy online or find them at a store near you.
+          </p>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             {suggestions.map((s, i) => (
               <ShoppingCard key={`${s.name}-${i}`} suggestion={s} />
             ))}
           </div>
-        </details>
+        </section>
       )}
     </div>
   )

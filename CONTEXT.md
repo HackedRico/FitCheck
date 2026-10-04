@@ -85,9 +85,9 @@ The ordered steps that ran for one request, each with its model, license and whe
 _Avoid_: trace, log, provenance
 
 **Open path**:
-Running FitCheck entirely on open-weight models you host and an open-source database, with no accounts.
+Running FitCheck on open-weight models and an open-source database, with no proprietary data platform.
 _Avoid_: local mode, OSS mode
 
 **Snowflake path**:
-Running FitCheck with the closet, search and stylist in Snowflake, while vision and try-on stay on hosted open weights.
+Running FitCheck with the closet, search and stylist in Snowflake, while vision and try-on stay on open-weight models outside it.
 _Avoid_: cloud mode, enterprise mode

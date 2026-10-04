@@ -49,7 +49,7 @@ db-down: ## Stop Postgres
 db-reset: ## Wipe Postgres data and start fresh; needed after a schema change
 	docker compose down -v && docker compose up -d postgres
 
-ollama-pull: ## Download the open-weight vision and chat model
+ollama-pull: ## Download an open-weight vision model to serve from this machine
 	ollama pull qwen3-vl:8b
 
 worker: ## Run the try-on GPU worker locally (needs a CUDA or Apple GPU)

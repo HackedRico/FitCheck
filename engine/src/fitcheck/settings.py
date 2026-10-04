@@ -6,7 +6,7 @@ from typing import Literal
 from pydantic import SecretStr
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
-from fitcheck.domain import Location
+from fitcheck.domain import Location, RunsOn
 
 # Repo root, so the demo closet resolves no matter which folder the server starts from
 _REPO_ROOT = Path(__file__).resolve().parents[3]
@@ -22,16 +22,19 @@ _REPO_ROOT = Path(__file__).resolve().parents[3]
 class Settings(BaseSettings):
     """Engine configuration; one field per env var `FITCHECK_<FIELD>`."""
 
-    model_config = SettingsConfigDict(env_prefix="FITCHECK_", env_file=".env", extra="ignore")
+    # An absolute path, so the CLI and the skill pick up engine/.env from any working folder
+    model_config = SettingsConfigDict(
+        env_prefix="FITCHECK_", env_file=_REPO_ROOT / "engine" / ".env", extra="ignore"
+    )
 
     # ---------- adapter slots ----------
     store: Literal["memory", "postgres", "snowflake"] = "memory"
-    tagger: Literal["fake", "ollama", "cortex"] = "fake"
+    tagger: Literal["fake", "openai_compat", "cortex"] = "fake"
     cutout: Literal["none", "rembg"] = "none"
     tryon: Literal["overlay", "remote", "hf_space"] = "overlay"
     weather: Literal["fixture", "open_meteo"] = "fixture"
     calendar: Literal["none", "fixture", "ics"] = "fixture"
-    stylist: Literal["template", "ollama", "cortex"] = "template"
+    stylist: Literal["template", "openai_compat", "cortex"] = "template"
 
     # ---------- engine ----------
     # Garment images only; person photos are never written here or anywhere else
@@ -46,21 +49,37 @@ class Settings(BaseSettings):
 
     # ---------- open path ----------
     database_url: str = "postgresql://fitcheck:fitcheck@localhost:5432/fitcheck"
-    ollama_host: str = "http://localhost:11434"
-    ollama_vision_model: str = "qwen3-vl:8b"
-    ollama_chat_model: str = "qwen3-vl:8b"
     tryon_worker_url: str | None = None
     tryon_worker_token: SecretStr | None = None
     # Public Hugging Face Space for try-on without a GPU; sends the person photo off this machine
     tryon_hf_space: str = "franciszzj/Leffa"
+    # Diffusion try-on takes seconds on a warm GPU and minutes on a cold Space or tunnel
+    tryon_timeout_s: float = 180.0
     # A private iCal address is a credential: anyone holding it can read the calendar
     calendar_ics_url: SecretStr | None = None
+
+    # ---------- OpenAI-compatible model endpoints ----------
+    # Any server speaking the OpenAI chat API works: Featherless, OpenRouter, Groq, or our
+    # own vLLM, llama.cpp or Ollama server (`http://localhost:11434/v1`). Vision and chat
+    # are separate so each can use the best open-weight model its host offers.
+    vision_base_url: str = "https://api.featherless.ai/v1"
+    vision_api_key: SecretStr | None = None
+    vision_model: str = "Qwen/Qwen2.5-VL-7B-Instruct"
+    # Where the vision model runs, for the pipeline panel; inferred from the URL when unset
+    vision_runs_on: RunsOn | None = None
+    chat_base_url: str = "https://api.featherless.ai/v1"
+    chat_api_key: SecretStr | None = None
+    chat_model: str = "Qwen/Qwen3-32B"
+    chat_runs_on: RunsOn | None = None
+    llm_timeout_s: float = 60.0
 
     # ---------- Snowflake path ----------
     snowflake_account: str | None = None
     snowflake_user: str | None = None
     snowflake_password: SecretStr | None = None
     snowflake_private_key_path: Path | None = None
+    # Set only when the key file is encrypted (`openssl pkcs8 -v2 aes-256-cbc`)
+    snowflake_private_key_passphrase: SecretStr | None = None
     snowflake_role: str | None = None
     snowflake_warehouse: str = "FITCHECK_WH"
     snowflake_database: str = "FITCHECK"

@@ -21,7 +21,7 @@ ADAPTERS: dict[str, dict[str, str]] = {
     },
     "tagger": {
         "fake": "fitcheck.vision.fake",
-        "ollama": "fitcheck.vision.ollama",
+        "openai_compat": "fitcheck.vision.openai_compat",
         "cortex": "fitcheck.vision.cortex",
     },
     "cutout": {
@@ -44,7 +44,7 @@ ADAPTERS: dict[str, dict[str, str]] = {
     },
     "stylist": {
         "template": "fitcheck.stylist.template",
-        "ollama": "fitcheck.stylist.ollama",
+        "openai_compat": "fitcheck.stylist.openai_compat",
         "cortex": "fitcheck.stylist.cortex",
     },
 }

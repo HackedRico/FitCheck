@@ -2,6 +2,7 @@ import { useState, type ReactNode } from "react";
 
 import { Icon } from "../components/Icons";
 import { PhotoBooth } from "../components/PhotoBooth";
+import { framePerson, isWellFramed } from "../lib/framePerson";
 import { useObjectUrl } from "../lib/objectUrl";
 import { useApp } from "../state/app";
 
@@ -16,6 +17,7 @@ import { useApp } from "../state/app";
 export function YouScreen(): ReactNode {
   const { person, flow, navigate, openSheet, settings } = useApp();
   const [booth, setBooth] = useState(false);
+  const [framing, setFraming] = useState<string | null>(null);
   const photoUrl = useObjectUrl(person.photo);
   const back = (): void => navigate(flow.frame ? "result" : "home");
 
@@ -26,6 +28,15 @@ export function YouScreen(): ReactNode {
         onPhoto={async (photo) => {
           await person.save(photo);
           setBooth(false);
+          // Check the photo the way the renderer will see it, so a bad one is caught now
+          const framed = await framePerson(photo).catch(() => null);
+          setFraming(
+            framed === null || isWellFramed(framed)
+              ? null
+              : framed.found
+                ? "You look small in this photo. Renders come out best when you fill the frame, head to knees."
+                : "We could not find you in this photo. Retake it standing, head to knees, facing the camera.",
+          );
           if (flow.scan.status === "done") {
             flow.requestRender(photo, "photo");
             navigate("result");
@@ -64,6 +75,7 @@ export function YouScreen(): ReactNode {
           renderer when a render runs. It is never saved there.
         </p>
         {person.storageError && <p className="fc-error">{person.storageError}</p>}
+        {framing && <p className="fc-warning">{framing}</p>}
       </div>
 
       <div className="fc-you-actions">

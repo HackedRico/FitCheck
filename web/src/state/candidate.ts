@@ -11,6 +11,7 @@ import {
   type Verdict,
   type WeekContext,
 } from "../api/client";
+import { framePerson } from "../lib/framePerson";
 import { regionFor } from "../lib/garments";
 import type { PipelineKind } from "./pipelines";
 
@@ -149,9 +150,17 @@ export function useCandidateFlow(deps: FlowDeps): Flow {
       await runStep(
         "render",
         async () => {
-          const out = await api.render(person, candidate.cutout, region);
+          // Try-on models need one person filling a portrait; a wide room shot makes them erase you
+          const framed = await framePerson(person).catch((error: unknown) => {
+            console.warn("[flow] Could not frame the person photo; sending it as is.", error);
+            return { image: person, found: true, fill: 1 };
+          });
+          if (!framed.found) {
+            throw new Error("No one is visible in your photo. Retake it on the You screen, head to knees.");
+          }
+          const out = await api.render(framed.image, candidate.cutout, region);
           depsRef.current.record("render", out.pipeline);
-          return { image: pngFromBase64(out.image_png_base64), person, cached: out.cached, origin };
+          return { image: pngFromBase64(out.image_png_base64), person: framed.image, cached: out.cached, origin };
         },
         isCurrent,
       );

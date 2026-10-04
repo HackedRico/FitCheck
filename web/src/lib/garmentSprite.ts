@@ -15,6 +15,8 @@ import { loadImagePoseLandmarker } from "./pose";
 // keeps only the "clothes" pixels, and Pose Landmarker finds where the model's
 // shoulders or hips were, so the live preview can map those joints onto the
 // owner's. Photos where no clothes are found fall back to `prepareCutout`.
+// `extractWornGarment` pulls a second piece out of an outfit photo, and only
+// when a wearer is visible.
 
 const SEGMENTER_URL =
   "https://storage.googleapis.com/mediapipe-models/image_segmenter/selfie_multiclass_256x256/float32/latest/selfie_multiclass_256x256.tflite";
@@ -57,6 +59,18 @@ export async function extractGarment(image: Blob, region: TryOnRegion): Promise<
     console.warn("[garment] On-device clothes segmentation failed; using the plain cutout.", error);
   }
   return { canvas: await prepareCutout(image), anchors: null };
+}
+
+/** The `region` garment a person wears in `image`, or `null` when nobody visibly wears one there. */
+export async function extractWornGarment(image: Blob, region: TryOnRegion): Promise<GarmentSprite | null> {
+  try {
+    const sprite = await cutWornGarment(await drawScaled(image), region);
+    // Without the wearer's joints there is no telling a worn piece from a stray patch of fabric
+    return sprite?.anchors ? sprite : null;
+  } catch (error) {
+    console.warn("[garment] On-device clothes segmentation failed.", error);
+    return null;
+  }
 }
 
 // -----------------------------------------------------------------

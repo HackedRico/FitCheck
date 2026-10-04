@@ -6,17 +6,19 @@ import { CameraCapture } from "../components/CameraCapture";
 import { GarmentThumb } from "../components/GarmentThumb";
 import { Icon } from "../components/Icons";
 import { useApp } from "../state/app";
+import { closetWearable, type Wearable } from "../state/outfit";
 
 // =============================================================================
 // Module Overview
 // =============================================================================
 // The owner's closet as a grid. Add one garment by shop link or photo, scan a
 // whole rack or closet in one photo (the engine finds, crops and tags each
-// garment), or delete everything, which takes a second tap to confirm.
+// garment), try any garment on in the live preview, or delete everything, which
+// takes a second tap to confirm.
 
 /** The closet grid with add and delete-all. */
 export function ClosetScreen(): ReactNode {
-  const { settings, pipelines, navigate, flow } = useApp();
+  const { settings, pipelines, navigate, flow, outfit } = useApp();
   const owner = settings.owner;
   const [garments, setGarments] = useState<Garment[] | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -71,6 +73,11 @@ export function ClosetScreen(): ReactNode {
     } finally {
       setScanning(false);
     }
+  };
+
+  const tryOn = (wearable: Wearable): void => {
+    outfit.wear(wearable);
+    navigate("live");
   };
 
   const forget = async (): Promise<void> => {
@@ -149,9 +156,19 @@ export function ClosetScreen(): ReactNode {
         </div>
       )}
       <div className="closet-grid">
-        {(garments ?? []).map((garment) => (
-          <GarmentThumb key={garment.id} owner={owner} garment={garment} />
-        ))}
+        {(garments ?? []).map((garment) => {
+          const wearable = closetWearable(owner, garment);
+          return (
+            <div key={garment.id} className="closet-item">
+              <GarmentThumb owner={owner} garment={garment} />
+              {wearable && (
+                <button type="button" className="fc-chip closet-tryon" onClick={() => tryOn(wearable)}>
+                  <Icon name="live" /> Try on
+                </button>
+              )}
+            </div>
+          );
+        })}
       </div>
       <AddGarmentSheet
         open={sheetOpen}

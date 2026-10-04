@@ -6,6 +6,9 @@ import os
 import pytest
 from PIL import Image
 
+# Shared test helpers live outside test modules; rewrite their asserts into readable failures
+pytest.register_assert_rewrite("support")
+
 # =============================================================================
 # Module Overview
 # =============================================================================

@@ -4,6 +4,7 @@ import re
 from threading import Lock
 
 from fitcheck.domain import AdapterInfo, Garment, RunsOn
+from fitcheck.errors import InvalidInput
 from fitcheck.seed import load_seed
 from fitcheck.settings import Settings
 
@@ -23,7 +24,7 @@ class MemoryClosetStore:
     info = AdapterInfo(name="memory-store", license="Apache-2.0", runs_on=RunsOn.THIS_MACHINE)
 
     def __init__(self, garments: list[Garment] | None = None) -> None:
-        # owner -> garment id -> garment; dicts keep insertion order, which is the "oldest first"
+        # owner -> garment id -> garment
         self._by_owner: dict[str, dict[str, Garment]] = {}
         # FastAPI runs sync routes on a thread pool, so writes can race
         self._lock = Lock()
@@ -32,7 +33,8 @@ class MemoryClosetStore:
 
     def garments(self, owner: str) -> list[Garment]:
         """Return every garment `owner` has, oldest first."""
-        return list(self._by_owner.get(owner, {}).values())
+        # Order by `created_at` like a database would; the id breaks ties so order is stable
+        return sorted(self._by_owner.get(owner, {}).values(), key=lambda g: (g.created_at, g.id))
 
     def get(self, owner: str, garment_id: str) -> Garment | None:
         """Return one garment, or `None`."""
@@ -45,6 +47,8 @@ class MemoryClosetStore:
 
     def search(self, owner: str, query: str, limit: int = 8) -> list[Garment]:
         """Rank `owner`'s garments by how many query words appear in their tags."""
+        if limit < 1:
+            raise InvalidInput(f"`limit` must be at least 1, got {limit}.")
         words = set(_WORD.findall(query.lower()))
         scored = [(_overlap(words, g), g) for g in self.garments(owner)]
         # Stable sort keeps closet order among ties, so results repeat run to run

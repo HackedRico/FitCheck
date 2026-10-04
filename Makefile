@@ -2,7 +2,7 @@
 .DEFAULT_GOAL := help
 ENGINE := cd engine &&
 
-.PHONY: help sync api api-open api-snowflake test test-live check fmt openapi web web-install db-up db-down ollama-pull worker
+.PHONY: help sync api api-open api-snowflake test test-live check fmt openapi web web-install db-up db-down db-reset ollama-pull worker
 
 help: ## List targets
 	@grep -E '^[a-z-]+:.*## ' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*## "}; {printf "  %-14s %s\n", $$1, $$2}'
@@ -45,6 +45,9 @@ db-up: ## Start Postgres for the open path
 
 db-down: ## Stop Postgres
 	docker compose down
+
+db-reset: ## Wipe Postgres data and start fresh; needed after a schema change
+	docker compose down -v && docker compose up -d postgres
 
 ollama-pull: ## Download the open-weight vision and chat model
 	ollama pull qwen3-vl:8b

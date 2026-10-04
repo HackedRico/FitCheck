@@ -94,7 +94,7 @@ export default function ProfilePage() {
           )}
           {profile.FAVORITE_COLORS && profile.FAVORITE_COLORS.length > 0 && (
             <div>
-              <p className="text-xs text-zinc-400 uppercase tracking-wide mb-1">Colors</p>
+              <p className="text-xs text-zinc-400 uppercase tracking-wide mb-1">Favorite Colors</p>
               <div className="flex flex-wrap gap-1.5">
                 {profile.FAVORITE_COLORS.map((c) => (
                   <span key={c} className="px-2 py-0.5 rounded-full text-xs bg-zinc-100 text-zinc-600">{c}</span>
@@ -102,8 +102,44 @@ export default function ProfilePage() {
               </div>
             </div>
           )}
+          {profile.AVOID_COLORS && profile.AVOID_COLORS.length > 0 && (
+            <div>
+              <p className="text-xs text-zinc-400 uppercase tracking-wide mb-1">Colors to Avoid</p>
+              <div className="flex flex-wrap gap-1.5">
+                {profile.AVOID_COLORS.map((c) => (
+                  <span key={c} className="px-2 py-0.5 rounded-full text-xs bg-red-50 text-red-500">{c}</span>
+                ))}
+              </div>
+            </div>
+          )}
+          {profile.FAVORITE_BRANDS && profile.FAVORITE_BRANDS.length > 0 && (
+            <div>
+              <p className="text-xs text-zinc-400 uppercase tracking-wide mb-1">Brands</p>
+              <div className="flex flex-wrap gap-1.5">
+                {profile.FAVORITE_BRANDS.map((b) => (
+                  <span key={b} className="px-2 py-0.5 rounded-full text-xs bg-violet-50 text-violet-600">{b}</span>
+                ))}
+              </div>
+            </div>
+          )}
           {profile.BUDGET_MIN != null && profile.BUDGET_MAX != null && (
             <p className="text-sm text-zinc-600">Budget: ${profile.BUDGET_MIN} – ${profile.BUDGET_MAX} per item</p>
+          )}
+          {(profile.SIZE_TOPS || profile.SIZE_BOTTOMS || profile.SIZE_SHOES) && (
+            <p className="text-sm text-zinc-600">
+              Sizes: {[
+                profile.SIZE_TOPS && `tops ${profile.SIZE_TOPS}`,
+                profile.SIZE_BOTTOMS && `bottoms ${profile.SIZE_BOTTOMS}`,
+                profile.SIZE_SHOES && `shoes ${profile.SIZE_SHOES}`,
+              ].filter(Boolean).join(' · ')}
+            </p>
+          )}
+          {(profile.BODY_TYPE || profile.SKIN_TONE || profile.GENDER) && (
+            <p className="text-sm text-zinc-600 capitalize">
+              {[profile.GENDER, profile.BODY_TYPE && `${profile.BODY_TYPE} build`, profile.SKIN_TONE && `${profile.SKIN_TONE} skin tone`]
+                .filter(Boolean)
+                .join(' · ')}
+            </p>
           )}
         </section>
       )}

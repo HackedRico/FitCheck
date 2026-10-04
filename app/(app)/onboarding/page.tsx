@@ -52,8 +52,8 @@ function Pill({ label, selected, onClick }: PillProps) {
       onClick={onClick}
       className={`rounded-full border px-4 py-1.5 text-sm font-medium capitalize transition-colors ${
         selected
-          ? 'border-violet-500 bg-violet-500/20 text-violet-300'
-          : 'border-zinc-700 bg-zinc-800 text-zinc-400 hover:border-zinc-500 hover:text-zinc-200'
+          ? 'border-violet-300 bg-violet-50 text-violet-700'
+          : 'border-zinc-200 bg-white text-zinc-500 hover:border-zinc-300 hover:text-zinc-700'
       }`}
     >
       {label}
@@ -72,11 +72,11 @@ interface SelectProps {
 function Select({ label, value, onChange, options, placeholder }: SelectProps) {
   return (
     <div className="flex flex-col gap-1.5">
-      <label className="text-sm font-medium text-zinc-300">{label}</label>
+      <label className="text-sm font-medium text-zinc-700">{label}</label>
       <select
         value={value}
         onChange={(e) => onChange(e.target.value)}
-        className="rounded-lg border border-zinc-700 bg-zinc-800 px-3 py-2 text-sm text-zinc-200 focus:border-violet-500 focus:outline-none"
+        className="rounded-lg border border-zinc-200 bg-white px-3 py-2 text-sm text-zinc-700 focus:border-violet-400 focus:outline-none"
       >
         {placeholder && (
           <option value="" disabled>
@@ -137,10 +137,10 @@ function Step1({
   return (
     <div className="flex flex-col gap-6">
       <div>
-        <h2 className="text-xl font-semibold text-zinc-100">
+        <h2 className="text-xl font-semibold text-zinc-900">
           Your style aesthetic
         </h2>
-        <p className="mt-1 text-sm text-zinc-400">
+        <p className="mt-1 text-sm text-zinc-500">
           Pick as many as feel like you.
         </p>
       </div>
@@ -173,14 +173,14 @@ function Step2({
   return (
     <div className="flex flex-col gap-8">
       <div>
-        <h2 className="text-xl font-semibold text-zinc-100">Colors</h2>
-        <p className="mt-1 text-sm text-zinc-400">
+        <h2 className="text-xl font-semibold text-zinc-900">Colors</h2>
+        <p className="mt-1 text-sm text-zinc-500">
           Select colors you love and colors you avoid.
         </p>
       </div>
 
       <div className="flex flex-col gap-3">
-        <p className="text-sm font-medium text-zinc-300">Favorite colors</p>
+        <p className="text-sm font-medium text-zinc-700">Favorite colors</p>
         <div className="flex flex-wrap gap-2">
           {COLOR_OPTIONS.map((c) => (
             <Pill
@@ -199,7 +199,7 @@ function Step2({
       </div>
 
       <div className="flex flex-col gap-3">
-        <p className="text-sm font-medium text-zinc-300">
+        <p className="text-sm font-medium text-zinc-700">
           Colors to avoid
         </p>
         <div className="flex flex-wrap gap-2">
@@ -256,16 +256,16 @@ function Step3({
   return (
     <div className="flex flex-col gap-8">
       <div>
-        <h2 className="text-xl font-semibold text-zinc-100">
+        <h2 className="text-xl font-semibold text-zinc-900">
           Brands &amp; budget
         </h2>
-        <p className="mt-1 text-sm text-zinc-400">
+        <p className="mt-1 text-sm text-zinc-500">
           Tell us which brands you love and how much you like to spend.
         </p>
       </div>
 
       <div className="flex flex-col gap-3">
-        <label className="text-sm font-medium text-zinc-300">
+        <label className="text-sm font-medium text-zinc-700">
           Favorite brands
         </label>
         <div className="flex gap-2">
@@ -282,7 +282,7 @@ function Step3({
               }
             }}
             placeholder="e.g. Zara, Levi's, Nike"
-            className="flex-1 rounded-lg border border-zinc-700 bg-zinc-800 px-3 py-2 text-sm text-zinc-200 placeholder:text-zinc-600 focus:border-violet-500 focus:outline-none"
+            className="flex-1 rounded-lg border border-zinc-200 bg-white px-3 py-2 text-sm text-zinc-700 placeholder:text-zinc-400 focus:border-violet-400 focus:outline-none"
           />
           <button
             type="button"
@@ -297,13 +297,13 @@ function Step3({
             {state.favorite_brands.map((b) => (
               <span
                 key={b}
-                className="flex items-center gap-1 rounded-full border border-violet-700 bg-violet-500/10 px-3 py-1 text-sm text-violet-300"
+                className="flex items-center gap-1 rounded-full border border-violet-200 bg-violet-50 px-3 py-1 text-sm text-violet-700"
               >
                 {b}
                 <button
                   type="button"
                   onClick={() => removeBrand(b)}
-                  className="ml-1 text-violet-400 hover:text-violet-200"
+                  className="ml-1 text-violet-400 hover:text-violet-600"
                   aria-label={`Remove ${b}`}
                 >
                   &times;
@@ -316,7 +316,7 @@ function Step3({
 
       <div className="flex flex-col gap-4">
         <div className="flex items-center justify-between">
-          <label className="text-sm font-medium text-zinc-300">Budget per item</label>
+          <label className="text-sm font-medium text-zinc-700">Budget per item</label>
           <span className="text-sm text-zinc-400">
             ${state.budget_min} – ${state.budget_max}
           </span>
@@ -380,8 +380,8 @@ function Step4({
   return (
     <div className="flex flex-col gap-8">
       <div>
-        <h2 className="text-xl font-semibold text-zinc-100">Your sizes</h2>
-        <p className="mt-1 text-sm text-zinc-400">
+        <h2 className="text-xl font-semibold text-zinc-900">Your sizes</h2>
+        <p className="mt-1 text-sm text-zinc-500">
           We use this to filter suggestions that actually fit.
         </p>
       </div>
@@ -430,11 +430,11 @@ function Step5({
   return (
     <div className="flex flex-col gap-8">
       <div>
-        <h2 className="text-xl font-semibold text-zinc-100">
+        <h2 className="text-xl font-semibold text-zinc-900">
           A little more about you{' '}
           <span className="text-zinc-500">(optional)</span>
         </h2>
-        <p className="mt-1 text-sm text-zinc-400">
+        <p className="mt-1 text-sm text-zinc-500">
           Helps us recommend outfits that flatter your look.
         </p>
       </div>
@@ -465,6 +465,34 @@ export default function OnboardingPage() {
   const [state, setState] = useState<FormState>(INITIAL_STATE)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+
+  useEffect(() => {
+    let cancelled = false
+    fetch('/api/taste-profile')
+      .then((r) => (r.ok ? (r.json() as Promise<TasteProfileRow>) : null))
+      .then((profile) => {
+        if (!profile || cancelled) return
+        setState((prev) => ({
+          ...prev,
+          style_aesthetics: profile.STYLE_AESTHETICS ?? [],
+          favorite_colors: profile.FAVORITE_COLORS ?? [],
+          avoid_colors: profile.AVOID_COLORS ?? [],
+          favorite_brands: profile.FAVORITE_BRANDS ?? [],
+          budget_min: profile.BUDGET_MIN ?? prev.budget_min,
+          budget_max: profile.BUDGET_MAX ?? prev.budget_max,
+          size_tops: profile.SIZE_TOPS ?? '',
+          size_bottoms: profile.SIZE_BOTTOMS ?? '',
+          size_shoes: profile.SIZE_SHOES ?? '',
+          gender: profile.GENDER ?? '',
+          body_type: profile.BODY_TYPE ?? '',
+          skin_tone: profile.SKIN_TONE ?? '',
+        }))
+      })
+      .catch(() => null)
+    return () => {
+      cancelled = true
+    }
+  }, [])
 
   function handleBack() {
     setError(null)
@@ -519,10 +547,10 @@ export default function OnboardingPage() {
   const progressPct = Math.round((step / TOTAL_STEPS) * 100)
 
   return (
-    <div className="flex min-h-screen flex-col items-center justify-center bg-zinc-950 px-4 py-12">
+    <div className="flex flex-col items-center px-4 py-12">
       <div className="w-full max-w-lg">
         <div className="mb-8 text-center">
-          <h1 className="text-3xl font-bold tracking-tight text-zinc-100">
+          <h1 className="text-3xl font-bold tracking-tight text-zinc-900">
             Build your taste profile
           </h1>
           <p className="mt-2 text-sm text-zinc-500">
@@ -530,14 +558,14 @@ export default function OnboardingPage() {
           </p>
         </div>
 
-        <div className="mb-8 h-1.5 w-full overflow-hidden rounded-full bg-zinc-800">
+        <div className="mb-8 h-1.5 w-full overflow-hidden rounded-full bg-zinc-100">
           <div
             className="h-full rounded-full bg-violet-500 transition-all duration-300"
             style={{ width: `${progressPct}%` }}
           />
         </div>
 
-        <div className="rounded-2xl border border-zinc-800 bg-zinc-900 p-8 shadow-xl">
+        <div className="rounded-2xl border border-zinc-200 bg-white p-8 shadow-sm">
           {step === 1 && <Step1 state={state} setState={setState} />}
           {step === 2 && <Step2 state={state} setState={setState} />}
           {step === 3 && <Step3 state={state} setState={setState} />}
@@ -545,7 +573,7 @@ export default function OnboardingPage() {
           {step === 5 && <Step5 state={state} setState={setState} />}
 
           {error && (
-            <p className="mt-6 rounded-lg border border-red-800 bg-red-950/40 px-4 py-2 text-sm text-red-400">
+            <p className="mt-6 rounded-lg border border-red-200 bg-red-50 px-4 py-2 text-sm text-red-600">
               {error}
             </p>
           )}
@@ -555,7 +583,7 @@ export default function OnboardingPage() {
               type="button"
               onClick={handleBack}
               disabled={step === 1}
-              className="rounded-lg border border-zinc-700 px-5 py-2 text-sm font-medium text-zinc-400 transition-colors hover:border-zinc-500 hover:text-zinc-200 disabled:cursor-not-allowed disabled:opacity-30"
+              className="rounded-lg border border-zinc-200 px-5 py-2 text-sm font-medium text-zinc-500 transition-colors hover:border-zinc-300 hover:text-zinc-700 disabled:cursor-not-allowed disabled:opacity-30"
             >
               Back
             </button>

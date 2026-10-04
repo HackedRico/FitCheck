@@ -36,13 +36,13 @@ export default function LoginPage() {
 
   return (
     <div className="w-full max-w-sm mx-4">
-      <div className="bg-neutral-900 border border-neutral-800 rounded-2xl px-8 py-10 shadow-xl">
-        <h1 className="text-2xl font-semibold text-white mb-1">Welcome back</h1>
-        <p className="text-neutral-400 text-sm mb-8">Sign in to your FitCheck account.</p>
+      <div className="bg-white border border-zinc-200 rounded-2xl px-8 py-10 shadow-sm">
+        <h1 className="text-2xl font-semibold text-zinc-900 mb-1">Welcome back</h1>
+        <p className="text-zinc-500 text-sm mb-8">Sign in to your FitCheck account.</p>
 
         <form onSubmit={handleSubmit} className="space-y-5">
           <div>
-            <label htmlFor="email" className="block text-sm font-medium text-neutral-300 mb-1.5">
+            <label htmlFor="email" className="block text-sm font-medium text-zinc-700 mb-1.5">
               Email
             </label>
             <input
@@ -52,13 +52,13 @@ export default function LoginPage() {
               required
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              className="w-full rounded-lg bg-neutral-800 border border-neutral-700 text-white placeholder-neutral-500 px-3.5 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition"
+              className="w-full rounded-lg bg-white border border-zinc-200 text-zinc-900 placeholder-zinc-400 px-3.5 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-zinc-400 focus:border-transparent transition"
               placeholder="you@example.com"
             />
           </div>
 
           <div>
-            <label htmlFor="password" className="block text-sm font-medium text-neutral-300 mb-1.5">
+            <label htmlFor="password" className="block text-sm font-medium text-zinc-700 mb-1.5">
               Password
             </label>
             <input
@@ -68,13 +68,13 @@ export default function LoginPage() {
               required
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              className="w-full rounded-lg bg-neutral-800 border border-neutral-700 text-white placeholder-neutral-500 px-3.5 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition"
+              className="w-full rounded-lg bg-white border border-zinc-200 text-zinc-900 placeholder-zinc-400 px-3.5 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-zinc-400 focus:border-transparent transition"
               placeholder="••••••••"
             />
           </div>
 
           {error && (
-            <p className="text-sm text-red-400 bg-red-950/40 border border-red-900/50 rounded-lg px-3 py-2">
+            <p className="text-sm text-red-600 bg-red-50 border border-red-200 rounded-lg px-3 py-2">
               {error}
             </p>
           )}
@@ -82,15 +82,15 @@ export default function LoginPage() {
           <button
             type="submit"
             disabled={loading}
-            className="w-full rounded-lg bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed text-white font-medium py-2.5 text-sm transition-colors"
+            className="w-full rounded-lg bg-zinc-900 hover:bg-zinc-700 disabled:opacity-50 disabled:cursor-not-allowed text-white font-medium py-2.5 text-sm transition-colors"
           >
             {loading ? 'Signing in…' : 'Sign in'}
           </button>
         </form>
 
-        <p className="mt-6 text-center text-sm text-neutral-500">
+        <p className="mt-6 text-center text-sm text-zinc-500">
           Don&apos;t have an account?{' '}
-          <Link href="/register" className="text-indigo-400 hover:text-indigo-300 transition-colors">
+          <Link href="/register" className="text-violet-600 hover:text-violet-500 transition-colors">
             Create one
           </Link>
         </p>

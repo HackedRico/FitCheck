@@ -1,7 +1,6 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { useRouter } from 'next/navigation'
 import type { CalendarEvent } from '@/types'
 
 const FORMALITY_STYLES: Record<string, string> = {
@@ -14,18 +13,12 @@ const FORMALITY_STYLES: Record<string, string> = {
 function formatEventTime(iso: string): string {
   const date = new Date(iso)
   if (Number.isNaN(date.getTime())) return ''
-  const today = new Date()
-  const sameDay = date.toDateString() === today.toDateString()
-  const time = date.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })
-  if (sameDay) return `Today ${time}`
-  return `${date.toLocaleDateString([], { weekday: 'short' })} ${time}`
+  return date.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })
 }
 
 export default function EventsCard() {
   const [events, setEvents] = useState<CalendarEvent[]>([])
   const [loaded, setLoaded] = useState(false)
-  const [dressing, setDressing] = useState<string | null>(null)
-  const router = useRouter()
 
   useEffect(() => {
     let cancelled = false
@@ -43,27 +36,21 @@ export default function EventsCard() {
     }
   }, [])
 
-  async function dressFor(event: CalendarEvent) {
-    setDressing(event.title)
-    try {
-      await fetch('/api/outfit/generate', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ occasion: `${event.title} (${event.formality})` }),
-      })
-      router.refresh()
-    } finally {
-      setDressing(null)
-    }
-  }
-
   if (!loaded || events.length === 0) return null
 
   return (
     <div className="rounded-2xl border border-zinc-200 bg-white p-5">
-      <h2 className="text-base font-semibold text-zinc-900">On Your Calendar</h2>
-      <p className="text-xs text-zinc-400 mt-0.5 mb-3">
-        Get an outfit styled for a specific event.
+      <div className="flex items-center gap-2">
+        <h2 className="text-base font-semibold text-zinc-900">Today&apos;s Schedule</h2>
+        <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2 py-0.5 text-[11px] font-medium text-emerald-700">
+          <svg className="h-3 w-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+            <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+          </svg>
+          Styled in
+        </span>
+      </div>
+      <p className="text-xs text-zinc-400 mt-0.5 mb-2">
+        Today&apos;s fit already accounts for what&apos;s on your calendar.
       </p>
       <ul className="divide-y divide-zinc-100">
         {events.map((event) => (
@@ -79,13 +66,6 @@ export default function EventsCard() {
             >
               {event.formality}
             </span>
-            <button
-              onClick={() => dressFor(event)}
-              disabled={dressing !== null}
-              className="shrink-0 rounded-full border border-zinc-300 px-3 py-1.5 text-xs font-medium text-zinc-700 hover:bg-zinc-50 disabled:opacity-50 transition-colors"
-            >
-              {dressing === event.title ? 'Styling…' : 'Dress for this'}
-            </button>
           </li>
         ))}
       </ul>

@@ -3,6 +3,7 @@ import { authOptions } from '@/lib/auth'
 import { query } from '@/lib/snowflake'
 import { generateOutfit, generateShoppingSuggestions } from '@/lib/cortex'
 import { getWeather } from '@/lib/weather'
+import { getTodaysEvents, occasionFromEvents } from '@/lib/calendar'
 import type {
   ClosetItemRow,
   TasteProfileRow,
@@ -63,8 +64,14 @@ function ensureCompleteOutfit(
 
 async function generateAndPersist(
   userId: string,
-  occasion: string = 'daily'
+  requestedOccasion: string = 'daily'
 ): Promise<Response> {
+  let occasion = requestedOccasion
+  if (requestedOccasion === 'daily') {
+    const eventOccasion = occasionFromEvents(await getTodaysEvents())
+    if (eventOccasion) occasion = eventOccasion
+  }
+
   const userRows = await query<{
     LOCATION_LAT: number | null
     LOCATION_LNG: number | null

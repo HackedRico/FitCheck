@@ -2,9 +2,8 @@ import { getServerSession } from 'next-auth'
 import { cookies } from 'next/headers'
 import { redirect } from 'next/navigation'
 import { authOptions } from '@/lib/auth'
-import type { OutfitRow, ClosetItemRow, WeatherContext, ShoppingSuggestion } from '@/types'
+import type { OutfitRow, ClosetItemRow, WeatherContext } from '@/types'
 import OutfitCard from '@/components/OutfitCard'
-import ShoppingCard from '@/components/ShoppingCard'
 import RegenerateButton from '@/components/RegenerateButton'
 import TryOnCard from '@/components/TryOnCard'
 import EventsCard from '@/components/EventsCard'
@@ -12,7 +11,6 @@ import EventsCard from '@/components/EventsCard'
 interface OutfitPayload {
   outfit: OutfitRow
   items: ClosetItemRow[]
-  suggestions: ShoppingSuggestion[]
   weather: WeatherContext
 }
 
@@ -90,7 +88,7 @@ export default async function DashboardPage() {
     )
   }
 
-  const { outfit, items, suggestions, weather } = result.data
+  const { outfit, items, weather } = result.data
 
   return (
     <div className="max-w-2xl mx-auto px-4 py-8 space-y-6">
@@ -109,6 +107,8 @@ export default async function DashboardPage() {
         <RegenerateButton />
       </div>
 
+      <EventsCard />
+
       <OutfitCard
         items={items}
         rationale={outfit.AI_RATIONALE ?? ''}
@@ -116,28 +116,22 @@ export default async function DashboardPage() {
         outfitId={outfit.ID}
       />
 
-      <EventsCard />
-
       <TryOnCard outfitId={outfit.ID} />
 
-      {suggestions && suggestions.length > 0 && (
-        <section>
-          <div className="flex items-baseline justify-between py-2">
-            <h2 className="text-base font-semibold text-zinc-900">Shop the Look</h2>
-            <span className="text-xs text-zinc-400">
-              {suggestions.length} picks · online &amp; in-store
-            </span>
-          </div>
-          <p className="text-xs text-zinc-400 mb-3 -mt-1">
-            Pieces that complete this outfit — buy online or find them at a store near you.
+      <a
+        href="/shop"
+        className="flex items-center justify-between rounded-2xl border border-zinc-200 bg-white p-5 hover:border-zinc-300 transition-colors"
+      >
+        <div>
+          <h2 className="text-base font-semibold text-zinc-900">Need something new?</h2>
+          <p className="text-xs text-zinc-400 mt-0.5">
+            The shopping assistant finds pieces for you — online or at your favorite stores.
           </p>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            {suggestions.map((s, i) => (
-              <ShoppingCard key={`${s.name}-${i}`} suggestion={s} />
-            ))}
-          </div>
-        </section>
-      )}
+        </div>
+        <svg className="h-5 w-5 shrink-0 text-zinc-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+          <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+        </svg>
+      </a>
     </div>
   )
 }

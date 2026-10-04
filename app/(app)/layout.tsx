@@ -42,6 +42,12 @@ export default async function AppLayout({ children }: { children: React.ReactNod
               In Store
             </a>
             <Link
+              href="/shop"
+              className="rounded-full px-4 py-2 text-sm font-medium text-zinc-600 hover:bg-zinc-100 hover:text-zinc-900 transition-colors"
+            >
+              Shop
+            </Link>
+            <Link
               href="/profile"
               className="rounded-full px-4 py-2 text-sm font-medium text-zinc-600 hover:bg-zinc-100 hover:text-zinc-900 transition-colors"
             >

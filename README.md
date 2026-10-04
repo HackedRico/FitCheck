@@ -4,16 +4,25 @@ A second opinion in the fitting-room line. Point your phone at a garment, see it
 
 Garment vision and chat run on open-weight models (Apache 2.0) through any OpenAI-compatible host, including your own server. Your body photo goes only to the try-on renderer and is never stored.
 
+## Prerequisites
+
+- [uv](https://docs.astral.sh/uv/) for the engine (`brew install uv` on macOS). It fetches Python 3.12 itself if you don't have it.
+- Node.js 20.19+ or 22.12+ with npm, for the web app.
+- `make`, which ships with macOS and Linux.
+
+The offline flow needs nothing else. The open path (`make api-open`) also needs Docker for Postgres (`make db-up`) and a running try-on worker (see `worker/README.md`). The Snowflake path needs a Snowflake account (see `docs/snowflake.md`).
+
 ## Run it
 
 ```bash
 make sync          # engine dependencies
-make api           # engine on :8000, offline: fakes, demo closet, demo week
-make web-install
-make web           # https://localhost:5173, or the network URL on your phone
+make web-install   # web app dependencies
+make dev           # engine on :8000 and web app on :5173 together; Ctrl+C stops both
 ```
 
-With nothing configured the whole flow runs offline. Closets, and the photos and shop links people add, are saved in `.fitcheck/` (a SQLite file plus the garment images), so they survive restarts; delete that folder to start from the demo closet again. To use real models, copy `engine/.env.example` to `engine/.env` and set the keys; `env/open.env` and `env/snowflake.env` switch every slot at once (`make api-open`, `make api-snowflake`).
+Or run them in two terminals with `make api` and `make web`. Open https://localhost:5173 and accept the self-signed certificate once. On your phone, use the Network URL Vite prints, on the same Wi-Fi; the camera only works over https.
+
+With nothing configured the whole flow runs offline. Closets, and the photos and shop links people add, are saved in `.fitcheck/` (a SQLite file plus the garment images), so they survive restarts; delete that folder to start from the demo closet again. To use real models, copy `engine/.env.example` to `engine/.env` and set the keys, then start the engine with `make api-open` or `make api-snowflake`. Keys alone don't switch anything: those targets load `env/open.env` or `env/snowflake.env`, which move every slot off the fakes at once.
 
 ## How it decides
 

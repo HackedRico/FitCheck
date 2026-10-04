@@ -1110,16 +1110,16 @@ body {
     margin-top: 0;
   }
 
-  /* Line the dock up under the right column of the page */
+  /* The dock spans both columns, so its content sits in the middle of the screen */
   .fc-dock {
     max-width: none;
-    grid-template-columns: minmax(0, 540px);
-    justify-content: end;
-    padding-right: max(var(--gutter), calc((100vw - 1160px) / 2 + var(--gutter)));
+    grid-template-columns: minmax(0, 640px);
+    justify-content: center;
   }
 
   .fc-chat-prompts {
     flex-wrap: wrap;
+    justify-content: center;
     margin: 0;
     padding: 0;
   }

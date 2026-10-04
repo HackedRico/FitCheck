@@ -77,7 +77,7 @@ class OpenAICompatTagger:
             return parse_tags(self._ask(messages))
 
     def find_all(self, image_png: bytes) -> list[FoundGarment]:
-        """Find every garment in a rack or closet photo; retry once if the answer is unusable."""
+        """Find every garment in a rack or closet photo; ask again once on a bad or empty answer."""
         image = images.flatten(images.open_image(image_png), BACKDROP)
         jpeg = images.encode_jpeg(images.fit_within(image, FIND_ALL_MAX_SIDE_PX))
         data_url = f"data:image/jpeg;base64,{base64.b64encode(jpeg).decode('ascii')}"
@@ -93,16 +93,21 @@ class OpenAICompatTagger:
         schema = found_json_schema()
         text = self._ask(messages, schema, "closet_scan", FIND_ALL_MAX_TOKENS)
         try:
-            return parse_found(text)
+            found = parse_found(text)
+            if found:
+                return found
+            # Hosted models sometimes answer an empty list for a photo full of clothes
+            nudge = (
+                "You listed no garments. Look again: list every clothing item you can see, "
+                "worn by a person or hanging or lying, each with its own box."
+            )
         except TaggingFailed as first:
-            messages += [
-                {"role": "assistant", "content": text},
-                {
-                    "role": "user",
-                    "content": f"That answer was invalid: {first}. Reply with only the JSON.",
-                },
-            ]
-            return parse_found(self._ask(messages, schema, "closet_scan", FIND_ALL_MAX_TOKENS))
+            nudge = f"That answer was invalid: {first}. Reply with only the JSON."
+        messages += [
+            {"role": "assistant", "content": text},
+            {"role": "user", "content": nudge},
+        ]
+        return parse_found(self._ask(messages, schema, "closet_scan", FIND_ALL_MAX_TOKENS))
 
     def _ask(
         self,

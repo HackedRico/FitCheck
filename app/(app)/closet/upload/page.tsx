@@ -103,7 +103,6 @@ export default function UploadPage() {
           </div>
 
           <div className="aspect-square w-full overflow-hidden rounded-2xl bg-zinc-900">
-            {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
               src={item.THUMBNAIL_URL ?? item.IMAGE_URL}
               alt="Uploaded item"
@@ -198,7 +197,6 @@ export default function UploadPage() {
           </div>
         ) : state.stage === 'preview' ? (
           <div className="relative aspect-square w-full overflow-hidden rounded-2xl bg-zinc-900">
-            {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
               src={state.objectUrl}
               alt="Preview"

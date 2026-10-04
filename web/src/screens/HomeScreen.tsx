@@ -109,6 +109,7 @@ export function HomeScreen(): ReactNode {
 
       <AddGarmentSheet
         open={adding}
+        camera={false}
         onClose={() => setAdding(false)}
         onGarment={(image) => {
           setAdding(false);

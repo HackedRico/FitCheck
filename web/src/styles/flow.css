@@ -1645,3 +1645,10 @@ body {
   line-height: 1.45;
   text-align: left;
 }
+
+/* ---------- in-app camera for garment photos and closet scans ---------- */
+
+/* Above the add sheet and the settings sheets it can open from */
+.fc-capture {
+  z-index: 60;
+}

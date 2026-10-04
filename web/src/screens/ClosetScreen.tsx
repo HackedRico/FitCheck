@@ -1,10 +1,10 @@
-import { useCallback, useEffect, useRef, useState, type ChangeEvent, type ReactNode } from "react";
+import { useCallback, useEffect, useState, type ReactNode } from "react";
 
 import { api, errorMessage, type Garment } from "../api/client";
 import { AddGarmentSheet } from "../components/AddGarmentSheet";
+import { CameraCapture } from "../components/CameraCapture";
 import { GarmentThumb } from "../components/GarmentThumb";
 import { Icon } from "../components/Icons";
-import { shrinkImage } from "../lib/camera";
 import { useApp } from "../state/app";
 
 // =============================================================================
@@ -25,7 +25,7 @@ export function ClosetScreen(): ReactNode {
   const [sheetOpen, setSheetOpen] = useState(false);
   const [scanning, setScanning] = useState(false);
   const [notice, setNotice] = useState<string | null>(null);
-  const scanRef = useRef<HTMLInputElement | null>(null);
+  const [shooting, setShooting] = useState(false);
 
   const load = useCallback(() => {
     setError(null);
@@ -52,15 +52,13 @@ export function ClosetScreen(): ReactNode {
     }
   };
 
-  const scan = async (event: ChangeEvent<HTMLInputElement>): Promise<void> => {
-    const file = event.target.files?.[0];
-    event.target.value = "";
-    if (!file) return;
+  const scan = async (photo: Blob): Promise<void> => {
+    setShooting(false);
     setScanning(true);
     setError(null);
     setNotice(null);
     try {
-      const out = await api.scanCloset(owner, await shrinkImage(file));
+      const out = await api.scanCloset(owner, photo);
       pipelines.record("closet", out.pipeline);
       setGarments((current) => [...out.garments, ...(current ?? [])]);
       setNotice(
@@ -118,11 +116,10 @@ export function ClosetScreen(): ReactNode {
             type="button"
             className="fc-btn is-ghost"
             disabled={adding || scanning}
-            onClick={() => scanRef.current?.click()}
+            onClick={() => setShooting(true)}
           >
             {scanning ? <span className="spinner" /> : <Icon name="camera" />} {scanning ? "Finding garments" : "Scan your closet"}
           </button>
-          <input ref={scanRef} type="file" accept="image/*" capture="environment" hidden onChange={(e) => void scan(e)} />
           <button
             type="button"
             className={`fc-btn is-danger${armed ? " is-armed" : ""}`}
@@ -164,6 +161,14 @@ export function ClosetScreen(): ReactNode {
         linkLabel="Bought it online? Paste the product link"
         busy={adding}
       />
+      {shooting && (
+        <CameraCapture
+          title="Scan your closet"
+          hint="Fit the whole rack in, clothes spread out"
+          onCancel={() => setShooting(false)}
+          onPhoto={(photo) => void scan(photo)}
+        />
+      )}
     </section>
   );
 }

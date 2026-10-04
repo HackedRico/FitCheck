@@ -3,14 +3,15 @@ import { useEffect, useRef, useState, type ChangeEvent, type FormEvent, type Rea
 import { api, errorMessage, pngFromBase64 } from "../api/client";
 import { shrinkImage } from "../lib/camera";
 import { useApp } from "../state/app";
+import { CameraCapture } from "./CameraCapture";
 import { Icon } from "./Icons";
 
 // =============================================================================
 // Module Overview
 // =============================================================================
 // Every way to bring a garment in besides the live camera: a link to a shop page
-// or image, a photo taken now, or one from the device. Each hands one garment
-// image to `onGarment`; the camera screen judges it, the closet stores it.
+// or image, a photo taken now in the in-app camera, or one from the device. Each
+// hands one garment image to `onGarment`; the camera screen judges it, the closet stores it.
 
 interface AddGarmentSheetProps {
   open: boolean;
@@ -21,6 +22,8 @@ interface AddGarmentSheetProps {
   linkLabel?: string;
   // Shown while the caller is still handling the garment, such as tagging it for the closet
   busy?: boolean;
+  // Off where a live camera is already behind the sheet, since a second stream freezes the first on iOS
+  camera?: boolean;
 }
 
 /** Paste a shop link, take a photo, or choose one, to bring in a garment. */
@@ -31,19 +34,21 @@ export function AddGarmentSheet({
   title = "Judge a garment",
   linkLabel = "Shopping online? Paste the product link",
   busy: callerBusy = false,
+  camera = true,
 }: AddGarmentSheetProps): ReactNode {
   const { pipelines } = useApp();
   const [url, setUrl] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [shooting, setShooting] = useState(false);
   const fileRef = useRef<HTMLInputElement | null>(null);
-  const cameraRef = useRef<HTMLInputElement | null>(null);
   const inputRef = useRef<HTMLInputElement | null>(null);
 
   useEffect(() => {
     if (!open) {
       setError(null);
       setBusy(false);
+      setShooting(false);
     }
   }, [open]);
 
@@ -121,17 +126,28 @@ export function AddGarmentSheet({
         <div className="fc-or">or</div>
 
         <div className="fc-addsheet-photos">
-          <button type="button" className="fc-btn is-ghost" disabled={callerBusy} onClick={() => cameraRef.current?.click()}>
-            <Icon name="camera" /> Take a photo
-          </button>
+          {camera && (
+            <button type="button" className="fc-btn is-ghost" disabled={callerBusy} onClick={() => setShooting(true)}>
+              <Icon name="camera" /> Take a photo
+            </button>
+          )}
           <button type="button" className="fc-btn is-ghost" disabled={callerBusy} onClick={() => fileRef.current?.click()}>
             <Icon name="upload" /> Choose a photo
           </button>
         </div>
-        {/* `capture` opens the rear camera on phones; desktops fall back to a file picker */}
-        <input ref={cameraRef} type="file" accept="image/*" capture="environment" hidden onChange={(event) => void pick(event)} />
         <input ref={fileRef} type="file" accept="image/*" hidden onChange={(event) => void pick(event)} />
       </section>
+      {shooting && (
+        <CameraCapture
+          title="Photo of the garment"
+          hint="Lay the garment flat or hold it up, filling the frame"
+          onCancel={() => setShooting(false)}
+          onPhoto={(photo) => {
+            setShooting(false);
+            onGarment(photo);
+          }}
+        />
+      )}
     </div>
   );
 }

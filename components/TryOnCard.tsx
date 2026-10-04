@@ -1,28 +1,36 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
+
+type Region = 'upper' | 'lower' | 'full'
+
+interface Garment {
+  region: Region
+  label: string
+  image: string
+}
+
+async function dataUrlToBlob(dataUrl: string): Promise<Blob> {
+  const res = await fetch(dataUrl)
+  return res.blob()
+}
+
+async function serverRender(person: File, fields: Record<string, string>): Promise<string> {
+  const form = new FormData()
+  form.append('person', person)
+  for (const [k, v] of Object.entries(fields)) form.append(k, v)
+  const res = await fetch('/api/tryon', { method: 'POST', body: form })
+  const data = (await res.json()) as { image?: string; error?: string }
+  if (!res.ok || !data.image) throw new Error(data.error ?? 'Try-on failed')
+  return data.image
+}
 
 export default function TryOnCard({ outfitId }: { outfitId: string }) {
   const [personFile, setPersonFile] = useState<File | null>(null)
   const [personPreview, setPersonPreview] = useState<string | null>(null)
-
-  useEffect(() => {
-    let cancelled = false
-    fetch('/demo-person.jpg')
-      .then((r) => (r.ok ? r.blob() : null))
-      .then((blob) => {
-        if (!blob || cancelled) return
-        const file = new File([blob], 'demo-person.jpg', { type: 'image/jpeg' })
-        setPersonFile((prev) => prev ?? file)
-        setPersonPreview((prev) => prev ?? URL.createObjectURL(blob))
-      })
-      .catch(() => null)
-    return () => {
-      cancelled = true
-    }
-  }, [])
   const [link, setLink] = useState('')
   const [result, setResult] = useState<string | null>(null)
+  const [status, setStatus] = useState<string | null>(null)
   const [loading, setLoading] = useState<'outfit' | 'link' | null>(null)
   const [error, setError] = useState<string | null>(null)
 
@@ -46,19 +54,45 @@ export default function TryOnCard({ outfitId }: { outfitId: string }) {
     }
     setLoading(mode)
     setError(null)
-    const form = new FormData()
-    form.append('person', personFile)
-    if (mode === 'outfit') form.append('outfitId', outfitId)
-    else form.append('link', link.trim())
+    setResult(null)
     try {
-      const res = await fetch('/api/tryon', { method: 'POST', body: form })
-      const data = (await res.json()) as { image?: string; error?: string }
-      if (!res.ok || !data.image) throw new Error(data.error ?? 'Try-on failed')
-      setResult(data.image)
+      setStatus('Preparing garments…')
+      const res = await fetch('/api/tryon/garments', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(mode === 'outfit' ? { outfitId } : { link: link.trim() }),
+      })
+      const data = (await res.json()) as { garments?: Garment[]; error?: string }
+      if (!res.ok || !data.garments?.length) throw new Error(data.error ?? 'Try-on failed')
+
+      setStatus('Finding your shoulders and hips…')
+      const { compositeOnPerson } = await import('@/lib/tryon/composite')
+      let current: Blob = personFile
+      let fitted = 0
+      for (const garment of data.garments) {
+        setStatus(`Fitting ${garment.label}…`)
+        const next = await compositeOnPerson(current, await dataUrlToBlob(garment.image), garment.region)
+        if (next) {
+          current = next
+          fitted += 1
+        }
+      }
+
+      if (fitted === 0) {
+        setStatus('No body found in the photo, using the engine preview…')
+        const image = await serverRender(
+          personFile,
+          mode === 'outfit' ? { outfitId } : { link: link.trim() }
+        )
+        setResult(image)
+      } else {
+        setResult(URL.createObjectURL(current))
+      }
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Try-on failed')
     } finally {
       setLoading(null)
+      setStatus(null)
     }
   }
 
@@ -67,8 +101,8 @@ export default function TryOnCard({ outfitId }: { outfitId: string }) {
       <div>
         <h2 className="text-base font-semibold text-zinc-900">Try It On</h2>
         <p className="text-xs text-zinc-400 mt-0.5">
-          See today&apos;s fit or a shop item on your own photo. Your photo never
-          leaves this device except for the render and is never stored.
+          See today&apos;s fit or a shop item on your own photo. Fitting runs in your
+          browser; your photo is never stored.
         </p>
       </div>
 
@@ -79,12 +113,7 @@ export default function TryOnCard({ outfitId }: { outfitId: string }) {
           ) : (
             <span className="px-2">Add full-body photo</span>
           )}
-          <input
-            type="file"
-            accept="image/*"
-            className="hidden"
-            onChange={onPhotoChange}
-          />
+          <input type="file" accept="image/*" className="hidden" onChange={onPhotoChange} />
         </label>
 
         <div className="flex-1 space-y-3">
@@ -93,7 +122,7 @@ export default function TryOnCard({ outfitId }: { outfitId: string }) {
             disabled={loading !== null}
             className="w-full rounded-full bg-zinc-900 px-4 py-2.5 text-sm font-medium text-white hover:bg-zinc-700 disabled:opacity-50 transition-colors"
           >
-            {loading === 'outfit' ? 'Rendering…' : "Try On Today's Outfit"}
+            {loading === 'outfit' ? status ?? 'Fitting…' : "Try On Today's Outfit"}
           </button>
 
           <div className="flex gap-2">

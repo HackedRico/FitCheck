@@ -1,0 +1,129 @@
+import { useEffect, useRef, useState, type FormEvent, type ReactNode } from "react";
+
+import { api, errorMessage, type ChatTurn } from "../api/client";
+import { useApp } from "../state/app";
+import { Icon } from "./Icons";
+
+// =============================================================================
+// Module Overview
+// =============================================================================
+// The stylist, inline at the foot of a result. Each message goes to `/chat` with
+// the history, the candidate and its verdict; the stylist explains the verdict
+// and never changes it. A reply that asks for a render starts one on the person
+// photo and calls `onRender` so the page can scroll up to it.
+
+const PROMPTS = ["Why this verdict?", "What do I wear it with?", "Will it work this week?"];
+
+/** Chat with the stylist about the current candidate. */
+export function StylistChat({ onRender }: { onRender: () => void }): ReactNode {
+  const { flow, settings, location, person, pipelines, navigate } = useApp();
+  const [history, setHistory] = useState<ChatTurn[]>([]);
+  const [draft, setDraft] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const endRef = useRef<HTMLDivElement | null>(null);
+
+  // A new scan is a new conversation
+  useEffect(() => {
+    setHistory([]);
+    setError(null);
+  }, [flow.id]);
+
+  useEffect(() => {
+    if (history.length > 0) endRef.current?.scrollIntoView({ behavior: "smooth", block: "nearest" });
+  }, [history.length, busy]);
+
+  const candidate = flow.scan.status === "done" ? flow.scan.value.tags : null;
+  const verdict = flow.judge.status === "done" ? flow.judge.value.verdict : null;
+
+  const send = async (message: string): Promise<void> => {
+    const text = message.trim();
+    if (!text || busy) return;
+    setDraft("");
+    setBusy(true);
+    setError(null);
+    const before = history;
+    setHistory([...before, { role: "user", text }]);
+    try {
+      const out = await api.chat({
+        owner: settings.owner,
+        message: text,
+        history: before,
+        candidate,
+        verdict,
+        location: location.location,
+      });
+      pipelines.record("chat", out.pipeline);
+      setHistory((turns) => [...turns, { role: "stylist", text: out.reply.text }]);
+      if (out.reply.render) {
+        if (person.photo) {
+          flow.requestRender(person.photo, "stylist");
+          onRender();
+        } else {
+          setError("The stylist wants to show you. Add your photo first.");
+        }
+      }
+    } catch (cause) {
+      setError(errorMessage(cause));
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const submit = (event: FormEvent): void => {
+    event.preventDefault();
+    void send(draft);
+  };
+
+  return (
+    <div className="fc-chat">
+      {history.length === 0 && (
+        <div className="fc-chat-prompts">
+          {PROMPTS.map((prompt) => (
+            <button key={prompt} type="button" className="fc-chip" disabled={busy} onClick={() => void send(prompt)}>
+              {prompt}
+            </button>
+          ))}
+        </div>
+      )}
+      {history.length > 0 && (
+        <ol className="fc-chat-log">
+          {history.map((turn, i) => (
+            <li key={i} className={`fc-bubble is-${turn.role}`}>
+              {turn.text}
+            </li>
+          ))}
+          {busy && (
+            <li className="fc-bubble is-stylist is-typing" aria-label="The stylist is typing">
+              <i />
+              <i />
+              <i />
+            </li>
+          )}
+        </ol>
+      )}
+      {error && (
+        <p className="fc-error">
+          {error}
+          {!person.photo && (
+            <button type="button" onClick={() => navigate("you")}>
+              Add photo
+            </button>
+          )}
+        </p>
+      )}
+      <form className="fc-chat-form" onSubmit={submit}>
+        <input
+          value={draft}
+          maxLength={2000}
+          placeholder="Ask anything about this piece"
+          onChange={(event) => setDraft(event.target.value)}
+        />
+        <button type="submit" className="fc-send" disabled={busy || !draft.trim()} aria-label="Send">
+          <Icon name="send" />
+        </button>
+      </form>
+      <div ref={endRef} />
+    </div>
+  );
+}

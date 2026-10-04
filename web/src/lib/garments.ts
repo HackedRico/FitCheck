@@ -59,12 +59,14 @@ export function garmentName(tags: GarmentTags): string {
 interface DecisionWording {
   word: string;
   spoken: string;
+  // The sentence-case answer the result page leads with
+  hero: string;
 }
 
 const DECISION_WORDING: Record<Decision, DecisionWording> = {
-  buy: { word: "BUY", spoken: "Buy it" },
-  skip: { word: "SKIP", spoken: "Skip it" },
-  try_with: { word: "TRY-WITH", spoken: "Try it with" },
+  buy: { word: "BUY", spoken: "Buy it", hero: "Buy it." },
+  skip: { word: "SKIP", spoken: "Skip it", hero: "Skip it." },
+  try_with: { word: "TRY-WITH", spoken: "Try it with", hero: "Try it first." },
 };
 
 /** The large-type word and a spoken phrase for a decision. */

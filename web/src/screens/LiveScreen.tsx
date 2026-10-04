@@ -106,11 +106,11 @@ export function LiveScreen(): ReactNode {
 
   if (candidate === null) {
     return (
-      <div className="empty">
-        <p className="kicker">Live preview</p>
-        <h1>Scan a garment first</h1>
-        <p>The live preview pins the candidate to you on the camera, on this phone, in real time.</p>
-        <button type="button" className="btn btn-solid" onClick={() => navigate("scan")}>
+      <div className="fc-page fc-empty">
+        <p className="fc-kicker">Live preview</p>
+        <h1 className="display">Scan a garment first</h1>
+        <p className="fc-muted">The live preview pins the garment to you on the camera, on this phone, in real time.</p>
+        <button type="button" className="fc-btn is-primary" onClick={() => navigate("home")}>
           <Icon name="camera" /> Scan a garment
         </button>
       </div>
@@ -121,7 +121,7 @@ export function LiveScreen(): ReactNode {
     const video = camera.videoRef.current;
     if (!video) return;
     flow.requestRender(await captureFrame(video), "live");
-    navigate("render");
+    navigate("result");
   };
 
   const hint =
@@ -136,35 +136,44 @@ export function LiveScreen(): ReactNode {
             : "Step back until your shoulders and hips are in view";
 
   return (
-    <section className="live">
-      <div className="stage">
-        <video ref={camera.videoRef} className="live-source" playsInline muted autoPlay />
-        <canvas ref={canvasRef} className="stage-media" data-mirrored={facing === "user"} />
-        <p className="live-status kicker">
-          On-device pose · {fps} fps
+    <section className="fc-cam is-dark fc-live">
+      <video ref={camera.videoRef} className="live-source" playsInline muted autoPlay />
+      <canvas ref={canvasRef} className="fc-cam-feed" data-mirrored={facing === "user"} />
+      <div className="fc-cam-shade" aria-hidden="true" />
+
+      <header className="fc-topbar">
+        <button type="button" className="fc-round fc-back" onClick={() => navigate("result")} aria-label="Back to the verdict">
+          <Icon name="arrow" />
+        </button>
+        <p className="fc-live-badge">
+          <i data-on={tracking} /> {tracking ? "Tracking you" : "Live"} · on device · {fps} fps
         </p>
-        {hint && <p className="stage-hint">{hint}</p>}
-        {camera.error && <p className="stage-hint">{camera.error}</p>}
-        <div className="shutter-row">
-          <button
-            type="button"
-            className="icon-btn"
-            onClick={() => setFacing(facing === "user" ? "environment" : "user")}
-            aria-label="Switch camera"
-          >
-            <Icon name="flip" />
-          </button>
-          <button
-            type="button"
-            className="shutter"
-            disabled={camera.status !== "live" || candidate.region === null}
-            onClick={() => void snap()}
-            aria-label="Snap and render"
-          />
-          <span className="icon-btn is-ghost" aria-hidden="true" />
-        </div>
-      </div>
-      <p className="booth-note muted">A 2D preview that tracks you. Snap for the diffusion render, which shows drape and fit.</p>
+        <button
+          type="button"
+          className="fc-round"
+          onClick={() => setFacing(facing === "user" ? "environment" : "user")}
+          aria-label="Switch camera"
+        >
+          <Icon name="flip" />
+        </button>
+      </header>
+
+      {(hint ?? camera.error) && <p className="fc-cam-hint">{camera.error ?? hint}</p>}
+
+      <footer className="fc-shutterbar">
+        <span className="fc-round is-ghost" aria-hidden="true" />
+        <button
+          type="button"
+          className="fc-shutter is-render"
+          disabled={camera.status !== "live" || candidate.region === null}
+          onClick={() => void snap()}
+          aria-label="Snap and render"
+        >
+          <span />
+        </button>
+        <span className="fc-round is-ghost" aria-hidden="true" />
+      </footer>
+      <p className="fc-live-note">Snap for the full render, with drape and fit.</p>
     </section>
   );
 }

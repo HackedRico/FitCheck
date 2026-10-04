@@ -48,7 +48,6 @@ export default function ClosetItemCard({ item, onDelete }: Props) {
   return (
     <div className="group relative rounded-2xl overflow-hidden bg-zinc-900 border border-zinc-800 hover:border-zinc-600 transition-colors">
       <div className="relative aspect-square w-full overflow-hidden">
-        {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
           src={imageUrl}
           alt={item.SUBCATEGORY ?? item.CATEGORY ?? 'Closet item'}

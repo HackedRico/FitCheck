@@ -50,7 +50,6 @@ export default function ProfilePage() {
     <div className="max-w-lg mx-auto px-4 py-8 space-y-8">
       <h1 className="text-2xl font-bold text-zinc-900">Profile</h1>
 
-      {/* Location */}
       <section className="rounded-2xl border border-zinc-200 bg-white p-6 space-y-4">
         <h2 className="font-semibold text-zinc-800">Your Location</h2>
         <p className="text-sm text-zinc-500">
@@ -77,7 +76,6 @@ export default function ProfilePage() {
         {locationMsg && <p className="text-sm text-zinc-500 text-center">{locationMsg}</p>}
       </section>
 
-      {/* Taste profile summary */}
       {profile && (
         <section className="rounded-2xl border border-zinc-200 bg-white p-6 space-y-3">
           <div className="flex items-center justify-between">
@@ -110,7 +108,6 @@ export default function ProfilePage() {
         </section>
       )}
 
-      {/* Sign out */}
       <button
         onClick={() => signOut({ callbackUrl: '/login' })}
         className="w-full py-2.5 rounded-lg border border-red-200 text-red-600 text-sm font-medium hover:bg-red-50 transition"

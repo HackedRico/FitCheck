@@ -59,7 +59,6 @@ export default function TryOnCard({ outfitId }: { outfitId: string }) {
       <div className="flex items-start gap-4">
         <label className="flex flex-col items-center justify-center w-24 h-32 rounded-xl border-2 border-dashed border-zinc-300 hover:border-zinc-400 cursor-pointer text-zinc-400 text-xs text-center transition-colors overflow-hidden shrink-0">
           {personPreview ? (
-            /* eslint-disable-next-line @next/next/no-img-element */
             <img src={personPreview} alt="You" className="w-full h-full object-cover" />
           ) : (
             <span className="px-2">Add full-body photo</span>
@@ -104,7 +103,6 @@ export default function TryOnCard({ outfitId }: { outfitId: string }) {
 
       {result && (
         <div className="pt-2">
-          {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
             src={result}
             alt="Try-on result"

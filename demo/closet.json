@@ -1,0 +1,274 @@
+{
+  "garments": [
+    {
+      "id": "maya-navy-cable-knit",
+      "owner": "maya",
+      "source": "closet",
+      "tags": {
+        "category": "sweater",
+        "color_family": "navy",
+        "pattern": "solid",
+        "warmth": 4,
+        "waterproof": false,
+        "formality": 2,
+        "description": "navy cable-knit wool sweater"
+      },
+      "price": "89.00",
+      "wears": 41,
+      "image_ref": null,
+      "created_at": "2023-11-02T12:00:00Z"
+    },
+    {
+      "id": "maya-navy-merino-crew",
+      "owner": "maya",
+      "source": "closet",
+      "tags": {
+        "category": "sweater",
+        "color_family": "navy",
+        "pattern": "solid",
+        "warmth": 3,
+        "waterproof": false,
+        "formality": 3,
+        "description": "navy merino crewneck"
+      },
+      "price": "120.00",
+      "wears": 28,
+      "image_ref": null,
+      "created_at": "2024-01-15T12:00:00Z"
+    },
+    {
+      "id": "maya-navy-quarter-zip",
+      "owner": "maya",
+      "source": "closet",
+      "tags": {
+        "category": "sweater",
+        "color_family": "navy",
+        "pattern": "solid",
+        "warmth": 3,
+        "waterproof": false,
+        "formality": 2,
+        "description": "navy quarter-zip pullover"
+      },
+      "price": "65.00",
+      "wears": 17,
+      "image_ref": null,
+      "created_at": "2025-02-08T12:00:00Z"
+    },
+    {
+      "id": "maya-black-jeans",
+      "owner": "maya",
+      "source": "closet",
+      "tags": {
+        "category": "bottom",
+        "color_family": "black",
+        "pattern": "solid",
+        "warmth": 2,
+        "waterproof": false,
+        "formality": 3,
+        "description": "black straight-leg jeans"
+      },
+      "price": "98.00",
+      "wears": 87,
+      "image_ref": null,
+      "created_at": "2023-03-21T12:00:00Z"
+    },
+    {
+      "id": "maya-blue-mom-jeans",
+      "owner": "maya",
+      "source": "closet",
+      "tags": {
+        "category": "bottom",
+        "color_family": "blue",
+        "pattern": "solid",
+        "warmth": 2,
+        "waterproof": false,
+        "formality": 2,
+        "description": "light blue mom jeans"
+      },
+      "price": "79.00",
+      "wears": 52,
+      "image_ref": null,
+      "created_at": "2023-06-10T12:00:00Z"
+    },
+    {
+      "id": "maya-beige-chinos",
+      "owner": "maya",
+      "source": "closet",
+      "tags": {
+        "category": "bottom",
+        "color_family": "beige",
+        "pattern": "solid",
+        "warmth": 2,
+        "waterproof": false,
+        "formality": 3,
+        "description": "beige pleated chinos"
+      },
+      "price": "70.00",
+      "wears": 14,
+      "image_ref": null,
+      "created_at": "2025-04-19T12:00:00Z"
+    },
+    {
+      "id": "maya-black-leggings",
+      "owner": "maya",
+      "source": "closet",
+      "tags": {
+        "category": "bottom",
+        "color_family": "black",
+        "pattern": "solid",
+        "warmth": 2,
+        "waterproof": false,
+        "formality": 1,
+        "description": "black high-rise leggings"
+      },
+      "price": "55.00",
+      "wears": 60,
+      "image_ref": null,
+      "created_at": "2024-02-03T12:00:00Z"
+    },
+    {
+      "id": "maya-white-oxford",
+      "owner": "maya",
+      "source": "closet",
+      "tags": {
+        "category": "shirt",
+        "color_family": "white",
+        "pattern": "solid",
+        "warmth": 2,
+        "waterproof": false,
+        "formality": 3,
+        "description": "white cotton oxford shirt"
+      },
+      "price": "60.00",
+      "wears": 33,
+      "image_ref": null,
+      "created_at": "2023-09-12T12:00:00Z"
+    },
+    {
+      "id": "maya-white-tee",
+      "owner": "maya",
+      "source": "closet",
+      "tags": {
+        "category": "top",
+        "color_family": "white",
+        "pattern": "solid",
+        "warmth": 1,
+        "waterproof": false,
+        "formality": 2,
+        "description": "white crew-neck tee"
+      },
+      "price": "25.00",
+      "wears": 70,
+      "image_ref": null,
+      "created_at": "2024-05-27T12:00:00Z"
+    },
+    {
+      "id": "maya-grey-tank",
+      "owner": "maya",
+      "source": "closet",
+      "tags": {
+        "category": "top",
+        "color_family": "grey",
+        "pattern": "solid",
+        "warmth": 1,
+        "waterproof": false,
+        "formality": 1,
+        "description": "grey racerback tank"
+      },
+      "price": "30.00",
+      "wears": 45,
+      "image_ref": null,
+      "created_at": "2024-03-30T12:00:00Z"
+    },
+    {
+      "id": "maya-black-blazer",
+      "owner": "maya",
+      "source": "closet",
+      "tags": {
+        "category": "outerwear",
+        "color_family": "black",
+        "pattern": "solid",
+        "warmth": 2,
+        "waterproof": false,
+        "formality": 4,
+        "description": "black single-breasted wool blazer"
+      },
+      "price": "180.00",
+      "wears": 9,
+      "image_ref": null,
+      "created_at": "2025-09-01T12:00:00Z"
+    },
+    {
+      "id": "maya-denim-jacket",
+      "owner": "maya",
+      "source": "closet",
+      "tags": {
+        "category": "outerwear",
+        "color_family": "blue",
+        "pattern": "solid",
+        "warmth": 2,
+        "waterproof": false,
+        "formality": 2,
+        "description": "blue denim trucker jacket"
+      },
+      "price": "90.00",
+      "wears": 38,
+      "image_ref": null,
+      "created_at": "2023-04-14T12:00:00Z"
+    },
+    {
+      "id": "maya-camel-coat",
+      "owner": "maya",
+      "source": "closet",
+      "tags": {
+        "category": "outerwear",
+        "color_family": "beige",
+        "pattern": "solid",
+        "warmth": 4,
+        "waterproof": false,
+        "formality": 3,
+        "description": "camel wool overcoat"
+      },
+      "price": "240.00",
+      "wears": 22,
+      "image_ref": null,
+      "created_at": "2024-10-20T12:00:00Z"
+    },
+    {
+      "id": "maya-white-sneakers",
+      "owner": "maya",
+      "source": "closet",
+      "tags": {
+        "category": "shoes",
+        "color_family": "white",
+        "pattern": "solid",
+        "warmth": 2,
+        "waterproof": false,
+        "formality": 2,
+        "description": "white leather sneakers"
+      },
+      "price": "110.00",
+      "wears": 95,
+      "image_ref": null,
+      "created_at": "2023-07-04T12:00:00Z"
+    },
+    {
+      "id": "maya-brown-chelsea-boots",
+      "owner": "maya",
+      "source": "closet",
+      "tags": {
+        "category": "shoes",
+        "color_family": "brown",
+        "pattern": "solid",
+        "warmth": 3,
+        "waterproof": false,
+        "formality": 3,
+        "description": "brown suede chelsea boots"
+      },
+      "price": "150.00",
+      "wears": 30,
+      "image_ref": null,
+      "created_at": "2024-11-11T12:00:00Z"
+    }
+  ]
+}

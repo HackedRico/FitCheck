@@ -55,12 +55,16 @@ The answer for one candidate: BUY, SKIP or TRY-WITH, with its reasons.
 _Avoid_: recommendation, score, rating
 
 **Duplicate**:
-A closet garment so close to the candidate that buying it adds nothing: same category, same color family, formality within one.
+A closet garment so close to the candidate that buying it adds nothing: same category, same color family, same pattern, formality within one.
 _Avoid_: similar item, match
 
 **Pairing**:
 A closet garment the candidate can be worn with: a complementary category at a close formality.
 _Avoid_: match, combo, outfit suggestion
+
+**Statement piece**:
+A candidate in mixed colors or a loud print (floral, graphic, other); it needs a gap to earn BUY.
+_Avoid_: bold item
 
 **Gap**:
 A need in the coming week that nothing in the closet covers, such as rain with no waterproof outerwear, or a formal event with nothing formal enough.

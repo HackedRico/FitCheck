@@ -182,6 +182,8 @@ class ReasonCode(StrEnum):
     DUPLICATES = "duplicates"
     FILLS_WEATHER_GAP = "fills_weather_gap"
     FITS_EVENT = "fits_event"
+    # A loud print or mixed colors: pairs on paper, but needs seeing on before a BUY
+    STATEMENT_PIECE = "statement_piece"
     PAIRS_WELL = "pairs_well"
     FEW_PAIRINGS = "few_pairings"
 

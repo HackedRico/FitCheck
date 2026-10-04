@@ -19,8 +19,8 @@ import { photoLeftOurHardware } from "../state/pipelines";
 // =============================================================================
 // One scan, told top to bottom: the snapped garment, a checklist while the
 // engine works, then the verdict as a giant tag, the garment on the owner, why,
-// what it goes with, the week, and the stylist. A sticky bar keeps "scan
-// another" and "try it live" under the thumb the whole way down.
+// what it goes with and the week. A dock pinned to the bottom keeps the stylist,
+// "scan another" and "try it live" under the thumb the whole way down.
 
 const REASON_LABEL: Record<Reason["code"], string> = {
   duplicates: "Already own",
@@ -100,29 +100,43 @@ export function ResultScreen(): ReactNode {
             <SectionTitle title="Your week" />
             <WeekStrip week={judged.week} />
           </section>
-          <section className="fc-section">
-            <SectionTitle title="Ask the stylist" />
-            <StylistChat onRender={() => onYouRef.current?.scrollIntoView({ behavior: "smooth", block: "start" })} />
-          </section>
           <PipelineFooter />
         </>
       )}
 
-      <nav className="fc-actionbar" aria-label="Next">
-        <button type="button" className="fc-btn is-ghost" onClick={scanAnother}>
-          <Icon name="camera" /> Scan another
-        </button>
-        <button
-          type="button"
-          className="fc-btn is-primary"
-          disabled={flow.scan.status !== "done"}
-          onClick={() => navigate("live")}
-        >
-          <Icon name="live" /> Try it live
-        </button>
-      </nav>
+      <div ref={trackDockHeight} className="fc-dock">
+        {judged && (
+          <StylistChat onRender={() => onYouRef.current?.scrollIntoView({ behavior: "smooth", block: "start" })} />
+        )}
+        <nav className="fc-actionbar" aria-label="Next">
+          <button type="button" className="fc-btn is-ghost" onClick={scanAnother}>
+            <Icon name="camera" /> Scan another
+          </button>
+          <button
+            type="button"
+            className="fc-btn is-primary"
+            disabled={flow.scan.status !== "done"}
+            onClick={() => navigate("live")}
+          >
+            <Icon name="live" /> Try it live
+          </button>
+        </nav>
+      </div>
     </section>
   );
+}
+
+/** Publish the dock's height as `--dock-h` on the page so the page scrolls clear of it. */
+function trackDockHeight(dock: HTMLDivElement | null): (() => void) | undefined {
+  const page = dock?.parentElement;
+  if (!dock || !page) return undefined;
+  // The dock grows as the stylist conversation does, so a fixed page padding would hide the foot
+  const observer = new ResizeObserver(() => page.style.setProperty("--dock-h", `${dock.offsetHeight}px`));
+  observer.observe(dock);
+  return () => {
+    observer.disconnect();
+    page.style.removeProperty("--dock-h");
+  };
 }
 
 // -----------------------------------------------------------------

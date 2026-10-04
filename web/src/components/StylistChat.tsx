@@ -7,7 +7,7 @@ import { Icon } from "./Icons";
 // =============================================================================
 // Module Overview
 // =============================================================================
-// The stylist, inline at the foot of a result. Each message goes to `/chat` with
+// The stylist, docked at the bottom of a result. Each message goes to `/chat` with
 // the history, the candidate and its verdict; the stylist explains the verdict
 // and never changes it. A reply that asks for a render starts one on the person
 // photo and calls `onRender` so the page can scroll up to it.
@@ -21,7 +21,7 @@ export function StylistChat({ onRender }: { onRender: () => void }): ReactNode {
   const [draft, setDraft] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const endRef = useRef<HTMLDivElement | null>(null);
+  const logRef = useRef<HTMLOListElement | null>(null);
 
   // A new scan is a new conversation
   useEffect(() => {
@@ -29,8 +29,10 @@ export function StylistChat({ onRender }: { onRender: () => void }): ReactNode {
     setError(null);
   }, [flow.id]);
 
+  // The log scrolls inside the dock, so pin it to the newest turn rather than moving the page
   useEffect(() => {
-    if (history.length > 0) endRef.current?.scrollIntoView({ behavior: "smooth", block: "nearest" });
+    const log = logRef.current;
+    if (log) log.scrollTo({ top: log.scrollHeight, behavior: "smooth" });
   }, [history.length, busy]);
 
   const candidate = flow.scan.status === "done" ? flow.scan.value.tags : null;
@@ -87,7 +89,7 @@ export function StylistChat({ onRender }: { onRender: () => void }): ReactNode {
         </div>
       )}
       {history.length > 0 && (
-        <ol className="fc-chat-log">
+        <ol ref={logRef} className="fc-chat-log">
           {history.map((turn, i) => (
             <li key={i} className={`fc-bubble is-${turn.role}`}>
               {turn.text}
@@ -123,7 +125,6 @@ export function StylistChat({ onRender }: { onRender: () => void }): ReactNode {
           <Icon name="send" />
         </button>
       </form>
-      <div ref={endRef} />
     </div>
   );
 }

@@ -147,6 +147,11 @@ export interface ShoppingSuggestionsResult {
   suggestions: ShoppingSuggestion[]
 }
 
+export interface ShoppingAssistantResult {
+  advice: string
+  suggestions: ShoppingSuggestion[]
+}
+
 export interface CalendarEvent {
   title: string
   start: string

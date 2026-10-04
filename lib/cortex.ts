@@ -3,6 +3,7 @@ import type {
   ClothingAnalysis,
   OutfitGenerationResult,
   ShoppingSuggestionsResult,
+  ShoppingAssistantResult,
   TasteProfileRow,
   ClosetItemRow,
   WeatherContext,
@@ -148,6 +149,63 @@ Return ONLY valid JSON:
   `, [prompt])
 
   return parseCortexJson<ShoppingSuggestionsResult>(rows[0].RESPONSE, 'generateShoppingSuggestions')
+}
+
+export async function shoppingAssistant(params: {
+  request: string
+  stores: string[]
+  tasteProfile: TasteProfileRow
+  closetSummary: string[]
+}): Promise<ShoppingAssistantResult> {
+  const { request, stores, tasteProfile, closetSummary } = params
+
+  const prompt = `
+You are a personal shopping assistant helping a user buy clothes.
+
+USER REQUEST: ${request}
+
+WHERE THEY WANT TO SHOP: ${stores.length > 0 ? stores.join(', ') : 'no preference — pick fitting well-known stores'}
+
+USER PREFERENCES:
+- Style: ${tasteProfile.STYLE_AESTHETICS?.join(', ') ?? 'not specified'}
+- Favorite colors: ${tasteProfile.FAVORITE_COLORS?.join(', ') ?? 'not specified'}
+- Colors to avoid: ${tasteProfile.AVOID_COLORS?.join(', ') ?? 'none'}
+- Budget per item: $${tasteProfile.BUDGET_MIN ?? 0} - $${tasteProfile.BUDGET_MAX ?? 200}
+- Favorite brands: ${tasteProfile.FAVORITE_BRANDS?.join(', ') ?? 'not specified'}
+- Sizes: tops ${tasteProfile.SIZE_TOPS ?? 'unknown'}, bottoms ${tasteProfile.SIZE_BOTTOMS ?? 'unknown'}, shoes ${tasteProfile.SIZE_SHOES ?? 'unknown'}
+
+THEY ALREADY OWN: ${closetSummary.length > 0 ? closetSummary.join('; ') : 'unknown'}
+
+Rules:
+- Suggest 4 to 6 specific products matching the request, budget and style
+- Prefer the stores they want to shop at; set "store_name" accordingly
+- Mix "source": "online" and "source": "in_store" so they can shop either way
+- Suggestions should complement what they already own, not duplicate it
+- "source" must be exactly "online" or "in_store". "price" must be a plain number
+- "advice" is 1-2 sentences of personal guidance for this request
+Return ONLY valid JSON:
+{
+  "advice": "short personal note",
+  "suggestions": [
+    {
+      "name": "Product name",
+      "brand": "Brand",
+      "price": 45,
+      "category": "SHOES",
+      "source": "online",
+      "store_name": "Zara",
+      "suggested_because": "brief reason",
+      "search_query": "search term to find this product"
+    }
+  ]
+}
+`.trim()
+
+  const rows = await query<{ RESPONSE: string }>(`
+    SELECT SNOWFLAKE.CORTEX.COMPLETE('llama3.1-70b', ?) AS RESPONSE
+  `, [prompt])
+
+  return parseCortexJson<ShoppingAssistantResult>(rows[0].RESPONSE, 'shoppingAssistant')
 }
 
 export async function embedText(text: string): Promise<number[]> {

@@ -1522,3 +1522,74 @@ body {
   text-overflow: ellipsis;
   white-space: nowrap;
 }
+
+/* ---------- before and after ---------- */
+
+.fc .compare-label {
+  top: 12px;
+  padding: 5px 10px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.92);
+  color: #141412;
+  font: 600 12px/1 var(--sans);
+  letter-spacing: normal;
+  text-transform: none;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.15);
+}
+
+.fc .compare-handle {
+  width: 2px;
+  margin-left: -1px;
+  background: #fff;
+  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.15);
+}
+
+.fc .compare-handle span {
+  width: 36px;
+  height: 36px;
+  margin: -18px 0 0 -18px;
+  border: 2px solid #fff;
+  background: rgba(20, 20, 18, 0.55);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+}
+
+/* Two images of different shapes: side by side, each whole, same height */
+.compare-pair {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+.compare-pair figure {
+  display: grid;
+  gap: 8px;
+  margin: 0;
+}
+
+.compare-pair img {
+  width: 100%;
+  height: min(52vh, 420px);
+  border-radius: 14px;
+  background: var(--bg-2);
+  object-fit: contain;
+}
+
+.compare-pair figcaption {
+  color: var(--fog);
+  font-size: 13px;
+  text-align: center;
+}
+
+/* Closet matches on a result use the closet page's grid, so a garment looks the same everywhere */
+.fc .shelf-row {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+  gap: 18px 14px;
+  overflow: visible;
+  padding-bottom: 0;
+}
+
+.fc .shelf-row .thumb {
+  flex: none;
+}

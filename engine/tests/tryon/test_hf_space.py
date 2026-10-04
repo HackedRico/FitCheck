@@ -179,3 +179,23 @@ def test_live_space_renders_the_example_pair() -> None:
     result = HfSpaceRenderer(SPACE).render(request)
 
     assert Image.open(io.BytesIO(result.image_png)).format == "PNG"
+
+
+def test_token_from_settings_reaches_the_space_client(monkeypatch: pytest.MonkeyPatch) -> None:
+    """engine/.env never reaches os.environ, so the token must travel through Settings."""
+    from fitcheck.settings import Settings
+    from fitcheck.tryon import hf_space
+
+    seen: dict[str, object] = {}
+
+    class _Client:
+        def __init__(self, space: str, **kwargs: object) -> None:
+            seen.update(kwargs, space=space)
+
+    monkeypatch.setitem(
+        __import__("sys").modules, "gradio_client", type("m", (), {"Client": _Client})
+    )
+    renderer = hf_space.build(Settings(hf_token="hf_test_token", tryon_hf_space="someone/space"))
+    renderer._client_factory("someone/space")
+    assert seen["token"] == "hf_test_token"
+    assert seen["space"] == "someone/space"

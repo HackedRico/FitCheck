@@ -3,7 +3,7 @@ from __future__ import annotations
 from pathlib import Path
 from typing import Literal
 
-from pydantic import SecretStr
+from pydantic import AliasChoices, Field, SecretStr
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 from fitcheck.domain import Location, RunsOn
@@ -56,6 +56,11 @@ class Settings(BaseSettings):
     tryon_worker_token: SecretStr | None = None
     # Public Hugging Face Space for try-on without a GPU; sends the person photo off this machine
     tryon_hf_space: str = "franciszzj/Leffa"
+    # A free Hugging Face read token raises the Space's daily GPU allowance; anonymous calls run
+    # out after one or two renders. Read here because engine/.env never reaches os.environ.
+    hf_token: SecretStr | None = Field(
+        default=None, validation_alias=AliasChoices("FITCHECK_HF_TOKEN", "HF_TOKEN")
+    )
     # Diffusion try-on takes seconds on a warm GPU and minutes on a cold Space or tunnel
     tryon_timeout_s: float = 180.0
     # How long to skip a failed try-on adapter before trying it again

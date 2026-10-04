@@ -100,6 +100,7 @@ class Judgement(_Result):
 class RenderResult(_Result):
     image_png: bytes
     cached: bool
+    fallback: bool
     pipeline: Pipeline
 
 
@@ -256,7 +257,12 @@ class Engine:
             result = self._ports.renderer.render(request)
             mark.cached = result.cached
         image_png = _match_shape(result.image_png, person_image)
-        return RenderResult(image_png=image_png, cached=result.cached, pipeline=trace.pipeline)
+        return RenderResult(
+            image_png=image_png,
+            cached=result.cached,
+            fallback=result.fallback,
+            pipeline=trace.pipeline,
+        )
 
     def chat(
         self,

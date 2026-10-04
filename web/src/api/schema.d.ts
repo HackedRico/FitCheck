@@ -567,6 +567,8 @@ export interface components {
             image_png_base64: string;
             /** Cached */
             cached: boolean;
+            /** Fallback */
+            fallback: boolean;
             /** Pipeline */
             pipeline: components["schemas"]["PipelineStep"][];
         };

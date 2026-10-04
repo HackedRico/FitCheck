@@ -1499,6 +1499,10 @@
             "type": "boolean",
             "title": "Cached"
           },
+          "fallback": {
+            "type": "boolean",
+            "title": "Fallback"
+          },
           "pipeline": {
             "items": {
               "$ref": "#/components/schemas/PipelineStep"
@@ -1511,6 +1515,7 @@
         "required": [
           "image_png_base64",
           "cached",
+          "fallback",
           "pipeline"
         ],
         "title": "RenderOut"

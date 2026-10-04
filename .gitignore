@@ -11,6 +11,11 @@ node_modules/
 dist/
 dev-dist/
 
+# Next.js
+.next/
+next-env.d.ts
+*.tsbuildinfo
+
 # Secrets and local config
 .env
 *.env.local
@@ -29,3 +34,4 @@ worker/vendor/
 .DS_Store
 .idea/
 .vscode/
+public/uploads/

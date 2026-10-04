@@ -13,7 +13,7 @@ function parseCortexJson<T>(raw: string, context: string): T {
   if (!match) throw new Error(`Cortex (${context}): no JSON in response. Raw: ${raw.slice(0, 200)}`)
   try {
     return JSON.parse(match[0]) as T
-  } catch (e) {
+  } catch {
     throw new Error(`Cortex (${context}): JSON.parse failed. Matched: ${match[0].slice(0, 200)}`)
   }
 }

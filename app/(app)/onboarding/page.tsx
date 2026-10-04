@@ -405,7 +405,7 @@ function Step4({
           label="Shoes (US)"
           value={state.size_shoes}
           onChange={(v) => setState((prev) => ({ ...prev, size_shoes: v }))}
-          options={Array.from({ length: 10 }, (_, i) => String(i + 5))}
+          options={SHOE_SIZES}
           placeholder="Select size"
         />
         <Select

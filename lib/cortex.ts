@@ -8,12 +8,6 @@ import type {
   WeatherContext,
 } from '@/types'
 
-// ─── Helpers ──────────────────────────────────────────────────────────────────
-
-/**
- * Extracts and parses the first JSON object from a Cortex COMPLETE response.
- * Cortex returns a plain string — JSON may be preceded/followed by prose.
- */
 function parseCortexJson<T>(raw: string, context: string): T {
   const match = raw.match(/\{[\s\S]*\}/)
   if (!match) throw new Error(`Cortex (${context}): no JSON in response. Raw: ${raw.slice(0, 200)}`)
@@ -23,8 +17,6 @@ function parseCortexJson<T>(raw: string, context: string): T {
     throw new Error(`Cortex (${context}): JSON.parse failed. Matched: ${match[0].slice(0, 200)}`)
   }
 }
-
-// ─── Vision: clothing image analysis ─────────────────────────────────────────
 
 const ANALYZE_PROMPT = `
 You are a fashion expert. Analyze this clothing item and return ONLY valid JSON with no other text:
@@ -58,8 +50,6 @@ export async function analyzeClothingImage(imageUrl: string): Promise<ClothingAn
 
   return parseCortexJson<ClothingAnalysis>(rows[0].RESPONSE, 'analyzeClothingImage')
 }
-
-// ─── Text: outfit generation ──────────────────────────────────────────────────
 
 export async function generateOutfit(params: {
   closetItems: ClosetItemRow[]
@@ -118,8 +108,6 @@ Rules:
   return parseCortexJson<OutfitGenerationResult>(rows[0].RESPONSE, 'generateOutfit')
 }
 
-// ─── Text: shopping suggestions ───────────────────────────────────────────────
-
 export async function generateShoppingSuggestions(params: {
   missingPieces: string[]
   tasteProfile: TasteProfileRow
@@ -166,10 +154,7 @@ For each missing piece suggest 2 products (1 online, 1 in-store). Return ONLY va
   return parseCortexJson<ShoppingSuggestionsResult>(rows[0].RESPONSE, 'generateShoppingSuggestions')
 }
 
-// ─── Embeddings ───────────────────────────────────────────────────────────────
-
 export async function embedText(text: string): Promise<number[]> {
-  // Snowflake returns the vector as a JSON string, not a native array
   const rows = await query<{ EMBEDDING: string }>(`
     SELECT SNOWFLAKE.CORTEX.EMBED_TEXT_768('snowflake-arctic-embed-m', ?) AS EMBEDDING
   `, [text])

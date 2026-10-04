@@ -68,6 +68,17 @@ class ScanOut(_Wire):
     pipeline: Pipeline
 
 
+class LinkIn(_Wire):
+    url: Annotated[str, Field(min_length=1, max_length=2048)]
+
+
+class LinkOut(_Wire):
+    image_png_base64: str
+    source_url: str
+    title: str | None
+    pipeline: Pipeline
+
+
 class JudgeIn(_Wire):
     owner: str
     tags: GarmentTags
@@ -162,6 +173,17 @@ def create_app(engine: Engine | None = None, settings: Settings | None = None) -
         result = get_engine().scan(image.file.read())
         return ScanOut(
             tags=result.tags, cutout_png_base64=_b64(result.cutout_png), pipeline=result.pipeline
+        )
+
+    @app.post("/link", response_model=LinkOut)
+    def link(body: LinkIn) -> LinkOut:
+        """Fetch the garment image from a shop or image link, to scan a garment not owned yet."""
+        result = get_engine().import_link(body.url)
+        return LinkOut(
+            image_png_base64=_b64(result.image_png),
+            source_url=result.source_url,
+            title=result.title,
+            pipeline=result.pipeline,
         )
 
     @app.post("/judge", response_model=JudgeOut)

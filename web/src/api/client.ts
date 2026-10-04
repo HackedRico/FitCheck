@@ -35,6 +35,7 @@ export type JudgeOut = Schemas["JudgeOut"];
 export type RenderOut = Schemas["RenderOut"];
 export type ChatOut = Schemas["ChatOut"];
 export type AddOut = Schemas["AddOut"];
+export type LinkOut = Schemas["LinkOut"];
 export type ChatIn = Schemas["ChatIn"];
 
 const API_BASE = import.meta.env.VITE_API_BASE ?? "/api";
@@ -150,6 +151,10 @@ export const api = {
         signal: AbortSignal.timeout(TIMEOUT_MS.model),
       }),
     ),
+
+  /** Fetch the garment image behind a shop or image link. */
+  link: (url: string): Promise<LinkOut> =>
+    unwrap(() => client.POST("/link", { body: { url }, signal: AbortSignal.timeout(TIMEOUT_MS.model) })),
 
   /** Get the verdict for `tags` against `owner`'s closet and week. */
   judge: (owner: string, tags: GarmentTags, location: Location | null): Promise<JudgeOut> =>

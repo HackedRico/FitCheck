@@ -35,6 +35,7 @@ from fitcheck.domain import (
     WeekContext,
 )
 from fitcheck.errors import InvalidInput, NotFound
+from fitcheck.garment_link import LinkedGarment, fetch_garment
 from fitcheck.ports import (
     CalendarSource,
     ClosetStore,
@@ -50,6 +51,7 @@ T = TypeVar("T")
 log = logging.getLogger(__name__)
 
 RULES_INFO = AdapterInfo(name="verdict-rules", license="Apache-2.0", runs_on=RunsOn.THIS_MACHINE)
+LINK_INFO = AdapterInfo(name="link-import", license="Apache-2.0", runs_on=RunsOn.THIS_MACHINE)
 
 # Owners name folders on disk, so keep them to a safe slug
 _OWNER_PATTERN = re.compile(r"^[a-z0-9][a-z0-9_-]{0,63}$")
@@ -103,6 +105,13 @@ class ChatResult(_Result):
     pipeline: Pipeline
 
 
+class LinkResult(_Result):
+    image_png: bytes
+    source_url: str
+    title: str | None
+    pipeline: Pipeline
+
+
 class AddResult(_Result):
     garment: Garment
     pipeline: Pipeline
@@ -138,6 +147,7 @@ class Engine:
         forecast_days: int = 7,
         seed_images_dir: Path | None = None,
         today: Callable[[], date] = date.today,
+        fetch_link: Callable[[str], LinkedGarment] = fetch_garment,
     ) -> None:
         if forecast_days < 1:
             raise ValueError("forecast_days must be at least 1")
@@ -147,6 +157,7 @@ class Engine:
         self._default_location = default_location
         self._forecast_days = forecast_days
         self._today = today
+        self._fetch_link = fetch_link
 
     @property
     def ports(self) -> Ports:
@@ -180,6 +191,20 @@ class Engine:
         with trace.step("tag", self._ports.tagger.info):
             tags = self._ports.tagger.tag(cutout)
         return ScanResult(tags=tags, cutout_png=cutout, pipeline=trace.pipeline)
+
+    def import_link(self, url: str) -> LinkResult:
+        """Fetch the garment image behind a shop or image link, for a garment not owned yet."""
+        if not url.strip():
+            raise InvalidInput("url must not be empty")
+        trace = _Trace()
+        with trace.step("link", LINK_INFO):
+            linked = self._fetch_link(url.strip())
+        return LinkResult(
+            image_png=linked.image_png,
+            source_url=linked.source_url,
+            title=linked.title,
+            pipeline=trace.pipeline,
+        )
 
     def week(self, owner: str, location: Location | None = None) -> WeekResult:
         """Return the forecast and calendar for the coming days; a failing source is skipped."""

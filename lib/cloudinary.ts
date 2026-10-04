@@ -25,7 +25,7 @@ async function uploadLocal(buffer: Buffer, folder: string): Promise<UploadResult
   const dir = path.join(process.cwd(), 'public', 'uploads', folder)
   await mkdir(dir, { recursive: true })
   await writeFile(path.join(dir, `${id}.jpg`), buffer)
-  const url = `${process.env.NEXTAUTH_URL ?? 'http://localhost:3000'}/uploads/${folder}/${id}.jpg`
+  const url = `/uploads/${folder}/${id}.jpg`
   return { url, thumbnail_url: url, public_id: id }
 }
 

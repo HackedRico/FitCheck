@@ -9,6 +9,21 @@ import type {
   WeatherContext,
 } from '@/types'
 
+async function completeJsonWithRetry<T>(prompt: string, context: string): Promise<T> {
+  let lastError: unknown
+  for (let attempt = 0; attempt < 2; attempt++) {
+    try {
+      const rows = await query<{ RESPONSE: string }>(`
+        SELECT SNOWFLAKE.CORTEX.COMPLETE('llama3.1-70b', ?) AS RESPONSE
+      `, [prompt])
+      return parseCortexJson<T>(rows[0].RESPONSE, context)
+    } catch (err) {
+      lastError = err
+    }
+  }
+  throw lastError
+}
+
 function parseCortexJson<T>(raw: string, context: string): T {
   const match = raw.match(/\{[\s\S]*\}/)
   if (!match) throw new Error(`Cortex (${context}): no JSON in response. Raw: ${raw.slice(0, 200)}`)
@@ -96,11 +111,7 @@ Rules:
 }
 `.trim()
 
-  const rows = await query<{ RESPONSE: string }>(`
-    SELECT SNOWFLAKE.CORTEX.COMPLETE('llama3.1-70b', ?) AS RESPONSE
-  `, [prompt])
-
-  return parseCortexJson<OutfitGenerationResult>(rows[0].RESPONSE, 'generateOutfit')
+  return completeJsonWithRetry<OutfitGenerationResult>(prompt, 'generateOutfit')
 }
 
 export async function generateShoppingSuggestions(params: {
@@ -201,11 +212,7 @@ Return ONLY valid JSON:
 }
 `.trim()
 
-  const rows = await query<{ RESPONSE: string }>(`
-    SELECT SNOWFLAKE.CORTEX.COMPLETE('llama3.1-70b', ?) AS RESPONSE
-  `, [prompt])
-
-  return parseCortexJson<ShoppingAssistantResult>(rows[0].RESPONSE, 'shoppingAssistant')
+  return completeJsonWithRetry<ShoppingAssistantResult>(prompt, 'shoppingAssistant')
 }
 
 export async function embedText(text: string): Promise<number[]> {

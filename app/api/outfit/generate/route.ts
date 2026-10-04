@@ -55,13 +55,13 @@ async function generateAndPersist(
     occasion,
   })
 
-  const insertedRows = await query<{ ID: string }>(
+  const outfitId = crypto.randomUUID()
+  await query(
     `INSERT INTO OUTFITS
        (ID, USER_ID, ITEM_IDS, AI_RATIONALE, WEATHER_CONTEXT, OCCASION, OUTFIT_DATE, GENERATED_AT)
-     VALUES
-       (UUID_STRING(), ?, PARSE_JSON(?), ?, PARSE_JSON(?), ?, CURRENT_DATE(), CURRENT_TIMESTAMP())
-     RETURNING ID`,
+     SELECT ?, ?, PARSE_JSON(?), ?, PARSE_JSON(?), ?, CURRENT_DATE(), CURRENT_TIMESTAMP()`,
     [
+      outfitId,
       userId,
       JSON.stringify(outfitResult.selected_item_ids),
       outfitResult.rationale,
@@ -69,8 +69,6 @@ async function generateAndPersist(
       occasion,
     ]
   )
-
-  const outfitId = insertedRows[0]?.ID
 
   const selectedItems = closetRows.filter((item) =>
     outfitResult.selected_item_ids.includes(item.ID)
@@ -83,16 +81,15 @@ async function generateAndPersist(
     outfitColors,
   })
 
-  const persistedSuggestions: ProductSuggestionRow[] = []
+  let persistedSuggestions: ProductSuggestionRow[] = []
   if (outfitId && suggestions.length > 0) {
     for (const s of suggestions) {
-      const suggRows = await query<ProductSuggestionRow>(
+      await query(
         `INSERT INTO PRODUCT_SUGGESTIONS
            (ID, OUTFIT_ID, USER_ID, NAME, BRAND, PRICE, SOURCE, STORE_NAME, CATEGORY, SUGGESTED_BECAUSE, CREATED_AT)
-         VALUES
-           (UUID_STRING(), ?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP())
-         RETURNING *`,
+         SELECT ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP()`,
         [
+          crypto.randomUUID(),
           outfitId,
           userId,
           s.name,
@@ -104,8 +101,11 @@ async function generateAndPersist(
           s.suggested_because,
         ]
       )
-      if (suggRows[0]) persistedSuggestions.push(suggRows[0])
     }
+    persistedSuggestions = await query<ProductSuggestionRow>(
+      `SELECT * FROM PRODUCT_SUGGESTIONS WHERE OUTFIT_ID = ? ORDER BY CREATED_AT ASC`,
+      [outfitId]
+    )
   }
 
   const outfitRows = await query<OutfitRow>(

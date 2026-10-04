@@ -35,3 +35,5 @@ worker/vendor/
 .idea/
 .vscode/
 public/uploads/
+snowflake.log
+*.swp

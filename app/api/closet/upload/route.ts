@@ -65,7 +65,7 @@ export async function POST(request: Request): Promise<Response> {
     `INSERT INTO CLOSET_ITEMS (
       ID, USER_ID, IMAGE_URL, THUMBNAIL_URL,
       AI_STATUS, IS_ACTIVE, CREATED_AT
-    ) VALUES (?, ?, ?, ?, 'pending', TRUE, CURRENT_TIMESTAMP())`,
+    ) SELECT ?, ?, ?, ?, 'pending', TRUE, CURRENT_TIMESTAMP()`,
     [itemId, userId, uploadResult.url, uploadResult.thumbnail_url]
   )
 

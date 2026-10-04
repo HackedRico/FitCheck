@@ -107,15 +107,15 @@ export async function POST(request: Request) {
         BODY_TYPE, SKIN_TONE, GENDER,
         SIZE_TOPS, SIZE_BOTTOMS, SIZE_SHOES,
         UPDATED_AT
-      ) VALUES (
-        UUID_STRING(), ?,
+      ) SELECT
+        ?, ?,
         PARSE_JSON(?), PARSE_JSON(?), PARSE_JSON(?), PARSE_JSON(?),
         ?, ?,
         ?, ?, ?,
         ?, ?, ?,
-        ?
-      )`,
+        ?`,
       [
+        crypto.randomUUID(),
         userId,
         JSON.stringify(body.style_aesthetics),
         JSON.stringify(body.favorite_colors),

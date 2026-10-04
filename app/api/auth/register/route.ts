@@ -51,8 +51,8 @@ export async function POST(req: Request) {
 
     await query(
       `INSERT INTO USERS (ID, EMAIL, PASSWORD_HASH, DISPLAY_NAME)
-       VALUES (UUID_STRING(), ?, ?, ?)`,
-      [normalizedEmail, hash, trimmedName]
+       VALUES (?, ?, ?, ?)`,
+      [crypto.randomUUID(), normalizedEmail, hash, trimmedName]
     )
 
     const created = await query<UserRow>(

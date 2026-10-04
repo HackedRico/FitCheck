@@ -1,4 +1,6 @@
 import { v2 as cloudinary } from 'cloudinary'
+import { writeFile, mkdir } from 'fs/promises'
+import path from 'path'
 
 cloudinary.config({
   cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
@@ -12,10 +14,26 @@ export interface UploadResult {
   public_id: string
 }
 
+const hasCloudinary = Boolean(
+  process.env.CLOUDINARY_CLOUD_NAME &&
+  process.env.CLOUDINARY_API_KEY &&
+  process.env.CLOUDINARY_API_SECRET
+)
+
+async function uploadLocal(buffer: Buffer, folder: string): Promise<UploadResult> {
+  const id = crypto.randomUUID()
+  const dir = path.join(process.cwd(), 'public', 'uploads', folder)
+  await mkdir(dir, { recursive: true })
+  await writeFile(path.join(dir, `${id}.jpg`), buffer)
+  const url = `${process.env.NEXTAUTH_URL ?? 'http://localhost:3000'}/uploads/${folder}/${id}.jpg`
+  return { url, thumbnail_url: url, public_id: id }
+}
+
 export async function uploadImage(
   buffer: Buffer,
   folder: string
 ): Promise<UploadResult> {
+  if (!hasCloudinary) return uploadLocal(buffer, folder)
   return new Promise((resolve, reject) => {
     const stream = cloudinary.uploader.upload_stream(
       {

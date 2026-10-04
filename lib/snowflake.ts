@@ -42,7 +42,7 @@ export async function query<T = Record<string, unknown>>(
     } else {
       conn.connect((err) => {
         if (err) {
-          connection = null // reset so next call retries
+          connection = null
           return reject(err)
         }
         execute()

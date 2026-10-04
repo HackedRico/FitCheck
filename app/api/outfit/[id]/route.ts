@@ -20,7 +20,6 @@ export async function PATCH(
     return Response.json({ error: 'Invalid JSON' }, { status: 400 })
   }
 
-  // Build SET clause from allowed fields only
   const allowed: Record<string, string> = {
     is_saved: 'IS_SAVED',
     is_worn: 'IS_WORN',

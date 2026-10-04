@@ -32,7 +32,7 @@ export async function getWeather(lat: number, lng: number): Promise<WeatherData>
     `&current=temperature_2m,apparent_temperature,precipitation_probability,weathercode` +
     `&temperature_unit=fahrenheit`
 
-  const res = await fetch(url, { next: { revalidate: 1800 } }) // cache 30 min
+  const res = await fetch(url, { next: { revalidate: 1800 } })
   if (!res.ok) throw new Error('Failed to fetch weather')
 
   const data = await res.json()

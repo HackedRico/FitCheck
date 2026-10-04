@@ -123,7 +123,9 @@ USER PREFERENCES:
 
 CURRENT OUTFIT COLORS: ${outfitColors.join(', ')}
 
-For each missing piece suggest 2 products (1 online, 1 in-store). Return ONLY valid JSON:
+For each missing piece suggest 2 products: one with "source": "online" and one with "source": "in_store".
+"source" must be exactly "online" or "in_store". "price" must be a plain number with no symbols.
+Return ONLY valid JSON:
 {
   "suggestions": [
     {

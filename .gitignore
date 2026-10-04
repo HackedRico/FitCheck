@@ -16,6 +16,7 @@ dev-dist/
 *.env.local
 env/*.local.env
 *.p8
+rsa_key.pub
 
 # Runtime data: stored garment images, model weights, cloned model repos
 .fitcheck/

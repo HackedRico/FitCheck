@@ -9,7 +9,7 @@ import { dressCode, swatchFor } from "../lib/garments";
 // One closet garment as a thumbnail: its stored cutout from the engine, or, when
 // there is no photo yet, a silhouette of its category in its colour. The caption
 // is the garment's own description, so "black straight-leg jeans" reads as such
-// rather than "black bottom".
+// rather than "black bottom". A garment imported from a shop link links back to it.
 
 interface GarmentThumbProps {
   owner: string;
@@ -44,9 +44,23 @@ export function GarmentThumb({ owner, garment, badge }: GarmentThumbProps): Reac
         <span className="thumb-meta">
           {tags.category} · {dressCode(tags.formality)}
         </span>
+        {garment.source_url && (
+          <a className="thumb-source" href={garment.source_url} target="_blank" rel="noreferrer noopener">
+            From {hostOf(garment.source_url)}
+          </a>
+        )}
       </figcaption>
     </figure>
   );
+}
+
+function hostOf(url: string): string {
+  try {
+    return new URL(url).hostname.replace(/^www\./, "");
+  } catch {
+    // A stored link that does not parse still deserves a label
+    return "the web";
+  }
 }
 
 function sentence(text: string): string {

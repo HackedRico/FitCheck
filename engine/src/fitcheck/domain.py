@@ -97,6 +97,8 @@ class Garment(_Value):
     wears: Annotated[int, Field(ge=0)] = 0
     # Key into the engine's garment image folder, never a person photo
     image_ref: str | None = None
+    # The shop or image link the garment was imported from, so the owner can go back to it
+    source_url: str | None = None
     created_at: datetime = Field(default_factory=lambda: datetime.now(UTC))
 
 

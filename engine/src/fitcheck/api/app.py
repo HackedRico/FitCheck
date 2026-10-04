@@ -241,11 +241,12 @@ def create_app(engine: Engine | None = None, settings: Settings | None = None) -
         ] = None,
         price: Annotated[Decimal | None, Form()] = None,
         source: Annotated[Source, Form()] = Source.CLOSET,
+        source_url: Annotated[str | None, Form(description="Shop link it came from")] = None,
     ) -> AddOut:
         """Add a garment photo to the closet, tagging it unless `tags_json` is given."""
         tags = _parse_tags(tags_json) if tags_json else None
         result = get_engine().add_to_closet(
-            owner, image.file.read(), tags=tags, price=price, source=source
+            owner, image.file.read(), tags=tags, price=price, source=source, source_url=source_url
         )
         return AddOut(garment=result.garment, pipeline=result.pipeline)
 
@@ -258,7 +259,8 @@ def create_app(engine: Engine | None = None, settings: Settings | None = None) -
     @app.get("/closet/{owner}/{garment_id}/image", response_class=Response)
     def garment_image(owner: str, garment_id: str) -> Response:
         """Return the stored garment cutout as PNG."""
-        return Response(get_engine().garment_image(owner, garment_id), media_type="image/png")
+        data = get_engine().garment_image(owner, garment_id)
+        return Response(data, media_type=_image_type(data))
 
     @app.delete("/closet/{owner}", response_model=ForgetOut)
     def forget(owner: str) -> ForgetOut:
@@ -266,6 +268,15 @@ def create_app(engine: Engine | None = None, settings: Settings | None = None) -
         return ForgetOut(deleted=get_engine().forget(owner))
 
     return app
+
+
+def _image_type(data: bytes) -> str:
+    """Name the image format from its first bytes; stored cutouts are PNG, seed photos JPEG."""
+    if data.startswith(b"\xff\xd8\xff"):
+        return "image/jpeg"
+    if data.startswith(b"RIFF"):
+        return "image/webp"
+    return "image/png"
 
 
 def _b64(data: bytes) -> str:

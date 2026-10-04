@@ -13,7 +13,7 @@ make web-install
 make web           # https://localhost:5173, or the network URL on your phone
 ```
 
-With nothing configured the whole flow runs offline. To use real models, copy `engine/.env.example` to `engine/.env` and set the keys; `env/open.env` and `env/snowflake.env` switch every slot at once (`make api-open`, `make api-snowflake`).
+With nothing configured the whole flow runs offline. Closets, and the photos and shop links people add, are saved in `.fitcheck/` (a SQLite file plus the garment images), so they survive restarts; delete that folder to start from the demo closet again. To use real models, copy `engine/.env.example` to `engine/.env` and set the keys; `env/open.env` and `env/snowflake.env` switch every slot at once (`make api-open`, `make api-snowflake`).
 
 ## How it decides
 

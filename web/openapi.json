@@ -614,6 +614,18 @@
           "source": {
             "$ref": "#/components/schemas/Source",
             "default": "closet"
+          },
+          "source_url": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Source Url",
+            "description": "Shop link it came from"
           }
         },
         "type": "object",
@@ -1052,6 +1064,17 @@
             ],
             "title": "Image Ref"
           },
+          "source_url": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Source Url"
+          },
           "created_at": {
             "type": "string",
             "format": "date-time",
@@ -1113,6 +1136,17 @@
               }
             ],
             "title": "Image Ref"
+          },
+          "source_url": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Source Url"
           },
           "created_at": {
             "type": "string",

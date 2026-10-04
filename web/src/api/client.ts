@@ -188,8 +188,8 @@ export const api = {
       }),
     ),
 
-  /** Add one garment photo to `owner`'s closet, letting the engine tag it. */
-  addToCloset: (owner: string, image: Blob): Promise<AddOut> =>
+  /** Add one garment photo to `owner`'s closet, letting the engine tag it; keeps the shop link. */
+  addToCloset: (owner: string, image: Blob, sourceUrl: string | null = null): Promise<AddOut> =>
     unwrap(() =>
       client.POST("/closet/{owner}", {
         params: { path: { owner } },
@@ -198,6 +198,7 @@ export const api = {
           tags_json: null,
           price: null,
           source: "closet",
+          source_url: sourceUrl,
         }),
         signal: AbortSignal.timeout(TIMEOUT_MS.model),
       }),

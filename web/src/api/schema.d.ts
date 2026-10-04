@@ -246,6 +246,11 @@ export interface components {
             price?: number | string | null;
             /** @default closet */
             source: components["schemas"]["Source"];
+            /**
+             * Source Url
+             * @description Shop link it came from
+             */
+            source_url?: string | null;
         };
         /** Body_render_render_post */
         Body_render_render_post: {
@@ -397,6 +402,8 @@ export interface components {
             wears: number;
             /** Image Ref */
             image_ref?: string | null;
+            /** Source Url */
+            source_url?: string | null;
             /**
              * Created At
              * Format: date-time
@@ -424,6 +431,8 @@ export interface components {
             wears: number;
             /** Image Ref */
             image_ref?: string | null;
+            /** Source Url */
+            source_url?: string | null;
             /**
              * Created At
              * Format: date-time

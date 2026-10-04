@@ -12,8 +12,10 @@ Her black blazer, formality 4, and white oxford shirt, formality 3, keep the job
 
 ## Adding real photos
 
-1. Put a cutout PNG per garment in `demo/images/`, named after the garment id, for example `demo/images/ricky-black-jeans.png`.
-2. Set that garment's `image_ref` to `"seed/ricky-black-jeans.png"`. The `seed/` prefix tells the engine to read from `demo/images/` instead of the data folder.
-3. Restart the engine. `GET /closet/ricky/ricky-black-jeans/image` should return the photo.
+1. Put one JPEG or PNG per garment in `demo/images/`, named after the garment id, for example `demo/images/ricky-black-jeans.jpg`, and add its license and author to `ATTRIBUTION.md`.
+2. Set that garment's `image_ref` to `"seed/ricky-black-jeans.jpg"`. The `seed/` prefix tells the engine to read from `demo/images/` instead of the data folder.
+3. Delete `.fitcheck/closet.db` (the demo closet only loads into an empty database) and restart the engine. `GET /closet/ricky/ricky-black-jeans/image` should return the photo.
 
-Use garment photos only. Never put a person photo in this folder.
+Use garment photos only: a garment on a hanger, a mannequin, or a body with no face showing. Never put an owner's person photo here; those stay on their device (ADR 0003).
+
+The current photos come from Wikimedia Commons; `images/ATTRIBUTION.md` lists the source, author, license and changes for each one.

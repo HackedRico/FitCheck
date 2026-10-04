@@ -124,3 +124,44 @@ def test_scan_closet_adds_each_found_garment_with_its_own_crop(tmp_path: Path) -
     # Each half plus a 4 percent margin, never the whole 200 px photo
     assert all(100 <= w < 200 for w in widths)
     assert result.pipeline[0].step == "find_garments"
+
+
+class _ScriptedClient:
+    """A chat client that returns canned answers in order and records each request."""
+
+    base_url = "http://localhost:11434/v1"
+    model = "test-model"
+
+    def __init__(self, answers: list[str]) -> None:
+        self._answers = answers
+        self.calls: list[object] = []
+
+    def complete(self, messages: object, **_: object) -> str:
+        self.calls.append(messages)
+        return self._answers[len(self.calls) - 1]
+
+
+def test_an_empty_scan_is_asked_once_more(png_bytes: bytes) -> None:
+    from fitcheck.settings import Settings
+    from fitcheck.vision.openai_compat import OpenAICompatTagger
+
+    full = json.dumps({"garments": [{**TAGS, "box": [0, 0, 500, 500]}]})
+    client = _ScriptedClient([json.dumps({"garments": []}), full])
+    tagger = OpenAICompatTagger(client, Settings())  # type: ignore[arg-type]
+
+    found = tagger.find_all(png_bytes)
+
+    assert len(found) == 1
+    assert len(client.calls) == 2
+
+
+def test_two_empty_answers_mean_nothing_was_found(png_bytes: bytes) -> None:
+    from fitcheck.settings import Settings
+    from fitcheck.vision.openai_compat import OpenAICompatTagger
+
+    empty = json.dumps({"garments": []})
+    client = _ScriptedClient([empty, empty])
+    tagger = OpenAICompatTagger(client, Settings())  # type: ignore[arg-type]
+
+    assert tagger.find_all(png_bytes) == []
+    assert len(client.calls) == 2

@@ -1404,3 +1404,18 @@ body {
     border-radius: 22px 0 0 22px;
   }
 }
+
+.fc-onyou-more {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-top: 12px;
+}
+
+.fc-onyou-more .fc-btn {
+  min-height: 42px;
+  padding: 0 16px;
+  font-size: 14px;
+}

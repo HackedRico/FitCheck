@@ -29,7 +29,7 @@ class Settings(BaseSettings):
 
     # ---------- adapter slots ----------
     store: Literal["memory", "postgres", "snowflake"] = "memory"
-    tagger: Literal["fake", "openai_compat", "cortex"] = "fake"
+    tagger: Literal["fake", "openai_compat"] = "fake"
     cutout: Literal["none", "rembg"] = "none"
     tryon: Literal["overlay", "remote", "hf_space"] = "overlay"
     weather: Literal["fixture", "open_meteo"] = "fixture"
@@ -64,12 +64,12 @@ class Settings(BaseSettings):
     # are separate so each can use the best open-weight model its host offers.
     vision_base_url: str = "https://api.featherless.ai/v1"
     vision_api_key: SecretStr | None = None
-    vision_model: str = "Qwen/Qwen2.5-VL-7B-Instruct"
+    vision_model: str = "Qwen/Qwen3-VL-8B-Instruct"
     # Where the vision model runs, for the pipeline panel; inferred from the URL when unset
     vision_runs_on: RunsOn | None = None
     chat_base_url: str = "https://api.featherless.ai/v1"
     chat_api_key: SecretStr | None = None
-    chat_model: str = "Qwen/Qwen3-32B"
+    chat_model: str = "Qwen/Qwen3-30B-A3B-Instruct-2507"
     chat_runs_on: RunsOn | None = None
     llm_timeout_s: float = 60.0
 
@@ -85,7 +85,8 @@ class Settings(BaseSettings):
     snowflake_database: str = "FITCHECK"
     snowflake_schema: str = "PUBLIC"
     snowflake_stage: str = "FITCHECK_IMAGES"
-    cortex_model: str = "llama4-maverick"
+    # llama4-maverick went legacy in August 2026; new accounts cannot start it
+    cortex_model: str = "llama3.3-70b"
     cortex_search_service: str = "CLOSET_SEARCH"
 
     @property

@@ -22,7 +22,6 @@ ADAPTERS: dict[str, dict[str, str]] = {
     "tagger": {
         "fake": "fitcheck.vision.fake",
         "openai_compat": "fitcheck.vision.openai_compat",
-        "cortex": "fitcheck.vision.cortex",
     },
     "cutout": {
         "none": "fitcheck.vision.cutout_none",

@@ -1,6 +1,9 @@
 import { getServerSession } from 'next-auth'
+import { writeFile, unlink } from 'fs/promises'
+import os from 'os'
+import path from 'path'
 import { authOptions } from '@/lib/auth'
-import { analyzeClothingImage, embedText } from '@/lib/cortex'
+import { analyzeClothingImage, embedText, CLOSET_IMAGE_STAGE } from '@/lib/cortex'
 import { query } from '@/lib/snowflake'
 import type { ClosetItemRow, Season } from '@/types'
 
@@ -52,7 +55,19 @@ export async function POST(request: Request): Promise<Response> {
     return Response.json({ error: 'Forbidden' }, { status: 403 })
   }
 
-  const analysis = await analyzeClothingImage(existing.IMAGE_URL)
+  const imageResponse = await fetch(existing.IMAGE_URL)
+  if (!imageResponse.ok) {
+    return Response.json({ error: 'Could not fetch item image' }, { status: 502 })
+  }
+  const buffer = Buffer.from(await imageResponse.arrayBuffer())
+  const tmpPath = path.join(os.tmpdir(), `${itemId}.jpg`)
+  await writeFile(tmpPath, buffer)
+  await query(
+    `PUT 'file://${tmpPath}' ${CLOSET_IMAGE_STAGE} AUTO_COMPRESS=FALSE OVERWRITE=TRUE`
+  )
+  await unlink(tmpPath).catch(() => {})
+
+  const analysis = await analyzeClothingImage(`${itemId}.jpg`)
   const descriptionText =
     `${analysis.category} ${analysis.subcategory} — ${analysis.description}`
   const embedding = await embedText(descriptionText)
@@ -67,7 +82,7 @@ export async function POST(request: Request): Promise<Response> {
       FORMALITY      = ?,
       SEASONS        = PARSE_JSON(?),
       AI_DESCRIPTION = ?,
-      EMBEDDING      = TO_VECTOR(?, FLOAT, 768),
+      EMBEDDING      = PARSE_JSON(?)::VECTOR(FLOAT, 768),
       AI_STATUS      = 'complete'
     WHERE ID = ?`,
     [

@@ -19,34 +19,27 @@ function parseCortexJson<T>(raw: string, context: string): T {
 }
 
 const ANALYZE_PROMPT = `
-You are a fashion expert. Analyze this clothing item and return ONLY valid JSON with no other text:
-{
-  "category": "TOP | BOTTOM | DRESS | OUTERWEAR | SHOES | ACCESSORY | BAG",
-  "subcategory": "specific item name, e.g. crew neck sweater",
-  "colors": ["color1", "color2"],
-  "pattern": "solid | striped | plaid | floral | graphic | other",
-  "material": "estimated material, e.g. cotton, denim, wool",
-  "formality": "CASUAL | SMART_CASUAL | BUSINESS | FORMAL",
-  "seasons": ["spring", "summer", "fall", "winter"],
-  "description": "one sentence describing this item for outfit matching"
-}
+You are a fashion expert. Analyze the clothing item in this image: {0}
+Return ONLY a valid JSON object with no other text, using exactly these keys:
+"category": one of TOP, BOTTOM, DRESS, OUTERWEAR, SHOES, ACCESSORY, BAG
+"subcategory": specific item name such as crew neck sweater
+"colors": array of color name strings
+"pattern": one of solid, striped, plaid, floral, graphic, other
+"material": estimated material such as cotton, denim, wool
+"formality": one of CASUAL, SMART_CASUAL, BUSINESS, FORMAL
+"seasons": array drawn from spring, summer, fall, winter
+"description": one sentence describing this item for outfit matching
 `.trim()
 
-export async function analyzeClothingImage(imageUrl: string): Promise<ClothingAnalysis> {
+export const CLOSET_IMAGE_STAGE = '@FITCHECK.APP.CLOSET_IMAGES'
+
+export async function analyzeClothingImage(stageFileName: string): Promise<ClothingAnalysis> {
   const rows = await query<{ RESPONSE: string }>(`
     SELECT SNOWFLAKE.CORTEX.COMPLETE(
       'pixtral-large',
-      [
-        {
-          'role': 'user',
-          'content': [
-            { 'type': 'image_url', 'image_url': { 'url': ? } },
-            { 'type': 'text', 'text': ? }
-          ]
-        }
-      ]
+      PROMPT(?, TO_FILE('${CLOSET_IMAGE_STAGE}', ?))
     ) AS RESPONSE
-  `, [imageUrl, ANALYZE_PROMPT])
+  `, [ANALYZE_PROMPT, stageFileName])
 
   return parseCortexJson<ClothingAnalysis>(rows[0].RESPONSE, 'analyzeClothingImage')
 }

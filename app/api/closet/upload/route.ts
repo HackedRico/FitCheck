@@ -1,7 +1,10 @@
 import { getServerSession } from 'next-auth'
+import { writeFile, unlink } from 'fs/promises'
+import os from 'os'
+import path from 'path'
 import { authOptions } from '@/lib/auth'
 import { uploadImage } from '@/lib/cloudinary'
-import { analyzeClothingImage, embedText } from '@/lib/cortex'
+import { analyzeClothingImage, embedText, CLOSET_IMAGE_STAGE } from '@/lib/cortex'
 import { query } from '@/lib/snowflake'
 import type { ClosetItemRow, Season } from '@/types'
 
@@ -70,7 +73,14 @@ export async function POST(request: Request): Promise<Response> {
   )
 
   try {
-    const analysis = await analyzeClothingImage(uploadResult.url)
+    const tmpPath = path.join(os.tmpdir(), `${itemId}.jpg`)
+    await writeFile(tmpPath, buffer)
+    await query(
+      `PUT 'file://${tmpPath}' ${CLOSET_IMAGE_STAGE} AUTO_COMPRESS=FALSE OVERWRITE=TRUE`
+    )
+    await unlink(tmpPath).catch(() => {})
+
+    const analysis = await analyzeClothingImage(`${itemId}.jpg`)
     const descriptionText =
       `${analysis.category} ${analysis.subcategory} — ${analysis.description}`
     const embedding = await embedText(descriptionText)
@@ -85,7 +95,7 @@ export async function POST(request: Request): Promise<Response> {
         FORMALITY      = ?,
         SEASONS        = PARSE_JSON(?),
         AI_DESCRIPTION = ?,
-        EMBEDDING      = TO_VECTOR(?, FLOAT, 768),
+        EMBEDDING      = PARSE_JSON(?)::VECTOR(FLOAT, 768),
         AI_STATUS      = 'complete'
       WHERE ID = ?`,
       [
@@ -101,7 +111,8 @@ export async function POST(request: Request): Promise<Response> {
         itemId,
       ]
     )
-  } catch {
+  } catch (err) {
+    console.error('Closet analyze pipeline failed:', err)
     await query(
       `UPDATE CLOSET_ITEMS SET AI_STATUS = 'failed' WHERE ID = ?`,
       [itemId]

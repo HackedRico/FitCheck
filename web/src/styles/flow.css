@@ -824,19 +824,43 @@ body {
 
 /* ---------- stylist chat ---------- */
 
+.fc-chat {
+  display: grid;
+  gap: 10px;
+}
+
+/* One row that scrolls sideways keeps the dock short */
 .fc-chat-prompts {
   display: flex;
-  flex-wrap: wrap;
   gap: 8px;
-  margin-bottom: 14px;
+  margin: 0 calc(-1 * var(--gutter));
+  padding: 0 var(--gutter);
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.fc-chat-prompts::-webkit-scrollbar {
+  display: none;
+}
+
+.fc-chat-prompts .fc-chip {
+  flex: none;
 }
 
 .fc-chat-log {
   display: grid;
+  align-content: start;
   gap: 8px;
-  margin: 0 0 14px;
+  max-height: min(38dvh, 340px);
+  margin: 0;
   padding: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
   list-style: none;
+}
+
+.fc-chat .fc-error {
+  margin: 0;
 }
 
 .fc-bubble {
@@ -971,13 +995,12 @@ body {
   font-size: 13px;
 }
 
-.fc-actionbar {
+.fc-dock {
   position: fixed;
   inset: auto 0 0;
   z-index: 20;
   display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 10px;
+  gap: 12px;
   max-width: 560px;
   margin: 0 auto;
   padding: 12px var(--gutter) calc(12px + env(safe-area-inset-bottom));
@@ -985,6 +1008,17 @@ body {
   background: color-mix(in srgb, var(--bg) 92%, transparent);
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
+}
+
+.fc-actionbar {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+/* `--dock-h` is the dock's measured height, set from ResultScreen */
+.fc-result {
+  padding-bottom: calc(var(--dock-h, 112px) + 24px);
 }
 
 /* ---------- you ---------- */
@@ -1064,11 +1098,11 @@ body {
     top: 84px;
     grid-row: 2 / span 20;
     width: 100%;
-    max-height: calc(100dvh - 130px);
+    max-height: calc(100dvh - 100px - var(--dock-h, 30px));
     margin: 0;
   }
 
-  .fc-result > :not(.fc-topbar, .fc-specimen, .fc-actionbar) {
+  .fc-result > :not(.fc-topbar, .fc-specimen, .fc-dock) {
     grid-column: 2;
   }
 
@@ -1076,11 +1110,18 @@ body {
     margin-top: 0;
   }
 
-  .fc-actionbar {
+  /* Line the dock up under the right column of the page */
+  .fc-dock {
     max-width: none;
-    grid-template-columns: 220px 220px;
+    grid-template-columns: minmax(0, 540px);
     justify-content: end;
     padding-right: max(var(--gutter), calc((100vw - 1160px) / 2 + var(--gutter)));
+  }
+
+  .fc-chat-prompts {
+    flex-wrap: wrap;
+    margin: 0;
+    padding: 0;
   }
 }
 
@@ -1521,4 +1562,86 @@ body {
   text-underline-offset: 2px;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+/* ---------- before and after ---------- */
+
+.fc .compare-label {
+  top: 12px;
+  padding: 5px 10px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.92);
+  color: #141412;
+  font: 600 12px/1 var(--sans);
+  letter-spacing: normal;
+  text-transform: none;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.15);
+}
+
+.fc .compare-handle {
+  width: 2px;
+  margin-left: -1px;
+  background: #fff;
+  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.15);
+}
+
+.fc .compare-handle span {
+  width: 36px;
+  height: 36px;
+  margin: -18px 0 0 -18px;
+  border: 2px solid #fff;
+  background: rgba(20, 20, 18, 0.55);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+}
+
+/* Two images of different shapes: side by side, each whole, same height */
+.compare-pair {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+.compare-pair figure {
+  display: grid;
+  gap: 8px;
+  margin: 0;
+}
+
+.compare-pair img {
+  width: 100%;
+  height: min(52vh, 420px);
+  border-radius: 14px;
+  background: var(--bg-2);
+  object-fit: contain;
+}
+
+.compare-pair figcaption {
+  color: var(--fog);
+  font-size: 13px;
+  text-align: center;
+}
+
+/* Closet matches on a result use the closet page's grid, so a garment looks the same everywhere */
+.fc .shelf-row {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+  gap: 18px 14px;
+  overflow: visible;
+  padding-bottom: 0;
+}
+
+.fc .shelf-row .thumb {
+  flex: none;
+}
+
+.fc-warning {
+  margin: 14px 0 0;
+  padding: 12px 14px;
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--warn) 12%, var(--bg));
+  color: var(--fg);
+  font-size: 14px;
+  line-height: 1.45;
+  text-align: left;
 }

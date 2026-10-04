@@ -1,9 +1,10 @@
-import type { ImageSegmenter, PoseLandmarker } from "@mediapipe/tasks-vision";
+import type { ImageSegmenter } from "@mediapipe/tasks-vision";
 import wasmLoaderPath from "@mediapipe/tasks-vision/vision_wasm_internal.js?url";
 import wasmBinaryPath from "@mediapipe/tasks-vision/vision_wasm_internal.wasm?url";
 
 import type { TryOnRegion } from "../api/client";
 import { prepareCutout } from "./cutout";
+import { loadImagePoseLandmarker } from "./pose";
 
 // =============================================================================
 // Module Overview
@@ -17,8 +18,6 @@ import { prepareCutout } from "./cutout";
 
 const SEGMENTER_URL =
   "https://storage.googleapis.com/mediapipe-models/image_segmenter/selfie_multiclass_256x256/float32/latest/selfie_multiclass_256x256.tflite";
-const POSE_URL =
-  "https://storage.googleapis.com/mediapipe-models/pose_landmarker/pose_landmarker_full/float16/1/pose_landmarker_full.task";
 
 // selfie_multiclass_256x256 categories: 0 background, 1 hair, 2 body skin, 3 face skin, 4 clothes, 5 other
 const CLOTHES = 4;
@@ -65,7 +64,7 @@ export async function extractGarment(image: Blob, region: TryOnRegion): Promise<
 // -----------------------------------------------------------------
 
 async function cutWornGarment(source: HTMLCanvasElement, region: TryOnRegion): Promise<GarmentSprite | null> {
-  const [segmenter, landmarker] = await Promise.all([loadSegmenter(), loadImagePose()]);
+  const [segmenter, landmarker] = await Promise.all([loadSegmenter(), loadImagePoseLandmarker()]);
   const { width, height } = source;
   const pose = landmarker.detect(source).landmarks[0];
   const at = (index: number): Point | null => {
@@ -155,7 +154,6 @@ function regionBand(
 // -----------------------------------------------------------------
 
 let segmenterPending: Promise<ImageSegmenter> | null = null;
-let posePending: Promise<PoseLandmarker> | null = null;
 
 function loadSegmenter(): Promise<ImageSegmenter> {
   segmenterPending ??= (async () => {
@@ -169,21 +167,6 @@ function loadSegmenter(): Promise<ImageSegmenter> {
     throw error;
   });
   return segmenterPending;
-}
-
-function loadImagePose(): Promise<PoseLandmarker> {
-  // A separate IMAGE-mode landmarker: the live preview's VIDEO-mode one needs increasing timestamps
-  posePending ??= (async () => {
-    const { PoseLandmarker } = await import("@mediapipe/tasks-vision");
-    return PoseLandmarker.createFromOptions(
-      { wasmLoaderPath, wasmBinaryPath },
-      { baseOptions: { modelAssetPath: POSE_URL }, runningMode: "IMAGE", numPoses: 1 },
-    );
-  })().catch((error: unknown) => {
-    posePending = null;
-    throw error;
-  });
-  return posePending;
 }
 
 // -----------------------------------------------------------------

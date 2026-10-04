@@ -88,21 +88,21 @@ export default function UploadPage() {
     const analysisSucceeded = item.AI_STATUS === 'complete'
 
     return (
-      <div className="min-h-screen bg-zinc-950 text-white flex items-center justify-center p-6">
-        <div className="w-full max-w-md space-y-6">
+      <div className="max-w-md mx-auto px-4 py-10">
+        <div className="w-full space-y-6">
           <div className="text-center">
             <div className="text-4xl mb-3">{analysisSucceeded ? '✓' : '⚠'}</div>
-            <h1 className="text-2xl font-bold">
+            <h1 className="text-2xl font-bold text-zinc-900">
               {analysisSucceeded ? 'Item added!' : 'Saved — analysis failed'}
             </h1>
             {!analysisSucceeded && (
-              <p className="text-zinc-400 mt-2 text-sm">
+              <p className="text-zinc-500 mt-2 text-sm">
                 The item was saved but AI analysis couldn&apos;t complete. You can retry it from your closet.
               </p>
             )}
           </div>
 
-          <div className="aspect-square w-full overflow-hidden rounded-2xl bg-zinc-900">
+          <div className="aspect-square w-full overflow-hidden rounded-2xl bg-zinc-50 border border-zinc-200">
             <img
               src={item.THUMBNAIL_URL ?? item.IMAGE_URL}
               alt="Uploaded item"
@@ -111,25 +111,25 @@ export default function UploadPage() {
           </div>
 
           {analysisSucceeded && (
-            <div className="rounded-xl bg-zinc-900 border border-zinc-800 p-4 space-y-3">
+            <div className="rounded-2xl bg-white border border-zinc-200 p-4 space-y-3">
               <div className="flex items-center justify-between">
-                <span className="text-xs text-zinc-500 uppercase tracking-widest">Category</span>
-                <span className="text-sm font-semibold text-indigo-400">{item.CATEGORY}</span>
+                <span className="text-xs text-zinc-400 uppercase tracking-widest">Category</span>
+                <span className="text-sm font-semibold text-violet-600">{item.CATEGORY}</span>
               </div>
               {item.SUBCATEGORY && (
                 <div className="flex items-center justify-between">
-                  <span className="text-xs text-zinc-500 uppercase tracking-widest">Type</span>
-                  <span className="text-sm text-zinc-200">{item.SUBCATEGORY}</span>
+                  <span className="text-xs text-zinc-400 uppercase tracking-widest">Type</span>
+                  <span className="text-sm text-zinc-700">{item.SUBCATEGORY}</span>
                 </div>
               )}
               {item.COLORS && item.COLORS.length > 0 && (
                 <div className="flex items-center justify-between">
-                  <span className="text-xs text-zinc-500 uppercase tracking-widest">Colors</span>
+                  <span className="text-xs text-zinc-400 uppercase tracking-widest">Colors</span>
                   <div className="flex gap-1.5 flex-wrap justify-end">
                     {item.COLORS.map((c) => (
                       <span
                         key={c}
-                        className="px-2 py-0.5 rounded-full text-xs bg-zinc-800 text-zinc-300 border border-zinc-700"
+                        className="px-2 py-0.5 rounded-full text-xs bg-zinc-100 text-zinc-600 border border-zinc-200"
                       >
                         {c}
                       </span>
@@ -138,7 +138,7 @@ export default function UploadPage() {
                 </div>
               )}
               {item.AI_DESCRIPTION && (
-                <p className="text-xs text-zinc-400 pt-1 border-t border-zinc-800">
+                <p className="text-xs text-zinc-500 pt-1 border-t border-zinc-100">
                   {item.AI_DESCRIPTION}
                 </p>
               )}
@@ -148,28 +148,35 @@ export default function UploadPage() {
           <div className="flex gap-3">
             <button
               onClick={reset}
-              className="flex-1 py-3 rounded-xl border border-zinc-700 text-zinc-300 hover:bg-zinc-800 transition-colors text-sm font-medium"
+              className="flex-1 py-3 rounded-full border border-zinc-200 text-zinc-600 hover:bg-zinc-50 transition-colors text-sm font-medium"
             >
               Upload Another
             </button>
             <button
               onClick={() => router.push('/closet')}
-              className="flex-1 py-3 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white transition-colors text-sm font-medium"
+              className="flex-1 py-3 rounded-full border border-zinc-200 text-zinc-600 hover:bg-zinc-50 transition-colors text-sm font-medium"
             >
               View My Closet
             </button>
           </div>
+
+          <button
+            onClick={() => router.push('/dashboard')}
+            className="w-full py-3 rounded-full bg-zinc-900 hover:bg-zinc-700 text-white transition-colors text-sm font-medium"
+          >
+            Get My Fit →
+          </button>
         </div>
       </div>
     )
   }
 
   return (
-    <div className="min-h-screen bg-zinc-950 text-white flex items-center justify-center p-6">
-      <div className="w-full max-w-md space-y-6">
+    <div className="max-w-md mx-auto px-4 py-10">
+      <div className="w-full space-y-6">
         <div>
-          <h1 className="text-2xl font-bold">Add to Closet</h1>
-          <p className="text-zinc-400 text-sm mt-1">
+          <h1 className="text-2xl font-bold text-zinc-900">Add to Closet</h1>
+          <p className="text-zinc-500 text-sm mt-1">
             Upload a photo of any clothing item — AI will tag it automatically.
           </p>
         </div>
@@ -185,18 +192,18 @@ export default function UploadPage() {
               'rounded-2xl border-2 border-dashed cursor-pointer',
               'aspect-square w-full transition-colors select-none',
               dragOver
-                ? 'border-indigo-500 bg-indigo-950/30'
-                : 'border-zinc-700 bg-zinc-900 hover:border-zinc-500 hover:bg-zinc-800',
+                ? 'border-violet-400 bg-violet-50'
+                : 'border-zinc-300 bg-zinc-50 hover:border-zinc-400 hover:bg-zinc-100',
             ].join(' ')}
           >
-            <div className="text-5xl text-zinc-600">+</div>
-            <p className="text-zinc-400 text-sm text-center px-6">
+            <div className="text-5xl text-zinc-300">+</div>
+            <p className="text-zinc-500 text-sm text-center px-6">
               Drag &amp; drop an image here, or click to browse
             </p>
-            <p className="text-zinc-600 text-xs">PNG, JPG, WEBP · max 10 MB</p>
+            <p className="text-zinc-400 text-xs">PNG, JPG, WEBP · max 10 MB</p>
           </div>
         ) : state.stage === 'preview' ? (
-          <div className="relative aspect-square w-full overflow-hidden rounded-2xl bg-zinc-900">
+          <div className="relative aspect-square w-full overflow-hidden rounded-2xl bg-zinc-50 border border-zinc-200">
             <img
               src={state.objectUrl}
               alt="Preview"
@@ -211,9 +218,9 @@ export default function UploadPage() {
             </button>
           </div>
         ) : state.stage === 'uploading' ? (
-          <div className="flex flex-col items-center justify-center aspect-square w-full rounded-2xl bg-zinc-900 border border-zinc-800 gap-4">
+          <div className="flex flex-col items-center justify-center aspect-square w-full rounded-2xl bg-zinc-50 border border-zinc-200 gap-4">
             <svg
-              className="w-10 h-10 animate-spin text-indigo-400"
+              className="w-10 h-10 animate-spin text-zinc-700"
               viewBox="0 0 24 24"
               fill="none"
             >
@@ -224,12 +231,12 @@ export default function UploadPage() {
                 d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"
               />
             </svg>
-            <p className="text-zinc-400 text-sm">Uploading &amp; analysing…</p>
+            <p className="text-zinc-500 text-sm">Uploading &amp; analysing…</p>
           </div>
         ) : null}
 
         {state.stage === 'error' && (
-          <p className="text-red-400 text-sm">{state.message}</p>
+          <p className="text-red-500 text-sm">{state.message}</p>
         )}
 
         <input
@@ -245,13 +252,13 @@ export default function UploadPage() {
             <>
               <button
                 onClick={reset}
-                className="flex-1 py-3 rounded-xl border border-zinc-700 text-zinc-300 hover:bg-zinc-800 transition-colors text-sm font-medium"
+                className="flex-1 py-3 rounded-full border border-zinc-200 text-zinc-600 hover:bg-zinc-50 transition-colors text-sm font-medium"
               >
                 Choose Different
               </button>
               <button
                 onClick={handleUpload}
-                className="flex-1 py-3 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white transition-colors text-sm font-medium"
+                className="flex-1 py-3 rounded-full bg-zinc-900 hover:bg-zinc-700 text-white transition-colors text-sm font-medium"
               >
                 Upload
               </button>
@@ -260,7 +267,7 @@ export default function UploadPage() {
           {(state.stage === 'idle' || state.stage === 'error') && (
             <button
               onClick={() => router.push('/closet')}
-              className="w-full py-3 rounded-xl border border-zinc-700 text-zinc-400 hover:bg-zinc-800 transition-colors text-sm"
+              className="w-full py-3 rounded-full border border-zinc-200 text-zinc-500 hover:bg-zinc-50 transition-colors text-sm"
             >
               Back to Closet
             </button>

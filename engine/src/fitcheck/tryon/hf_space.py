@@ -160,10 +160,15 @@ class HfSpaceRenderer:
 
 def build(settings: Settings) -> HfSpaceRenderer:
     """Return a renderer for the Space named by `FITCHECK_TRYON_HF_SPACE`."""
-    return HfSpaceRenderer(settings.tryon_hf_space, timeout_s=settings.tryon_timeout_s)
+    token = settings.hf_token.get_secret_value() if settings.hf_token else None
+    return HfSpaceRenderer(
+        settings.tryon_hf_space,
+        timeout_s=settings.tryon_timeout_s,
+        client_factory=lambda space: _gradio_client(space, token),
+    )
 
 
-def _gradio_client(space: str) -> Any:
+def _gradio_client(space: str, token: str | None = None) -> Any:
     """Connect to `space`; outputs stay on the Space so nothing lands in a local temp dir."""
     try:
         from gradio_client import Client
@@ -172,8 +177,9 @@ def _gradio_client(space: str) -> Any:
         raise AdapterUnavailable(
             "FITCHECK_TRYON=hf_space needs gradio-client; run `uv sync --all-extras` in engine/."
         ) from exc
-    # The token comes from HF_TOKEN or `hf auth login`; a signed-in user gets more ZeroGPU time
-    return Client(space, verbose=False, download_files=False)
+    # With no token, gradio falls back to `hf auth login`, else calls anonymously with the
+    # smallest ZeroGPU allowance; a signed-in user gets more
+    return Client(space, token=token, verbose=False, download_files=False)
 
 
 def _from_space_error(space: str, exc: Exception) -> Exception:

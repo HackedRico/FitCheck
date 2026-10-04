@@ -25,6 +25,13 @@ const WEATHER_CODE_MAP: Record<number, string> = {
   95: 'thunderstorm',
 }
 
+const FALLBACK_WEATHER: WeatherData = {
+  temp: 68,
+  feels_like: 68,
+  rain_chance: 10,
+  condition: 'mild',
+}
+
 export async function getWeather(lat: number, lng: number): Promise<WeatherData> {
   const url =
     `https://api.open-meteo.com/v1/forecast` +
@@ -32,16 +39,21 @@ export async function getWeather(lat: number, lng: number): Promise<WeatherData>
     `&current=temperature_2m,apparent_temperature,precipitation_probability,weathercode` +
     `&temperature_unit=fahrenheit`
 
-  const res = await fetch(url, { next: { revalidate: 1800 } })
-  if (!res.ok) throw new Error('Failed to fetch weather')
+  try {
+    const res = await fetch(url, { next: { revalidate: 1800 } })
+    if (!res.ok) return FALLBACK_WEATHER
 
-  const data = await res.json()
-  const c = data.current
+    const data = await res.json()
+    const c = data.current
+    if (typeof c?.temperature_2m !== 'number') return FALLBACK_WEATHER
 
-  return {
-    temp: Math.round(c.temperature_2m),
-    feels_like: Math.round(c.apparent_temperature),
-    rain_chance: c.precipitation_probability ?? 0,
-    condition: WEATHER_CODE_MAP[c.weathercode] ?? 'mixed conditions',
+    return {
+      temp: Math.round(c.temperature_2m),
+      feels_like: Math.round(c.apparent_temperature ?? c.temperature_2m),
+      rain_chance: c.precipitation_probability ?? 0,
+      condition: WEATHER_CODE_MAP[c.weathercode] ?? 'mixed conditions',
+    }
+  } catch {
+    return FALLBACK_WEATHER
   }
 }

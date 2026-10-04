@@ -60,6 +60,24 @@ export async function POST(request: Request) {
 
   const userId = session.user.id
   const now = new Date().toISOString()
+  const arr = (v: unknown) => JSON.stringify(Array.isArray(v) ? v : [])
+  const num = (v: unknown) => (typeof v === 'number' && Number.isFinite(v) ? v : null)
+  const str = (v: unknown) => (typeof v === 'string' && v.trim() ? v.trim() : null)
+  const values = [
+    arr(body.style_aesthetics),
+    arr(body.favorite_colors),
+    arr(body.avoid_colors),
+    arr(body.favorite_brands),
+    num(body.budget_min),
+    num(body.budget_max),
+    str(body.body_type),
+    str(body.skin_tone),
+    str(body.gender),
+    str(body.size_tops),
+    str(body.size_bottoms),
+    str(body.size_shoes),
+    now,
+  ]
 
   const updateResult = await query<Record<string, unknown>>(
     `UPDATE TASTE_PROFILES SET
@@ -77,22 +95,7 @@ export async function POST(request: Request) {
       SIZE_SHOES       = ?,
       UPDATED_AT       = ?
     WHERE USER_ID = ?`,
-    [
-      JSON.stringify(body.style_aesthetics),
-      JSON.stringify(body.favorite_colors),
-      JSON.stringify(body.avoid_colors),
-      JSON.stringify(body.favorite_brands),
-      body.budget_min,
-      body.budget_max,
-      body.body_type,
-      body.skin_tone,
-      body.gender,
-      body.size_tops,
-      body.size_bottoms,
-      body.size_shoes,
-      now,
-      userId,
-    ]
+    [...values, userId]
   )
 
   const rowsUpdated =
@@ -114,23 +117,7 @@ export async function POST(request: Request) {
         ?, ?, ?,
         ?, ?, ?,
         ?`,
-      [
-        crypto.randomUUID(),
-        userId,
-        JSON.stringify(body.style_aesthetics),
-        JSON.stringify(body.favorite_colors),
-        JSON.stringify(body.avoid_colors),
-        JSON.stringify(body.favorite_brands),
-        body.budget_min,
-        body.budget_max,
-        body.body_type,
-        body.skin_tone,
-        body.gender,
-        body.size_tops,
-        body.size_bottoms,
-        body.size_shoes,
-        now,
-      ]
+      [crypto.randomUUID(), userId, ...values]
     )
   }
 

@@ -5,6 +5,7 @@ import { authOptions } from '@/lib/auth'
 import { query } from '@/lib/snowflake'
 import type { ClosetItemRow, Season } from '@/types'
 import ClosetGrid from '@/components/ClosetGrid'
+import ClosetSearch from '@/components/ClosetSearch'
 
 async function getClosetItems(userId: string): Promise<ClosetItemRow[]> {
   const rows = await query<ClosetItemRow>(
@@ -42,23 +43,23 @@ export default async function ClosetPage() {
   const items = await getClosetItems(session.user.id)
 
   return (
-    <div className="min-h-screen bg-zinc-950 text-white">
-      <header className="sticky top-0 z-10 bg-zinc-950/80 backdrop-blur border-b border-zinc-800 px-6 py-4 flex items-center justify-between">
-        <h1 className="text-xl font-bold tracking-tight">My Closet</h1>
+    <div className="max-w-3xl mx-auto px-4 py-8">
+      <div className="flex items-center justify-between mb-6">
+        <h1 className="text-2xl font-bold tracking-tight text-zinc-900">My Closet</h1>
         <Link
           href="/closet/upload"
-          className="px-4 py-2 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-medium transition-colors"
+          className="rounded-full bg-zinc-900 px-4 py-2 text-sm font-medium text-white hover:bg-zinc-700 transition-colors"
         >
           + Add Item
         </Link>
-      </header>
+      </div>
 
-      <main className="p-6">
+      <main>
         {items.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-32 gap-6 text-center">
-            <div className="w-20 h-20 rounded-2xl bg-zinc-900 border border-zinc-800 flex items-center justify-center">
+            <div className="w-20 h-20 rounded-2xl bg-zinc-50 border border-zinc-200 flex items-center justify-center">
               <svg
-                className="w-10 h-10 text-zinc-600"
+                className="w-10 h-10 text-zinc-400"
                 fill="none"
                 viewBox="0 0 24 24"
                 stroke="currentColor"
@@ -72,20 +73,23 @@ export default async function ClosetPage() {
               </svg>
             </div>
             <div>
-              <h2 className="text-lg font-semibold text-zinc-200">Your closet is empty</h2>
+              <h2 className="text-lg font-semibold text-zinc-800">Your closet is empty</h2>
               <p className="text-zinc-500 text-sm mt-1">
                 Upload your first item to get started.
               </p>
             </div>
             <Link
               href="/closet/upload"
-              className="px-6 py-3 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-medium transition-colors"
+              className="rounded-full bg-zinc-900 px-6 py-3 text-sm font-medium text-white hover:bg-zinc-700 transition-colors"
             >
               Upload First Item
             </Link>
           </div>
         ) : (
-          <ClosetGrid items={items} />
+          <>
+            <ClosetSearch />
+            <ClosetGrid items={items} />
+          </>
         )}
       </main>
     </div>

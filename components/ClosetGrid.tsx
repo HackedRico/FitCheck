@@ -11,6 +11,10 @@ interface Props {
 export default function ClosetGrid({ items: initialItems }: Props) {
   const [items, setItems] = useState<ClosetItemRow[]>(initialItems)
 
+  const handleUpdate = (updated: ClosetItemRow) => {
+    setItems((prev) => prev.map((i) => (i.ID === updated.ID ? updated : i)))
+  }
+
   const handleDelete = async (id: string) => {
     setItems((prev) => prev.filter((i) => i.ID !== id))
 
@@ -39,7 +43,7 @@ export default function ClosetGrid({ items: initialItems }: Props) {
   return (
     <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
       {items.map((item) => (
-        <ClosetItemCard key={item.ID} item={item} onDelete={handleDelete} />
+        <ClosetItemCard key={item.ID} item={item} onDelete={handleDelete} onUpdate={handleUpdate} />
       ))}
     </div>
   )

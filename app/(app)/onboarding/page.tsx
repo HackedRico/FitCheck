@@ -1,8 +1,8 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
-import type { TasteProfilePayload } from '@/types'
+import type { TasteProfilePayload, TasteProfileRow } from '@/types'
 
 const STYLE_OPTIONS = [
   'minimalist',

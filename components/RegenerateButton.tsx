@@ -3,14 +3,21 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 
+const OCCASIONS = ['daily', 'work', 'interview', 'date night', 'party', 'weekend']
+
 export default function RegenerateButton() {
   const [loading, setLoading] = useState(false)
+  const [occasion, setOccasion] = useState('daily')
   const router = useRouter()
 
   async function handleRegenerate() {
     setLoading(true)
     try {
-      await fetch('/api/outfit/generate', { method: 'POST' })
+      await fetch('/api/outfit/generate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ occasion }),
+      })
       router.refresh()
     } finally {
       setLoading(false)
@@ -18,6 +25,19 @@ export default function RegenerateButton() {
   }
 
   return (
+    <div className="flex items-center gap-2">
+      <select
+        value={occasion}
+        onChange={(e) => setOccasion(e.target.value)}
+        disabled={loading}
+        className="rounded-full border border-zinc-200 bg-white px-3 py-2 text-sm text-zinc-700 focus:outline-none focus:border-zinc-400 disabled:opacity-50 capitalize"
+      >
+        {OCCASIONS.map((o) => (
+          <option key={o} value={o} className="capitalize">
+            {o}
+          </option>
+        ))}
+      </select>
     <button
       onClick={handleRegenerate}
       disabled={loading}
@@ -35,5 +55,6 @@ export default function RegenerateButton() {
       )}
       {loading ? 'Generating…' : 'Regenerate'}
     </button>
+    </div>
   )
 }

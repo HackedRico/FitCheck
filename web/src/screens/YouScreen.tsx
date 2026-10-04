@@ -26,19 +26,22 @@ export function YouScreen(): ReactNode {
       <PhotoBooth
         onCancel={() => setBooth(false)}
         onPhoto={async (photo) => {
-          await person.save(photo);
-          setBooth(false);
-          // Check the photo the way the renderer will see it, so a bad one is caught now
+          // Keep the crop around the person, so "You" shows exactly who a render will dress
           const framed = await framePerson(photo).catch(() => null);
+          const keep = framed?.found ? framed.image : photo;
+          await person.save(keep);
+          setBooth(false);
           setFraming(
             framed === null || isWellFramed(framed)
               ? null
-              : framed.found
-                ? "You look small in this photo. Renders come out best when you fill the frame, head to knees."
-                : "We could not find you in this photo. Retake it standing, head to knees, facing the camera.",
+              : !framed.found
+                ? "We could not find you in this photo. Retake it standing, head to knees, facing the camera."
+                : framed.people > 1
+                  ? "More than one person is in this photo, so a render may dress the wrong one. Retake it alone."
+                  : "You look small in this photo. Renders come out best when you fill the frame, head to knees.",
           );
           if (flow.scan.status === "done") {
-            flow.requestRender(photo, "photo");
+            flow.requestRender(keep, "photo");
             navigate("result");
           }
         }}

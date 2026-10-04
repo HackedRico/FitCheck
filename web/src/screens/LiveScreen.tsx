@@ -3,6 +3,7 @@ import { useEffect, useRef, useState, type ReactNode } from "react";
 import { Icon } from "../components/Icons";
 import { captureFrame, useCamera, type Facing } from "../lib/camera";
 import { placeGarment, smoothPlacement, type Landmark, type Placement } from "../lib/fit";
+import { drawOnJoints, type JointPair } from "../lib/composite";
 import { extractGarment, type GarmentSprite, type Point } from "../lib/garmentSprite";
 import { loadPoseLandmarker } from "../lib/pose";
 import { useApp } from "../state/app";
@@ -28,11 +29,6 @@ const LEFT_HIP = 23;
 const RIGHT_HIP = 24;
 
 type PoseStatus = "loading" | "ready" | "failed";
-
-interface JointPair {
-  left: Point;
-  right: Point;
-}
 
 /** The candidate on the owner, live. */
 export function LiveScreen(): ReactNode {
@@ -227,21 +223,4 @@ function smoothJoints(previous: JointPair | null, next: JointPair): JointPair {
     y: a.y + (b.y - a.y) * SMOOTHING,
   });
   return { left: mix(previous.left, next.left), right: mix(previous.right, next.right) };
-}
-
-/** Draw `garment` so its wearer's joints land on the owner's: one scale, one turn, one shift. */
-function drawOnJoints(context: CanvasRenderingContext2D, garment: HTMLCanvasElement, from: JointPair, to: JointPair): void {
-  const fromSpan = { x: from.left.x - from.right.x, y: from.left.y - from.right.y };
-  const toSpan = { x: to.left.x - to.right.x, y: to.left.y - to.right.y };
-  const fromLength = Math.hypot(fromSpan.x, fromSpan.y);
-  if (fromLength < 1) return;
-  const scale = Math.hypot(toSpan.x, toSpan.y) / fromLength;
-  const angle = Math.atan2(toSpan.y, toSpan.x) - Math.atan2(fromSpan.y, fromSpan.x);
-  context.save();
-  context.translate(to.right.x, to.right.y);
-  context.rotate(angle);
-  context.scale(scale, scale);
-  context.translate(-from.right.x, -from.right.y);
-  context.drawImage(garment, 0, 0);
-  context.restore();
 }

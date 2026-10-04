@@ -63,6 +63,17 @@ export default function ShoppingCard({ suggestion }: ShoppingCardProps) {
         )}
       </div>
 
+      {suggestion.already_owned && (
+        <div className="flex items-center gap-1.5 rounded-lg bg-emerald-50 border border-emerald-200 px-2.5 py-1.5">
+          <svg className="h-3.5 w-3.5 text-emerald-600 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+            <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+          </svg>
+          <p className="text-xs font-medium text-emerald-700">
+            Already in your closet: {suggestion.already_owned}
+          </p>
+        </div>
+      )}
+
       {suggestion.suggested_because && (
         <p className="text-xs text-zinc-500 leading-relaxed border-t border-zinc-100 pt-2">
           {suggestion.suggested_because}

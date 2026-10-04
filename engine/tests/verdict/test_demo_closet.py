@@ -28,7 +28,7 @@ TODAY = date(2026, 10, 5)
 # =============================================================================
 # Module Overview
 # =============================================================================
-# The stage script as a test: Maya's seed closet in `demo/closet.json` against a copy
+# The stage script as a test: Ricky's seed closet in `demo/closet.json` against a copy
 # of the default weather and calendar fixtures must give BUY for the raincoat, SKIP
 # for the navy crewneck and TRY_WITH for the bold shirt. The week is mirrored here
 # rather than imported, so a fixture change shows up as a failing demo, not a quiet one.
@@ -72,7 +72,7 @@ def _fixture_week() -> WeekContext:
 
 @pytest.fixture(scope="module")
 def closet() -> list[Garment]:
-    """Return Maya's seed closet."""
+    """Return Ricky's seed closet."""
     return load_seed(SEED_PATH)
 
 
@@ -107,15 +107,15 @@ BOLD_SHIRT = GarmentTags(
 )
 
 
-def test_the_seed_is_mayas_fifteen_priced_and_worn_garments(closet: list[Garment]) -> None:
+def test_the_seed_is_rickys_fifteen_priced_and_worn_garments(closet: list[Garment]) -> None:
     assert len(closet) == 15
     assert len({g.id for g in closet}) == 15
-    assert all(g.owner == "maya" and g.id.startswith("maya-") for g in closet)
+    assert all(g.owner == "ricky" and g.id.startswith("ricky-") for g in closet)
     # Cost per wear needs both numbers
     assert all(g.price is not None and g.wears > 0 for g in closet)
 
 
-def test_raincoat_is_buy_because_rain_is_due_and_maya_owns_no_shell(
+def test_raincoat_is_buy_because_rain_is_due_and_ricky_owns_no_shell(
     closet: list[Garment],
 ) -> None:
     verdict = decide(RAINCOAT, closet, WEEK, TODAY)
@@ -127,10 +127,10 @@ def test_raincoat_is_buy_because_rain_is_due_and_maya_owns_no_shell(
     )
     pairing_ids = [g.id for g in verdict.pairings]
     assert len(pairing_ids) >= 3
-    assert "maya-black-jeans" in pairing_ids
+    assert "ricky-black-jeans" in pairing_ids
 
 
-def test_navy_crewneck_is_skip_because_maya_owns_three_navy_sweaters(
+def test_navy_crewneck_is_skip_because_ricky_owns_three_navy_sweaters(
     closet: list[Garment],
 ) -> None:
     verdict = decide(NAVY_CREWNECK, closet, WEEK, TODAY)
@@ -145,7 +145,7 @@ def test_bold_shirt_is_try_with_her_black_jeans(closet: list[Garment]) -> None:
 
     assert verdict.decision is Decision.TRY_WITH
     assert verdict.best_pairing is not None
-    assert verdict.best_pairing.id == "maya-black-jeans"
+    assert verdict.best_pairing.id == "ricky-black-jeans"
     assert verdict.headline.startswith("Try it with your black straight-leg jeans: ")
 
 

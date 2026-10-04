@@ -111,8 +111,7 @@ export function ClosetScreen(): ReactNode {
         <div className="closet-empty">
           <p>Nothing here yet.</p>
           <p className="fc-muted">
-            Add a photo of something you own. For the demo closet, switch the owner to <strong>maya</strong> in
-            Settings, on the You screen.
+            Add a photo of something you already own, and every verdict will weigh it.
           </p>
         </div>
       )}

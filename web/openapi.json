@@ -1,0 +1,1577 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "FitCheck engine",
+    "summary": "Scan a garment, see it on you, get BUY, SKIP or TRY-WITH.",
+    "version": "0.1.0"
+  },
+  "paths": {
+    "/health": {
+      "get": {
+        "summary": "Health",
+        "description": "List the adapter running in every slot.",
+        "operationId": "health_health_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HealthOut"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/scan": {
+      "post": {
+        "summary": "Scan",
+        "description": "Cut out and tag one garment photo. Nothing is stored.",
+        "operationId": "scan_scan_post",
+        "requestBody": {
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "$ref": "#/components/schemas/Body_scan_scan_post"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ScanOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/judge": {
+      "post": {
+        "summary": "Judge",
+        "description": "Return BUY, SKIP or TRY_WITH for scanned tags against the owner's closet and week.",
+        "operationId": "judge_judge_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/JudgeIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/JudgeOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/week/{owner}": {
+      "get": {
+        "summary": "Week",
+        "description": "Return the forecast and calendar events for the coming days.",
+        "operationId": "week_week__owner__get",
+        "parameters": [
+          {
+            "name": "owner",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Owner"
+            }
+          },
+          {
+            "name": "lat",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Lat"
+            }
+          },
+          {
+            "name": "lon",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Lon"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WeekOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/render": {
+      "post": {
+        "summary": "Render",
+        "description": "Render the garment on the person.",
+        "operationId": "render_render_post",
+        "requestBody": {
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "$ref": "#/components/schemas/Body_render_render_post"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RenderOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/chat": {
+      "post": {
+        "summary": "Chat",
+        "description": "Ask the stylist about the current scan, verdict or closet.",
+        "operationId": "chat_chat_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ChatIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ChatOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/closet/{owner}": {
+      "get": {
+        "summary": "Closet",
+        "description": "List the owner's closet.",
+        "operationId": "closet_closet__owner__get",
+        "parameters": [
+          {
+            "name": "owner",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Owner"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/Garment-Output"
+                  },
+                  "title": "Response Closet Closet  Owner  Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "summary": "Add To Closet",
+        "description": "Add a garment photo to the closet, tagging it unless `tags_json` is given.",
+        "operationId": "add_to_closet_closet__owner__post",
+        "parameters": [
+          {
+            "name": "owner",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Owner"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "$ref": "#/components/schemas/Body_add_to_closet_closet__owner__post"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AddOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "summary": "Forget",
+        "description": "Delete every garment and stored image for the owner.",
+        "operationId": "forget_closet__owner__delete",
+        "parameters": [
+          {
+            "name": "owner",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Owner"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ForgetOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/closet/{owner}/{garment_id}/image": {
+      "get": {
+        "summary": "Garment Image",
+        "description": "Return the stored garment cutout as PNG.",
+        "operationId": "garment_image_closet__owner___garment_id__image_get",
+        "parameters": [
+          {
+            "name": "owner",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Owner"
+            }
+          },
+          {
+            "name": "garment_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Garment Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "AdapterInfo": {
+        "properties": {
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "model": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Model"
+          },
+          "license": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "License"
+          },
+          "runs_on": {
+            "$ref": "#/components/schemas/RunsOn",
+            "default": "this_machine"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "name"
+        ],
+        "title": "AdapterInfo"
+      },
+      "AddOut": {
+        "properties": {
+          "garment": {
+            "$ref": "#/components/schemas/Garment-Output"
+          },
+          "pipeline": {
+            "items": {
+              "$ref": "#/components/schemas/PipelineStep"
+            },
+            "type": "array",
+            "title": "Pipeline"
+          }
+        },
+        "type": "object",
+        "required": [
+          "garment",
+          "pipeline"
+        ],
+        "title": "AddOut"
+      },
+      "Body_add_to_closet_closet__owner__post": {
+        "properties": {
+          "image": {
+            "type": "string",
+            "contentMediaType": "application/octet-stream",
+            "title": "Image"
+          },
+          "tags_json": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Tags Json",
+            "description": "GarmentTags as JSON; omit to auto-tag"
+          },
+          "price": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "string",
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Price"
+          },
+          "source": {
+            "$ref": "#/components/schemas/Source",
+            "default": "closet"
+          }
+        },
+        "type": "object",
+        "required": [
+          "image"
+        ],
+        "title": "Body_add_to_closet_closet__owner__post"
+      },
+      "Body_render_render_post": {
+        "properties": {
+          "person": {
+            "type": "string",
+            "contentMediaType": "application/octet-stream",
+            "title": "Person",
+            "description": "Person photo; held in memory only"
+          },
+          "garment": {
+            "type": "string",
+            "contentMediaType": "application/octet-stream",
+            "title": "Garment",
+            "description": "Garment photo or cutout"
+          },
+          "region": {
+            "$ref": "#/components/schemas/TryOnRegion"
+          },
+          "seed": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Seed"
+          }
+        },
+        "type": "object",
+        "required": [
+          "person",
+          "garment",
+          "region"
+        ],
+        "title": "Body_render_render_post"
+      },
+      "Body_scan_scan_post": {
+        "properties": {
+          "image": {
+            "type": "string",
+            "contentMediaType": "application/octet-stream",
+            "title": "Image"
+          }
+        },
+        "type": "object",
+        "required": [
+          "image"
+        ],
+        "title": "Body_scan_scan_post"
+      },
+      "CalendarEvent": {
+        "properties": {
+          "title": {
+            "type": "string",
+            "title": "Title"
+          },
+          "start": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Start"
+          },
+          "end": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "End"
+          },
+          "location": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Location"
+          },
+          "formality": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "maximum": 5.0,
+                "minimum": 1.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Formality"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "title",
+          "start"
+        ],
+        "title": "CalendarEvent"
+      },
+      "Category": {
+        "type": "string",
+        "enum": [
+          "top",
+          "sweater",
+          "shirt",
+          "outerwear",
+          "dress",
+          "bottom",
+          "shoes",
+          "accessory"
+        ],
+        "title": "Category"
+      },
+      "ChatIn": {
+        "properties": {
+          "owner": {
+            "type": "string",
+            "title": "Owner"
+          },
+          "message": {
+            "type": "string",
+            "maxLength": 2000,
+            "minLength": 1,
+            "title": "Message"
+          },
+          "history": {
+            "items": {
+              "$ref": "#/components/schemas/ChatTurn"
+            },
+            "type": "array",
+            "title": "History",
+            "default": []
+          },
+          "candidate": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/GarmentTags"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "verdict": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Verdict-Input"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "location": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Location"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "type": "object",
+        "required": [
+          "owner",
+          "message"
+        ],
+        "title": "ChatIn"
+      },
+      "ChatOut": {
+        "properties": {
+          "reply": {
+            "$ref": "#/components/schemas/StylistReply"
+          },
+          "pipeline": {
+            "items": {
+              "$ref": "#/components/schemas/PipelineStep"
+            },
+            "type": "array",
+            "title": "Pipeline"
+          }
+        },
+        "type": "object",
+        "required": [
+          "reply",
+          "pipeline"
+        ],
+        "title": "ChatOut"
+      },
+      "ChatTurn": {
+        "properties": {
+          "role": {
+            "type": "string",
+            "enum": [
+              "user",
+              "stylist"
+            ],
+            "title": "Role"
+          },
+          "text": {
+            "type": "string",
+            "title": "Text"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "role",
+          "text"
+        ],
+        "title": "ChatTurn"
+      },
+      "ColorFamily": {
+        "type": "string",
+        "enum": [
+          "black",
+          "white",
+          "grey",
+          "navy",
+          "blue",
+          "green",
+          "yellow",
+          "red",
+          "pink",
+          "brown",
+          "beige",
+          "multi"
+        ],
+        "title": "ColorFamily"
+      },
+      "DayForecast": {
+        "properties": {
+          "day": {
+            "type": "string",
+            "format": "date",
+            "title": "Day"
+          },
+          "temp_min_c": {
+            "type": "number",
+            "title": "Temp Min C"
+          },
+          "temp_max_c": {
+            "type": "number",
+            "title": "Temp Max C"
+          },
+          "precipitation_mm": {
+            "type": "number",
+            "minimum": 0.0,
+            "title": "Precipitation Mm"
+          },
+          "precipitation_probability": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "maximum": 100.0,
+                "minimum": 0.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Precipitation Probability"
+          },
+          "weather_code": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Weather Code"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "day",
+          "temp_min_c",
+          "temp_max_c",
+          "precipitation_mm"
+        ],
+        "title": "DayForecast"
+      },
+      "Decision": {
+        "type": "string",
+        "enum": [
+          "buy",
+          "skip",
+          "try_with"
+        ],
+        "title": "Decision"
+      },
+      "Forecast": {
+        "properties": {
+          "location": {
+            "$ref": "#/components/schemas/Location"
+          },
+          "days": {
+            "items": {
+              "$ref": "#/components/schemas/DayForecast"
+            },
+            "type": "array",
+            "title": "Days"
+          },
+          "attribution": {
+            "type": "string",
+            "title": "Attribution",
+            "default": "Weather data by Open-Meteo.com"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "location",
+          "days"
+        ],
+        "title": "Forecast"
+      },
+      "ForgetOut": {
+        "properties": {
+          "deleted": {
+            "type": "integer",
+            "title": "Deleted"
+          }
+        },
+        "type": "object",
+        "required": [
+          "deleted"
+        ],
+        "title": "ForgetOut"
+      },
+      "Garment-Input": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "owner": {
+            "type": "string",
+            "title": "Owner"
+          },
+          "source": {
+            "$ref": "#/components/schemas/Source",
+            "default": "closet"
+          },
+          "tags": {
+            "$ref": "#/components/schemas/GarmentTags"
+          },
+          "price": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "string",
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Price"
+          },
+          "wears": {
+            "type": "integer",
+            "minimum": 0.0,
+            "title": "Wears",
+            "default": 0
+          },
+          "image_ref": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Image Ref"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "id",
+          "owner",
+          "tags"
+        ],
+        "title": "Garment",
+        "description": "A tagged garment that belongs to one owner's closet."
+      },
+      "Garment-Output": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "owner": {
+            "type": "string",
+            "title": "Owner"
+          },
+          "source": {
+            "$ref": "#/components/schemas/Source",
+            "default": "closet"
+          },
+          "tags": {
+            "$ref": "#/components/schemas/GarmentTags"
+          },
+          "price": {
+            "anyOf": [
+              {
+                "type": "string",
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Price"
+          },
+          "wears": {
+            "type": "integer",
+            "minimum": 0.0,
+            "title": "Wears",
+            "default": 0
+          },
+          "image_ref": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Image Ref"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "id",
+          "owner",
+          "tags"
+        ],
+        "title": "Garment",
+        "description": "A tagged garment that belongs to one owner's closet."
+      },
+      "GarmentTags": {
+        "properties": {
+          "category": {
+            "$ref": "#/components/schemas/Category"
+          },
+          "color_family": {
+            "$ref": "#/components/schemas/ColorFamily"
+          },
+          "pattern": {
+            "$ref": "#/components/schemas/Pattern"
+          },
+          "warmth": {
+            "type": "integer",
+            "maximum": 5.0,
+            "minimum": 1.0,
+            "title": "Warmth"
+          },
+          "waterproof": {
+            "type": "boolean",
+            "title": "Waterproof"
+          },
+          "formality": {
+            "type": "integer",
+            "maximum": 5.0,
+            "minimum": 1.0,
+            "title": "Formality"
+          },
+          "description": {
+            "type": "string",
+            "maxLength": 120,
+            "title": "Description"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "category",
+          "color_family",
+          "pattern",
+          "warmth",
+          "waterproof",
+          "formality",
+          "description"
+        ],
+        "title": "GarmentTags",
+        "description": "What a tagger reads off one garment image; the verdict rules see only this."
+      },
+      "HTTPValidationError": {
+        "properties": {
+          "detail": {
+            "items": {
+              "$ref": "#/components/schemas/ValidationError"
+            },
+            "type": "array",
+            "title": "Detail"
+          }
+        },
+        "type": "object",
+        "title": "HTTPValidationError"
+      },
+      "HealthOut": {
+        "properties": {
+          "status": {
+            "type": "string",
+            "title": "Status"
+          },
+          "adapters": {
+            "additionalProperties": {
+              "$ref": "#/components/schemas/AdapterInfo"
+            },
+            "type": "object",
+            "title": "Adapters"
+          }
+        },
+        "type": "object",
+        "required": [
+          "status",
+          "adapters"
+        ],
+        "title": "HealthOut"
+      },
+      "JudgeIn": {
+        "properties": {
+          "owner": {
+            "type": "string",
+            "title": "Owner"
+          },
+          "tags": {
+            "$ref": "#/components/schemas/GarmentTags"
+          },
+          "location": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Location"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "type": "object",
+        "required": [
+          "owner",
+          "tags"
+        ],
+        "title": "JudgeIn"
+      },
+      "JudgeOut": {
+        "properties": {
+          "verdict": {
+            "$ref": "#/components/schemas/Verdict-Output"
+          },
+          "week": {
+            "$ref": "#/components/schemas/WeekContext"
+          },
+          "pipeline": {
+            "items": {
+              "$ref": "#/components/schemas/PipelineStep"
+            },
+            "type": "array",
+            "title": "Pipeline"
+          }
+        },
+        "type": "object",
+        "required": [
+          "verdict",
+          "week",
+          "pipeline"
+        ],
+        "title": "JudgeOut"
+      },
+      "Location": {
+        "properties": {
+          "latitude": {
+            "type": "number",
+            "maximum": 90.0,
+            "minimum": -90.0,
+            "title": "Latitude"
+          },
+          "longitude": {
+            "type": "number",
+            "maximum": 180.0,
+            "minimum": -180.0,
+            "title": "Longitude"
+          },
+          "name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Name"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "latitude",
+          "longitude"
+        ],
+        "title": "Location"
+      },
+      "Pattern": {
+        "type": "string",
+        "enum": [
+          "solid",
+          "stripe",
+          "check",
+          "floral",
+          "graphic",
+          "other"
+        ],
+        "title": "Pattern"
+      },
+      "PipelineStep": {
+        "properties": {
+          "step": {
+            "type": "string",
+            "title": "Step"
+          },
+          "adapter": {
+            "$ref": "#/components/schemas/AdapterInfo"
+          },
+          "ms": {
+            "type": "integer",
+            "title": "Ms"
+          },
+          "touched_person_image": {
+            "type": "boolean",
+            "title": "Touched Person Image",
+            "default": false
+          },
+          "skipped": {
+            "type": "boolean",
+            "title": "Skipped",
+            "default": false
+          },
+          "cached": {
+            "type": "boolean",
+            "title": "Cached",
+            "default": false
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "step",
+          "adapter",
+          "ms"
+        ],
+        "title": "PipelineStep"
+      },
+      "Reason": {
+        "properties": {
+          "code": {
+            "$ref": "#/components/schemas/ReasonCode"
+          },
+          "message": {
+            "type": "string",
+            "title": "Message"
+          },
+          "garment_ids": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Garment Ids",
+            "default": []
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "code",
+          "message"
+        ],
+        "title": "Reason"
+      },
+      "ReasonCode": {
+        "type": "string",
+        "enum": [
+          "duplicates",
+          "fills_weather_gap",
+          "fits_event",
+          "pairs_well",
+          "few_pairings"
+        ],
+        "title": "ReasonCode"
+      },
+      "RenderAction": {
+        "properties": {
+          "garment_ids": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Garment Ids"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "garment_ids"
+        ],
+        "title": "RenderAction",
+        "description": "A stylist request to render the candidate together with these closet garments."
+      },
+      "RenderOut": {
+        "properties": {
+          "image_png_base64": {
+            "type": "string",
+            "title": "Image Png Base64"
+          },
+          "cached": {
+            "type": "boolean",
+            "title": "Cached"
+          },
+          "pipeline": {
+            "items": {
+              "$ref": "#/components/schemas/PipelineStep"
+            },
+            "type": "array",
+            "title": "Pipeline"
+          }
+        },
+        "type": "object",
+        "required": [
+          "image_png_base64",
+          "cached",
+          "pipeline"
+        ],
+        "title": "RenderOut"
+      },
+      "RunsOn": {
+        "type": "string",
+        "enum": [
+          "this_machine",
+          "self_hosted_gpu",
+          "snowflake",
+          "public_api"
+        ],
+        "title": "RunsOn",
+        "description": "Where an adapter executes; the pipeline panel and the privacy badge read this."
+      },
+      "ScanOut": {
+        "properties": {
+          "tags": {
+            "$ref": "#/components/schemas/GarmentTags"
+          },
+          "cutout_png_base64": {
+            "type": "string",
+            "title": "Cutout Png Base64"
+          },
+          "pipeline": {
+            "items": {
+              "$ref": "#/components/schemas/PipelineStep"
+            },
+            "type": "array",
+            "title": "Pipeline"
+          }
+        },
+        "type": "object",
+        "required": [
+          "tags",
+          "cutout_png_base64",
+          "pipeline"
+        ],
+        "title": "ScanOut"
+      },
+      "Source": {
+        "type": "string",
+        "enum": [
+          "closet",
+          "store",
+          "online"
+        ],
+        "title": "Source",
+        "description": "Where a garment record came from."
+      },
+      "StylistReply": {
+        "properties": {
+          "text": {
+            "type": "string",
+            "title": "Text"
+          },
+          "render": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/RenderAction"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "text"
+        ],
+        "title": "StylistReply"
+      },
+      "TryOnRegion": {
+        "type": "string",
+        "enum": [
+          "upper",
+          "lower",
+          "full"
+        ],
+        "title": "TryOnRegion",
+        "description": "The body region a try-on model repaints."
+      },
+      "ValidationError": {
+        "properties": {
+          "loc": {
+            "items": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "integer"
+                }
+              ]
+            },
+            "type": "array",
+            "title": "Location"
+          },
+          "msg": {
+            "type": "string",
+            "title": "Message"
+          },
+          "type": {
+            "type": "string",
+            "title": "Error Type"
+          },
+          "input": {
+            "title": "Input"
+          },
+          "ctx": {
+            "type": "object",
+            "title": "Context"
+          }
+        },
+        "type": "object",
+        "required": [
+          "loc",
+          "msg",
+          "type"
+        ],
+        "title": "ValidationError"
+      },
+      "Verdict-Input": {
+        "properties": {
+          "decision": {
+            "$ref": "#/components/schemas/Decision"
+          },
+          "headline": {
+            "type": "string",
+            "title": "Headline"
+          },
+          "reasons": {
+            "items": {
+              "$ref": "#/components/schemas/Reason"
+            },
+            "type": "array",
+            "title": "Reasons"
+          },
+          "duplicates": {
+            "items": {
+              "$ref": "#/components/schemas/Garment-Input"
+            },
+            "type": "array",
+            "title": "Duplicates",
+            "default": []
+          },
+          "pairings": {
+            "items": {
+              "$ref": "#/components/schemas/Garment-Input"
+            },
+            "type": "array",
+            "title": "Pairings",
+            "default": []
+          },
+          "best_pairing": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Garment-Input"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "decision",
+          "headline",
+          "reasons"
+        ],
+        "title": "Verdict",
+        "description": "The rules' answer for one candidate garment; the stylist explains it, never changes it."
+      },
+      "Verdict-Output": {
+        "properties": {
+          "decision": {
+            "$ref": "#/components/schemas/Decision"
+          },
+          "headline": {
+            "type": "string",
+            "title": "Headline"
+          },
+          "reasons": {
+            "items": {
+              "$ref": "#/components/schemas/Reason"
+            },
+            "type": "array",
+            "title": "Reasons"
+          },
+          "duplicates": {
+            "items": {
+              "$ref": "#/components/schemas/Garment-Output"
+            },
+            "type": "array",
+            "title": "Duplicates",
+            "default": []
+          },
+          "pairings": {
+            "items": {
+              "$ref": "#/components/schemas/Garment-Output"
+            },
+            "type": "array",
+            "title": "Pairings",
+            "default": []
+          },
+          "best_pairing": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Garment-Output"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "decision",
+          "headline",
+          "reasons"
+        ],
+        "title": "Verdict",
+        "description": "The rules' answer for one candidate garment; the stylist explains it, never changes it."
+      },
+      "WeekContext": {
+        "properties": {
+          "forecast": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Forecast"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "events": {
+            "items": {
+              "$ref": "#/components/schemas/CalendarEvent"
+            },
+            "type": "array",
+            "title": "Events",
+            "default": []
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "title": "WeekContext",
+        "description": "The next days of weather and plans that a verdict weighs."
+      },
+      "WeekOut": {
+        "properties": {
+          "week": {
+            "$ref": "#/components/schemas/WeekContext"
+          },
+          "pipeline": {
+            "items": {
+              "$ref": "#/components/schemas/PipelineStep"
+            },
+            "type": "array",
+            "title": "Pipeline"
+          }
+        },
+        "type": "object",
+        "required": [
+          "week",
+          "pipeline"
+        ],
+        "title": "WeekOut"
+      }
+    }
+  }
+}

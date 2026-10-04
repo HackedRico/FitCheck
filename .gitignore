@@ -1,0 +1,30 @@
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+.mypy_cache/
+.pytest_cache/
+.ruff_cache/
+
+# Node
+node_modules/
+dist/
+dev-dist/
+
+# Secrets and local config
+.env
+*.env.local
+env/*.local.env
+*.p8
+
+# Runtime data: stored garment images, model weights, cloned model repos
+.fitcheck/
+worker/weights/
+worker/vendor/
+*.safetensors
+*.ckpt
+
+# OS and editors
+.DS_Store
+.idea/
+.vscode/

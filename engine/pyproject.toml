@@ -1,0 +1,58 @@
+[project]
+name = "fitcheck"
+version = "0.1.0"
+description = "A second opinion in the fitting-room line: scan a garment, see it on you, get BUY, SKIP or TRY-WITH."
+requires-python = ">=3.12"
+license = "Apache-2.0"
+dependencies = [
+    "fastapi>=0.115",
+    "uvicorn[standard]>=0.32",
+    "python-multipart>=0.0.12",
+    "pydantic>=2.9",
+    "pydantic-settings>=2.6",
+    "httpx>=0.27",
+    "pillow>=11",
+]
+
+# Each extra backs one adapter. `make sync` installs all of them; the core runs without any.
+[project.optional-dependencies]
+postgres = ["psycopg[binary]>=3.2"]
+snowflake = ["snowflake-connector-python>=3.12"]
+calendar = ["icalendar>=6", "recurring-ical-events>=3"]
+cutout = ["rembg>=2.0.59", "onnxruntime>=1.19"]
+hfspace = ["gradio-client>=1.4"]
+
+[project.scripts]
+fitcheck = "fitcheck.cli:main"
+
+[dependency-groups]
+dev = ["pytest>=8", "respx>=0.21", "ruff>=0.7", "mypy>=1.13"]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/fitcheck"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B", "SIM", "RUF"]
+
+[tool.mypy]
+strict = true
+plugins = ["pydantic.mypy"]
+ignore_missing_imports = true
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+# importlib mode lets test files in different folders share a basename
+addopts = "--import-mode=importlib"
+# Lets tests import shared helpers from `tests/support/`
+pythonpath = ["tests"]
+markers = [
+    "live: talks to a real service (Ollama, Postgres, Snowflake, Open-Meteo); runs only with FITCHECK_LIVE=1",
+]

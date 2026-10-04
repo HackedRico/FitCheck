@@ -1,0 +1,22 @@
+# Postgres for the open path. `make db-up` starts it; docs/postgres.md covers the rest.
+# The pgvector image costs nothing now and keeps vector search one CREATE EXTENSION away.
+services:
+  postgres:
+    image: pgvector/pgvector:pg17
+    environment:
+      POSTGRES_USER: fitcheck
+      POSTGRES_PASSWORD: fitcheck
+      POSTGRES_DB: fitcheck
+    ports:
+      # Loopback only: the password is public, and only the engine on this machine needs the port
+      - "127.0.0.1:5432:5432"
+    volumes:
+      - fitcheck-postgres:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U fitcheck -d fitcheck"]
+      interval: 2s
+      timeout: 3s
+      retries: 30
+
+volumes:
+  fitcheck-postgres:

@@ -1,0 +1,83 @@
+/* =============================================================================
+   Module Overview
+   =============================================================================
+   Design tokens for FitCheck. The chrome is ink and paper so that the one
+   accent of each verdict, lime BUY, vermillion SKIP and cobalt TRY-WITH, owns
+   the projector. Type pairs a condensed display face for verdicts with a serif
+   italic for the stylist's voice and a mono for tags and the pipeline. */
+
+:root {
+  /* ---------- surfaces ---------- */
+  --ink: #0e0e0c;
+  --ink-1: #161613;
+  --ink-2: #201f1b;
+  --ink-3: #2e2c27;
+  --line: rgba(242, 237, 227, 0.14);
+  --line-strong: rgba(242, 237, 227, 0.32);
+  --paper: #f2ede3;
+  --paper-2: #e4ddcd;
+  --fog: #a49e90;
+  --ink-muted: #5c574c;
+
+  /* ---------- accents: one per verdict ---------- */
+  --buy: #c2f74a;
+  --skip: #ff4b2b;
+  --try: #6b80ff;
+  --warn: #ffb21e;
+  --accent: var(--paper);
+
+  /* ---------- type ---------- */
+  --display: "Big Shoulders Display", "Arial Narrow", "Helvetica Neue", sans-serif;
+  --serif: "Instrument Serif", "Times New Roman", serif;
+  --sans: "Instrument Sans", "Helvetica Neue", sans-serif;
+  --mono: "DM Mono", ui-monospace, "SF Mono", monospace;
+
+  /* ---------- motion ---------- */
+  --ease-out: cubic-bezier(0.2, 0.8, 0.2, 1);
+  --ease-swing: cubic-bezier(0.34, 1.56, 0.64, 1);
+  --fast: 160ms;
+  --medium: 320ms;
+
+  /* ---------- layout ---------- */
+  --gutter: 16px;
+  --radius: 4px;
+  --tabbar-h: calc(64px + env(safe-area-inset-bottom));
+  --masthead-h: 56px;
+
+  color-scheme: dark;
+}
+
+@media (min-width: 900px) {
+  :root {
+    --gutter: 28px;
+    --tabbar-h: 0px;
+    --masthead-h: 68px;
+  }
+}
+
+[data-decision="buy"] {
+  --accent: var(--buy);
+}
+
+[data-decision="skip"] {
+  --accent: var(--skip);
+}
+
+[data-decision="try_with"] {
+  --accent: var(--try);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --fast: 0ms;
+    --medium: 0ms;
+  }
+
+  *,
+  *::before,
+  *::after {
+    animation-duration: 1ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 1ms !important;
+  }
+}

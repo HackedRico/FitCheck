@@ -1,36 +1,29 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# FitCheck
 
-## Getting Started
+A second opinion in the fitting-room line. Point your phone at a garment, see it on you, and get **BUY, SKIP or TRY-WITH** against your closet, this week's weather and your calendar.
 
-First, run the development server:
+Garment vision and chat run on open-weight models (Apache 2.0) through any OpenAI-compatible host, including your own server. Your body photo goes only to the try-on renderer and is never stored.
+
+## Run it
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+make sync          # engine dependencies
+make api           # engine on :8000, offline: fakes, demo closet, demo week
+make web-install
+make web           # https://localhost:5173, or the network URL on your phone
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+With nothing configured the whole flow runs offline. To use real models, copy `engine/.env.example` to `engine/.env` and set the keys; `env/open.env` and `env/snowflake.env` switch every slot at once (`make api-open`, `make api-snowflake`).
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## How it decides
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+Plain rules decide the verdict, so the demo repeats exactly; the stylist model explains it. A candidate that fills a gap in your week, such as rain with no rain shell, is a BUY. Two near duplicates in your closet is a SKIP. Details in `docs/verdict-rules.md`.
 
-## Learn More
+## Two tracks, one repo
 
-To learn more about Next.js, take a look at the following resources:
+- **Open source:** open-weight models only, Postgres, a public repo under Apache 2.0, and the `fit-check` agent skill in `skills/`.
+- **Snowflake:** the closet lives in Snowflake, Cortex Search retrieves closet garments and Cortex AI_COMPLETE answers as the stylist, a RAG chatbot over your own data. See `docs/snowflake.md`.
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## For the team
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Start with `AGENTS.md`, then `CONTEXT.md` for the vocabulary. Run `make check` before every PR. Models and licenses are in `THIRD_PARTY_LICENSES.md`.

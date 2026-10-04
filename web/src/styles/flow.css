@@ -1512,3 +1512,13 @@ body {
   padding: 6px;
   object-fit: contain;
 }
+
+.fc .thumb-source {
+  overflow: hidden;
+  color: var(--fog);
+  font-size: 12px;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}

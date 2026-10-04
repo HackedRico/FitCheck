@@ -37,12 +37,12 @@ export function ClosetScreen(): ReactNode {
 
   useEffect(load, [load]);
 
-  const add = async (image: Blob): Promise<void> => {
+  const add = async (image: Blob, sourceUrl?: string): Promise<void> => {
     setSheetOpen(false);
     setAdding(true);
     setError(null);
     try {
-      const out = await api.addToCloset(owner, image);
+      const out = await api.addToCloset(owner, image, sourceUrl ?? null);
       pipelines.record("closet", out.pipeline);
       setGarments((current) => [out.garment, ...(current ?? [])]);
     } catch (cause) {
@@ -159,7 +159,7 @@ export function ClosetScreen(): ReactNode {
       <AddGarmentSheet
         open={sheetOpen}
         onClose={() => setSheetOpen(false)}
-        onGarment={(image) => void add(image)}
+        onGarment={(image, sourceUrl) => void add(image, sourceUrl)}
         title="Add to your closet"
         linkLabel="Bought it online? Paste the product link"
         busy={adding}

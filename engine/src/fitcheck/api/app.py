@@ -241,11 +241,12 @@ def create_app(engine: Engine | None = None, settings: Settings | None = None) -
         ] = None,
         price: Annotated[Decimal | None, Form()] = None,
         source: Annotated[Source, Form()] = Source.CLOSET,
+        source_url: Annotated[str | None, Form(description="Shop link it came from")] = None,
     ) -> AddOut:
         """Add a garment photo to the closet, tagging it unless `tags_json` is given."""
         tags = _parse_tags(tags_json) if tags_json else None
         result = get_engine().add_to_closet(
-            owner, image.file.read(), tags=tags, price=price, source=source
+            owner, image.file.read(), tags=tags, price=price, source=source, source_url=source_url
         )
         return AddOut(garment=result.garment, pipeline=result.pipeline)
 

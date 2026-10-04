@@ -47,18 +47,23 @@ class MemoryClosetStore:
 
     def search(self, owner: str, query: str, limit: int = 8) -> list[Garment]:
         """Rank `owner`'s garments by how many query words appear in their tags."""
-        if limit < 1:
-            raise InvalidInput(f"`limit` must be at least 1, got {limit}.")
-        words = set(_WORD.findall(query.lower()))
-        scored = [(_overlap(words, g), g) for g in self.garments(owner)]
-        # Stable sort keeps closet order among ties, so results repeat run to run
-        ranked = sorted((pair for pair in scored if pair[0] > 0), key=lambda p: -p[0])
-        return [g for _, g in ranked[:limit]]
+        return rank_by_words(self.garments(owner), query, limit)
 
     def forget(self, owner: str) -> int:
         """Delete everything for `owner`; return the number of garments removed."""
         with self._lock:
             return len(self._by_owner.pop(owner, {}))
+
+
+def rank_by_words(garments: list[Garment], query: str, limit: int) -> list[Garment]:
+    """Rank `garments` by how many query words appear in their tags; shared by local stores."""
+    if limit < 1:
+        raise InvalidInput(f"`limit` must be at least 1, got {limit}.")
+    words = set(_WORD.findall(query.lower()))
+    scored = [(_overlap(words, g), g) for g in garments]
+    # Stable sort keeps closet order among ties, so results repeat run to run
+    ranked = sorted((pair for pair in scored if pair[0] > 0), key=lambda p: -p[0])
+    return [g for _, g in ranked[:limit]]
 
 
 def _overlap(words: set[str], garment: Garment) -> int:

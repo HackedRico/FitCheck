@@ -15,7 +15,8 @@ import { Icon } from "./Icons";
 interface AddGarmentSheetProps {
   open: boolean;
   onClose: () => void;
-  onGarment: (image: Blob) => void;
+  // `sourceUrl` is the shop link when the garment came from one
+  onGarment: (image: Blob, sourceUrl?: string) => void;
   title?: string;
   linkLabel?: string;
   // Shown while the caller is still handling the garment, such as tagging it for the closet
@@ -62,7 +63,7 @@ export function AddGarmentSheet({
       const out = await api.link(link);
       pipelines.record("scan", out.pipeline);
       setUrl("");
-      onGarment(pngFromBase64(out.image_png_base64));
+      onGarment(pngFromBase64(out.image_png_base64), out.source_url);
     } catch (cause) {
       setError(errorMessage(cause));
     } finally {

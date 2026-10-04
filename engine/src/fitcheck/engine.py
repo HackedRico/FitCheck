@@ -306,6 +306,7 @@ class Engine:
         tags: GarmentTags | None = None,
         price: Decimal | None = None,
         source: Source = Source.CLOSET,
+        source_url: str | None = None,
     ) -> AddResult:
         """Cut out, tag (unless `tags` is given), store the image and save a new garment."""
         _require_owner(owner)
@@ -322,7 +323,13 @@ class Engine:
         path.parent.mkdir(parents=True, exist_ok=True)
         path.write_bytes(cutout)
         garment = Garment(
-            id=garment_id, owner=owner, source=source, tags=tags, price=price, image_ref=image_ref
+            id=garment_id,
+            owner=owner,
+            source=source,
+            tags=tags,
+            price=price,
+            image_ref=image_ref,
+            source_url=source_url,
         )
         with trace.step("closet", self._ports.store.info):
             self._ports.store.save(garment)

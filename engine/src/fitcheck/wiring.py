@@ -16,6 +16,7 @@ from fitcheck.tryon.fallback import FallbackRenderer
 
 ADAPTERS: dict[str, dict[str, str]] = {
     "store": {
+        "sqlite": "fitcheck.closet.sqlite",
         "memory": "fitcheck.closet.memory",
         "postgres": "fitcheck.closet.postgres",
         "snowflake": "fitcheck.closet.snowflake",

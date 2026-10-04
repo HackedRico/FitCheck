@@ -28,7 +28,8 @@ class Settings(BaseSettings):
     )
 
     # ---------- adapter slots ----------
-    store: Literal["memory", "postgres", "snowflake"] = "memory"
+    # sqlite keeps closets across restarts with no server; memory forgets them on exit
+    store: Literal["sqlite", "memory", "postgres", "snowflake"] = "sqlite"
     tagger: Literal["fake", "openai_compat"] = "fake"
     cutout: Literal["none", "rembg"] = "none"
     tryon: Literal["overlay", "remote", "hf_space"] = "overlay"

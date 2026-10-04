@@ -79,8 +79,10 @@ export function ClosetScreen(): ReactNode {
       </header>
       <header className="closet-head">
         <div>
-          <p className="kicker">{owner}'s closet</p>
-          <h1 className="display">{garments === null ? "Closet" : `${garments.length} garments`}</h1>
+          <h1 className="closet-title">{owner}'s closet</h1>
+          <p className="fc-muted">
+            {garments === null ? "Loading" : `${garments.length} ${garments.length === 1 ? "garment" : "garments"}`}
+          </p>
         </div>
         <div className="closet-actions">
           <button type="button" className="fc-btn is-primary" disabled={adding} onClick={() => fileRef.current?.click()}>
@@ -105,7 +107,15 @@ export function ClosetScreen(): ReactNode {
           </button>
         </p>
       )}
-      {garments !== null && garments.length === 0 && <p className="muted">The closet is empty. Add a garment by photo.</p>}
+      {garments !== null && garments.length === 0 && (
+        <div className="closet-empty">
+          <p>Nothing here yet.</p>
+          <p className="fc-muted">
+            Add a photo of something you own. For the demo closet, switch the owner to <strong>maya</strong> in
+            Settings, on the You screen.
+          </p>
+        </div>
+      )}
       <div className="closet-grid">
         {(garments ?? []).map((garment) => (
           <GarmentThumb key={garment.id} owner={owner} garment={garment} />

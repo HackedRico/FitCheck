@@ -1326,3 +1326,81 @@ body {
   height: 1px;
   background: var(--line);
 }
+
+/* ---------- closet ---------- */
+
+.fc-page.closet {
+  display: block;
+  max-width: 960px;
+  padding-bottom: 60px;
+}
+
+.fc-page.closet .closet-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 16px;
+  margin: 8px 0 24px;
+}
+
+.fc-page.closet .closet-head .closet-title {
+  margin: 0 0 4px;
+  font: 600 28px/1.15 var(--sans);
+  letter-spacing: -0.02em;
+}
+
+.fc-page.closet .closet-title::first-letter {
+  text-transform: uppercase;
+}
+
+.fc-page.closet .closet-actions .fc-btn {
+  min-height: 44px;
+  padding: 0 16px;
+  font-size: 15px;
+}
+
+.closet-empty {
+  display: grid;
+  gap: 6px;
+  padding: 28px 20px;
+  border-radius: 18px;
+  background: var(--bg-2);
+  text-align: center;
+}
+
+.closet-empty p {
+  margin: 0;
+}
+
+.closet-empty p:first-child {
+  font-weight: 600;
+}
+
+.fc-page.closet .closet-grid {
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: 20px 16px;
+}
+
+/* ---------- sheets: pipeline and settings ---------- */
+
+.fc .sheet {
+  border: 0;
+  border-radius: 22px 22px 0 0;
+  box-shadow: 0 -10px 40px rgba(0, 0, 0, 0.12);
+}
+
+.fc .sheet-head h2 {
+  font: 600 20px/1.2 var(--sans);
+  letter-spacing: -0.01em;
+}
+
+.fc .sheet-scrim {
+  background: rgba(0, 0, 0, 0.35);
+}
+
+@media (min-width: 900px) {
+  .fc .sheet {
+    border-radius: 22px 0 0 22px;
+  }
+}

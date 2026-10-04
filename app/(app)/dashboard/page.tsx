@@ -1,4 +1,5 @@
 import { getServerSession } from 'next-auth'
+import { cookies } from 'next/headers'
 import { redirect } from 'next/navigation'
 import { authOptions } from '@/lib/auth'
 import type { OutfitRow, ClosetItemRow, ProductSuggestionRow, WeatherContext, ShoppingSuggestion } from '@/types'
@@ -19,7 +20,11 @@ async function fetchTodaysOutfit(): Promise<
 > {
   const baseUrl = process.env.NEXT_PUBLIC_APP_URL ?? 'http://localhost:3000'
   try {
-    const res = await fetch(`${baseUrl}/api/outfit/generate`, { cache: 'no-store' })
+    const cookieStore = await cookies()
+    const res = await fetch(`${baseUrl}/api/outfit/generate`, {
+      cache: 'no-store',
+      headers: { cookie: cookieStore.toString() },
+    })
     if (!res.ok) {
       const body = await res.json().catch(() => ({}))
       return { ok: false, error: (body as { error?: string }).error ?? 'unknown_error' }

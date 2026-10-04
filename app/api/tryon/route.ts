@@ -105,7 +105,15 @@ export async function POST(request: Request): Promise<Response> {
         `SELECT * FROM OUTFITS WHERE ID = ? AND USER_ID = ? LIMIT 1`,
         [outfitId, userId]
       )
-      const outfit = outfits[0]
+      let outfit = outfits[0]
+      if (!outfit) {
+        const todays = await query<OutfitRow>(
+          `SELECT * FROM OUTFITS WHERE USER_ID = ? AND OUTFIT_DATE = CURRENT_DATE()
+           ORDER BY GENERATED_AT DESC LIMIT 1`,
+          [userId]
+        )
+        outfit = todays[0]
+      }
       if (!outfit) {
         return Response.json({ error: 'Outfit not found' }, { status: 404 })
       }

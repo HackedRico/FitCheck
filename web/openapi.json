@@ -1251,6 +1251,7 @@
           "duplicates",
           "fills_weather_gap",
           "fits_event",
+          "statement_piece",
           "pairs_well",
           "few_pairings"
         ],

@@ -1,10 +1,26 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 
 export default function TryOnCard({ outfitId }: { outfitId: string }) {
   const [personFile, setPersonFile] = useState<File | null>(null)
   const [personPreview, setPersonPreview] = useState<string | null>(null)
+
+  useEffect(() => {
+    let cancelled = false
+    fetch('/demo-person.jpg')
+      .then((r) => (r.ok ? r.blob() : null))
+      .then((blob) => {
+        if (!blob || cancelled) return
+        const file = new File([blob], 'demo-person.jpg', { type: 'image/jpeg' })
+        setPersonFile((prev) => prev ?? file)
+        setPersonPreview((prev) => prev ?? URL.createObjectURL(blob))
+      })
+      .catch(() => null)
+    return () => {
+      cancelled = true
+    }
+  }, [])
   const [link, setLink] = useState('')
   const [result, setResult] = useState<string | null>(null)
   const [loading, setLoading] = useState<'outfit' | 'link' | null>(null)

@@ -29,6 +29,8 @@ All facts below were checked on 2026-10-04.
 2. **Real render: Modal on an L4 or A10 (24 GB).** No tunnel and no terms problem. $30 covers about 27 to 37 GPU hours. Warm the container before judging, because a cold start downloads several GB of weights.
 3. **Free fallback: `hf_space` with `HF_TOKEN` set** to a free Hugging Face account token. That gives 5 min of ZeroGPU a day, which is a handful of renders, so save it for the demo.
 
+Set `FITCHECK_TRYON_FALLBACK=overlay` next to `hf_space` or `remote`. When the main adapter is unavailable, such as a spent quota, a full queue or a timeout, the engine renders the overlay instead and skips the main adapter for `FITCHECK_TRYON_FALLBACK_COOLDOWN_S` seconds, 300 by default. The overlay image carries a "preview" tag, so nobody mistakes it for a real render.
+
 We do not recommend Colab or Kaggle with a tunnel: it works, but the terms forbid it.
 
 ## Model notes

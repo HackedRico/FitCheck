@@ -32,6 +32,8 @@ class Settings(BaseSettings):
     tagger: Literal["fake", "openai_compat"] = "fake"
     cutout: Literal["none", "rembg"] = "none"
     tryon: Literal["overlay", "remote", "hf_space"] = "overlay"
+    # Second try-on adapter, used while the first is unavailable; `none` lets the error through
+    tryon_fallback: Literal["none", "overlay", "remote", "hf_space"] = "none"
     weather: Literal["fixture", "open_meteo"] = "fixture"
     calendar: Literal["none", "fixture", "ics"] = "fixture"
     stylist: Literal["template", "openai_compat", "cortex"] = "template"
@@ -55,6 +57,8 @@ class Settings(BaseSettings):
     tryon_hf_space: str = "franciszzj/Leffa"
     # Diffusion try-on takes seconds on a warm GPU and minutes on a cold Space or tunnel
     tryon_timeout_s: float = 180.0
+    # How long to skip a failed try-on adapter before trying it again
+    tryon_fallback_cooldown_s: float = 300.0
     # A private iCal address is a credential: anyone holding it can read the calendar
     calendar_ics_url: SecretStr | None = None
 

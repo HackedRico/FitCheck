@@ -5,6 +5,7 @@ from typing import Any
 
 from fitcheck.engine import Engine, Ports
 from fitcheck.settings import Settings
+from fitcheck.tryon.fallback import FallbackRenderer
 
 # =============================================================================
 # Module Overview
@@ -56,7 +57,7 @@ def build_engine(settings: Settings | None = None) -> Engine:
         store=_build("store", settings.store, settings),
         tagger=_build("tagger", settings.tagger, settings),
         cutter=_build("cutout", settings.cutout, settings),
-        renderer=_build("tryon", settings.tryon, settings),
+        renderer=_build_renderer(settings),
         weather=_build("weather", settings.weather, settings),
         calendar=_build("calendar", settings.calendar, settings),
         stylist=_build("stylist", settings.stylist, settings),
@@ -68,6 +69,15 @@ def build_engine(settings: Settings | None = None) -> Engine:
         forecast_days=settings.forecast_days,
         seed_images_dir=settings.seed_path.parent / "images" if settings.seed_path else None,
     )
+
+
+def _build_renderer(settings: Settings) -> Any:
+    """Return the try-on adapter, wrapped with its fallback when one is set."""
+    primary = _build("tryon", settings.tryon, settings)
+    if settings.tryon_fallback in ("none", settings.tryon):
+        return primary
+    backup = _build("tryon", settings.tryon_fallback, settings)
+    return FallbackRenderer(primary, backup, cooldown_s=settings.tryon_fallback_cooldown_s)
 
 
 def _build(slot: str, name: str, settings: Settings) -> Any:

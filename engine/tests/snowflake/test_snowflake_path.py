@@ -8,7 +8,7 @@ from decimal import Decimal
 from typing import IO, Any
 
 import pytest
-from support.closet_contract import ClosetStoreContract, make_garment
+from support.closet_contract import ClosetStoreContract, Owners, make_garment, unique_owners
 
 from fitcheck.closet import snowflake as closet_snowflake
 from fitcheck.closet.snowflake import SnowflakeClosetStore
@@ -37,7 +37,8 @@ _SNEAKY = "o'brien'; DROP TABLE GARMENTS; --"
 # Tests the Snowflake path without an account: a `FakeConnection` records every
 # statement and answers from canned rows, so the tests check that values travel as
 # bind parameters, that search falls back when Cortex Search fails, and that missing
-# settings raise `AdapterUnavailable`. `TestSnowflakeClosetStoreLive` needs a real account.
+# settings raise `AdapterUnavailable`. `TestSnowflakeClosetStoreLive` needs a real account
+# and writes only under `test-<uuid>-` owners, so it never touches the demo closet.
 
 
 class FakeCursor:
@@ -295,11 +296,17 @@ def test_stylist_reports_an_empty_completion(
 @pytest.mark.live
 class TestSnowflakeClosetStoreLive(ClosetStoreContract):
     @pytest.fixture
-    def store(self) -> Iterator[SnowflakeClosetStore]:
-        """Yield the configured store with the contract's owners wiped before and after."""
-        store = closet_snowflake.build(Settings())
-        for owner in ("maya", "sam", "nobody"):
-            store.forget(owner)
+    def owners(self) -> Owners:
+        """Return owners unique to this test, since the account also holds the demo closet."""
+        return unique_owners()
+
+    @pytest.fixture
+    def store(self, owners: Owners) -> Iterator[SnowflakeClosetStore]:
+        """Yield the configured store and forget this test's owners afterwards."""
+        settings = Settings()
+        # Teardown deletes by owner, so a plain name here would wipe the seeded demo closet
+        assert settings.default_owner not in owners
+        store = closet_snowflake.build(settings)
         yield store
-        for owner in ("maya", "sam"):
+        for owner in owners:
             store.forget(owner)

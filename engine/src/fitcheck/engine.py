@@ -13,6 +13,7 @@ from decimal import Decimal
 from pathlib import Path
 from time import perf_counter
 from typing import TypeVar
+from urllib.parse import urlsplit
 
 from PIL import Image
 from pydantic import BaseModel, ConfigDict
@@ -48,6 +49,7 @@ from fitcheck.ports import (
     TryOnRenderer,
     WeatherSource,
 )
+from fitcheck.vision import images
 
 T = TypeVar("T")
 
@@ -59,6 +61,8 @@ LINK_INFO = AdapterInfo(name="link-import", license="Apache-2.0", runs_on=RunsOn
 # Owners name folders on disk, so keep them to a safe slug
 _OWNER_PATTERN = re.compile(r"^[a-z0-9][a-z0-9_-]{0,63}$")
 _SEED_PREFIX = "seed/"
+# Matches the `/link` request cap, so any link the app imported can also be stored
+_MAX_LINK_CHARS = 2048
 # Magic numbers for the image formats phones and browsers send
 _IMAGE_SIGNATURES = (b"\x89PNG", b"\xff\xd8\xff", b"RIFF", b"GIF8")
 
@@ -316,6 +320,10 @@ class Engine:
         """Cut out, tag (unless `tags` is given), store the image and save a new garment."""
         _require_owner(owner)
         _require_image(image, "image")
+        if price is not None and (not price.is_finite() or price < 0):
+            raise InvalidInput("price must be a finite amount of zero or more")
+        if source_url is not None:
+            _require_web_link(source_url)
         trace = _Trace()
         with trace.step("cutout", self._ports.cutter.info):
             cutout = self._ports.cutter.cut(image)
@@ -478,15 +486,13 @@ class _Trace:
 
 def _match_shape(render_png: bytes, person_image: bytes) -> bytes:
     """Trim a renderer's padding and resize so the render matches the person photo exactly."""
-    with (
-        Image.open(io.BytesIO(person_image)) as person,
-        Image.open(io.BytesIO(render_png)) as render,
-    ):
-        target = person.size
+    # Upright size, because renderers paint the photo after applying its EXIF rotation
+    target = images.open_image(person_image).size
+    with Image.open(io.BytesIO(render_png)) as render:
+        if render.size == target:
+            return render_png
         width, height = render.size
         want = target[0] / target[1]
-        if abs(width / height - want) < 0.01 and render.size == target:
-            return render_png
         # Diffusion try-on fits the person into its own frame and pads the rest, centred;
         # cutting the centre back to the photo's shape removes exactly that padding
         if width / height > want:
@@ -502,20 +508,19 @@ def _match_shape(render_png: bytes, person_image: bytes) -> bytes:
 
 def _crop(image: bytes, box: Box) -> bytes:
     """Cut `box` out of `image` with a small margin, as PNG, so each garment keeps its edges."""
-    with Image.open(io.BytesIO(image)) as source:
-        width, height = source.size
-        # A few percent of slack, because model boxes tend to clip sleeves and hems
-        pad_x = (box.right - box.left) * width * 0.04
-        pad_y = (box.bottom - box.top) * height * 0.04
-        area = (
-            max(0, round(box.left * width - pad_x)),
-            max(0, round(box.top * height - pad_y)),
-            min(width, round(box.right * width + pad_x)),
-            min(height, round(box.bottom * height + pad_y)),
-        )
-        out = io.BytesIO()
-        source.convert("RGBA").crop(area).save(out, format="PNG")
-    return out.getvalue()
+    # Upright, because the tagger drew its boxes on the photo after its EXIF rotation
+    source = images.open_image(image)
+    width, height = source.size
+    # A few percent of slack, because model boxes tend to clip sleeves and hems
+    pad_x = (box.right - box.left) * width * 0.04
+    pad_y = (box.bottom - box.top) * height * 0.04
+    area = (
+        max(0, round(box.left * width - pad_x)),
+        max(0, round(box.top * height - pad_y)),
+        min(width, round(box.right * width + pad_x)),
+        min(height, round(box.bottom * height + pad_y)),
+    )
+    return images.encode_png(source.convert("RGBA").crop(area))
 
 
 def _elapsed_ms(start: float) -> int:
@@ -527,6 +532,14 @@ def _require_owner(owner: str) -> None:
         raise InvalidInput(
             "owner must be 1-64 chars of lowercase letters, digits, `-` or `_`, "
             "starting with a letter or digit"
+        )
+
+
+def _require_web_link(url: str) -> None:
+    # The web app shows this as a link, so a `javascript:` URL would run in the owner's page
+    if len(url) > _MAX_LINK_CHARS or urlsplit(url).scheme not in ("http", "https"):
+        raise InvalidInput(
+            f"source_url must be an http(s) link of at most {_MAX_LINK_CHARS} characters"
         )
 
 

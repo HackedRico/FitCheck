@@ -88,3 +88,11 @@ def test_unreadable_person_is_422() -> None:
 
     assert response.status_code == 422
     assert "person" in response.json()["detail"]
+
+
+def test_a_malformed_content_length_is_a_client_error() -> None:
+    with _client() as client:
+        headers = {"content-length": "lots", "content-type": "text/plain"}
+        response = client.post("/render", content=b"x", headers=headers)
+
+    assert 400 <= response.status_code < 500

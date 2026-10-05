@@ -149,9 +149,12 @@ def _public_addresses(url: str) -> list[str]:
         raise InvalidInput(f"Could not find `{parts.hostname}`; check the link.")
     for address in addresses:
         ip = ipaddress.ip_address(address.split("%")[0])
-        if not ip.is_global:
+        # Older Python releases judge `::ffff:127.0.0.1` by its IPv6 form, which looks global
+        mapped = ip.ipv4_mapped if isinstance(ip, ipaddress.IPv6Address) else None
+        if not ip.is_global or (mapped is not None and not mapped.is_global):
             raise InvalidInput("That link points at a private network address.")
-    return sorted(addresses)
+    # IPv4 first: many home and venue networks resolve AAAA records but cannot route IPv6
+    return sorted(addresses, key=lambda address: (":" in address, address))
 
 
 def _to_png(data: bytes) -> bytes:

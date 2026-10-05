@@ -129,6 +129,17 @@ def test_private_network_hosts_are_refused() -> None:
         fetch_garment("https://internal.example/coat.jpg")
 
 
+def test_ipv4_mapped_private_addresses_are_refused(monkeypatch: pytest.MonkeyPatch) -> None:
+    """A AAAA record of `::ffff:127.0.0.1` reaches loopback on a dual-stack socket."""
+
+    def mapped(host: str, *_: Any, **__: Any) -> list[Any]:
+        return [(socket.AF_INET6, socket.SOCK_STREAM, 6, "", ("::ffff:127.0.0.1", 0, 0, 0))]
+
+    monkeypatch.setattr(garment_link.socket, "getaddrinfo", mapped)
+    with pytest.raises(InvalidInput, match="private network"):
+        fetch_garment("https://mapped.example/coat.jpg")
+
+
 @respx.mock
 def test_redirects_into_a_private_network_are_refused() -> None:
     _mock("https://shop.example/r").mock(

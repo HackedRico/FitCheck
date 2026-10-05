@@ -21,14 +21,13 @@ from fitcheck_worker.echo import EchoBackend, Region
 
 log = logging.getLogger("fitcheck_worker")
 
-_MAX_STEPS = 100
 
 # =============================================================================
 # Module Overview
 # =============================================================================
 # The worker's HTTP surface. `GET /health` names the backend, model, license and
-# device; `POST /render` takes multipart `person`, `garment`, `region` and optional
-# `seed` and `steps`, and answers `image/png`. `create_app` builds it around one
+# device; `POST /render` takes multipart `person`, `garment`, `region` and an optional
+# `seed`, and answers `image/png`. `create_app` builds it around one
 # `Backend`; `main` is the `fitcheck-worker` script. Person photos stay in memory.
 
 
@@ -79,7 +78,7 @@ def load_backend(name: str) -> Backend:
         return EchoBackend()
     raise ValueError(
         f"WORKER_BACKEND `{name}` is not available in this build; use `echo`. "
-        "See worker/README.md for the Leffa and CatVTON entry points."
+        "See worker/README.md for how a Leffa backend would plug in."
     )
 
 
@@ -118,6 +117,8 @@ def create_app(config: WorkerConfig, backend: Backend | None = None) -> FastAPI:
         if config.token is not None and not _token_ok(request, config.token):
             return _error(401, "Missing or wrong bearer token.")
         length = request.headers.get("content-length")
+        if length is not None and not length.isdigit():
+            return _error(400, "Content-Length must be a whole number of bytes.")
         if length is not None and int(length) > config.max_upload_bytes:
             return _error(413, f"Upload is over {config.max_upload_bytes // (1024 * 1024)} MB.")
         if not ready["ready"]:
@@ -187,6 +188,9 @@ def _decode(data: bytes, field: str) -> Image.Image:
     try:
         image = Image.open(io.BytesIO(data))
         image.load()
+    # Not an `OSError`, so it would otherwise escape as an unhandled 500
+    except Image.DecompressionBombError as exc:
+        raise ValueError(f"{field} is too large to decode") from exc
     except (UnidentifiedImageError, OSError) as exc:
         raise ValueError(f"{field} is not a readable image") from exc
     return ImageOps.exif_transpose(image)

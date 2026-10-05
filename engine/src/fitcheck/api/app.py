@@ -217,9 +217,7 @@ def create_app(engine: Engine | None = None, settings: Settings | None = None) -
     @app.get("/week/{owner}", response_model=WeekOut)
     def week(owner: str, lat: float | None = None, lon: float | None = None) -> WeekOut:
         """Return the forecast and calendar events for the coming days."""
-        location = (
-            Location(latitude=lat, longitude=lon) if lat is not None and lon is not None else None
-        )
+        location = _location(lat, lon) if lat is not None and lon is not None else None
         result = get_engine().week(owner, location)
         return WeekOut(week=result.week, pipeline=result.pipeline)
 
@@ -301,6 +299,14 @@ def _image_type(data: bytes) -> str:
 
 def _b64(data: bytes) -> str:
     return base64.b64encode(data).decode("ascii")
+
+
+def _location(lat: float, lon: float) -> Location:
+    """Return the `Location` for query values, or raise `InvalidInput` when one is off the globe."""
+    try:
+        return Location(latitude=lat, longitude=lon)
+    except ValidationError as exc:
+        raise InvalidInput("lat must be within -90 to 90 and lon within -180 to 180.") from exc
 
 
 def _parse_tags(raw: str) -> GarmentTags:

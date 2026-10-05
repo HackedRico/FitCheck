@@ -120,7 +120,7 @@ class RemoteRenderer:
         if self._base_url is None:
             raise AdapterUnavailable(
                 "FITCHECK_TRYON_WORKER_URL is not set; point it at the try-on worker, "
-                "for example the tunnel URL the Colab notebook prints."
+                "such as http://127.0.0.1:8008 for `make worker` on this machine."
             )
         return self._base_url
 

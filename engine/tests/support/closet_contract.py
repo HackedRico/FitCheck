@@ -184,6 +184,7 @@ class ClosetStoreContract:
             price=Decimal("189.00"),
             wears=7,
             image_ref="maya/mac.png",
+            source_url="https://shop.example/p/mac",
             created_at=_T0,
         )
         store.save(garment)

@@ -26,8 +26,8 @@ _FENCE = re.compile(r"^```(?:json)?\s*|\s*```$", re.MULTILINE)
 # =============================================================================
 # Module Overview
 # =============================================================================
-# The stylist prompt and reply contract shared by every LLM stylist, so Qwen3-VL on
-# Ollama and Llama 4 on Cortex get identical facts and answer in one JSON shape.
+# The stylist prompt and reply contract shared by every LLM stylist, so a model behind
+# an OpenAI-compatible API and one on Cortex get identical facts and answer in one JSON shape.
 # `render_brief` writes the `StylistBrief` as plain text facts; `parse_reply` reads
 # the model's JSON back into a `StylistReply`.
 

@@ -4,7 +4,7 @@ import io
 from datetime import date
 from pathlib import Path
 
-from PIL import Image
+from PIL import Image, ImageOps
 
 from fitcheck.domain import AdapterInfo, Location, TryOnRegion, TryOnRequest, TryOnResult
 from fitcheck.engine import Engine, Ports
@@ -29,7 +29,8 @@ class _PaddingRenderer:
     info = AdapterInfo(name="padding-renderer")
 
     def render(self, request: TryOnRequest) -> TryOnResult:
-        person = Image.open(io.BytesIO(request.person_image))
+        # Real renderers turn phone photos upright before painting
+        person = ImageOps.exif_transpose(Image.open(io.BytesIO(request.person_image)))
         scale = 1024 / person.height
         inner = person.convert("RGB").resize((round(person.width * scale), 1024))
         frame = Image.new("RGB", (768, 1024), "white")
@@ -69,3 +70,18 @@ def test_render_comes_back_in_the_person_photos_shape(tmp_path: Path) -> None:
     # The white bands are gone: the left and right edges are the person photo, not padding
     assert image.getpixel((2, 512)) != (255, 255, 255)
     assert image.getpixel((679, 512)) != (255, 255, 255)
+
+
+def test_render_matches_an_upright_phone_photo(tmp_path: Path) -> None:
+    # Stored landscape with EXIF "rotate 90", so the owner sees a portrait photo
+    exif = Image.Exif()
+    exif[0x0112] = 6
+    person = io.BytesIO()
+    Image.new("RGB", (1024, 682), "navy").save(person, format="JPEG", exif=exif.tobytes())
+
+    result = _engine(tmp_path).render(
+        person.getvalue(), _png((200, 200), "yellow"), TryOnRegion.UPPER
+    )
+
+    with Image.open(io.BytesIO(result.image_png)) as image:
+        assert image.size == (682, 1024)

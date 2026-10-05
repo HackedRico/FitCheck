@@ -14,15 +14,19 @@ import { loadImagePoseLandmarker } from "./pose";
 // MediaPipe models (Apache-2.0) on the device: the multiclass selfie segmenter
 // keeps only the "clothes" pixels, and Pose Landmarker finds where the model's
 // shoulders or hips were, so the live preview can map those joints onto the
-// owner's. Photos where no clothes are found fall back to `prepareCutout`.
-// `extractWornGarment` pulls a second piece out of an outfit photo, and only
-// when a wearer is visible.
+// owner's. A product shot with no one in it goes to `prepareCutout` instead, and
+// `outlineAnchors` reads where a wearer's shoulders (or hips) would sit from the
+// garment's outline, so every garment is pinned the same way. `extractWornGarment`
+// pulls a second piece out of an outfit photo, and only when a wearer is visible.
 
 const SEGMENTER_URL =
   "https://storage.googleapis.com/mediapipe-models/image_segmenter/selfie_multiclass_256x256/float32/latest/selfie_multiclass_256x256.tflite";
 
 // selfie_multiclass_256x256 categories: 0 background, 1 hair, 2 body skin, 3 face skin, 4 clothes, 5 other
 const CLOTHES = 4;
+const PERSON: ReadonlySet<number> = new Set([1, 2, 3]);
+// Hair or skin on at least this share of the photo means someone is wearing the garment
+const MIN_PERSON_SHARE = 0.01;
 // Large enough to keep knit and print detail at shoulder width on a phone screen
 const MAX_SIDE = 768;
 // Below this share of the band, the segmenter did not find a worn garment
@@ -58,7 +62,8 @@ export async function extractGarment(image: Blob, region: TryOnRegion): Promise<
   } catch (error) {
     console.warn("[garment] On-device clothes segmentation failed; using the plain cutout.", error);
   }
-  return { canvas: await prepareCutout(image), anchors: null };
+  const canvas = await prepareCutout(image);
+  return { canvas, anchors: outlineAnchors(canvas, region) };
 }
 
 /** The `region` garment a person wears in `image`, or `null` when nobody visibly wears one there. */
@@ -71,6 +76,70 @@ export async function extractWornGarment(image: Blob, region: TryOnRegion): Prom
     console.warn("[garment] On-device clothes segmentation failed.", error);
     return null;
   }
+}
+
+// -----------------------------------------------------------------
+// Product shot: find where the joints would sit from the garment's outline
+// -----------------------------------------------------------------
+
+// A top's shoulder seams sit within this share of its width below the collar
+const SHOULDER_BAND = 0.18;
+// The widest row in that band, give or take, is the line across the shoulder seams
+const SHOULDER_ROW = 0.95;
+// Shoulder joints sit inside the shoulder seams, hip joints inside the hips
+const SEAMS_OVER_JOINTS = 1.3;
+const HIPS_OVER_JOINTS = 1.45;
+// Hip joints sit below the waistband, by this share of the waistband's width
+const HIP_DROP = 0.2;
+
+/**
+ * Where a wearer's shoulders (or hips) would be on a garment nobody wears, from its outline:
+ * the shoulder seams of a top or dress, the waistband of a bottom. `null` if there is no outline.
+ */
+function outlineAnchors(canvas: HTMLCanvasElement, region: TryOnRegion): GarmentSprite["anchors"] {
+  const { width, height } = canvas;
+  const context = canvas.getContext("2d", { willReadFrequently: true });
+  if (!context || width < 8 || height < 8) return null;
+  const alpha = context.getImageData(0, 0, width, height).data;
+  const extent = (y: number): { left: number; right: number } | null => {
+    let left = -1;
+    let right = -1;
+    for (let x = 0; x < width; x += 1) {
+      if ((alpha[(y * width + x) * 4 + 3] ?? 0) < 128) continue;
+      if (left < 0) left = x;
+      right = x;
+    }
+    return left < 0 ? null : { left, right };
+  };
+  const span = (y: number): number => {
+    const e = extent(y);
+    return e ? e.right - e.left : 0;
+  };
+  // The first row wider than a collar tip or the stub of a hanger is the garment's top
+  let top = 0;
+  while (top < height && span(top) < width * 0.25) top += 1;
+  if (top >= height) return null;
+
+  if (region === "lower") {
+    const waist = extent(top);
+    if (!waist) return null;
+    const middle = (waist.left + waist.right) / 2;
+    const half = (waist.right - waist.left) / 2 / HIPS_OVER_JOINTS;
+    const y = top + (waist.right - waist.left) * HIP_DROP;
+    return { left: { x: middle + half, y }, right: { x: middle - half, y } };
+  }
+
+  const band = Math.min(height - 1, top + Math.round(width * SHOULDER_BAND));
+  let widest = 0;
+  for (let y = top; y <= band; y += 1) widest = Math.max(widest, span(y));
+  let row = top;
+  while (row < band && span(row) < widest * SHOULDER_ROW) row += 1;
+  const seams = extent(row);
+  if (!seams) return null;
+  const middle = (seams.left + seams.right) / 2;
+  const half = (seams.right - seams.left) / 2 / SEAMS_OVER_JOINTS;
+  // The garment faces the camera, so the wearer's left shoulder is on the image's right
+  return { left: { x: middle + half, y: row }, right: { x: middle - half, y: row } };
 }
 
 // -----------------------------------------------------------------
@@ -103,6 +172,9 @@ async function cutWornGarment(source: HTMLCanvasElement, region: TryOnRegion): P
   const maskWidth = mask.width;
   const maskHeight = mask.height;
   result.close();
+  // With no skin or hair in view, any pose is one the model imagined in a product shot, and the
+  // "clothes" mask a coarse guess at it; the plain cutout follows its outline at full resolution
+  if (share(categories, PERSON) < MIN_PERSON_SHARE) return null;
 
   const context = source.getContext("2d", { willReadFrequently: true });
   if (!context) return null;
@@ -161,6 +233,12 @@ function regionBand(
   // Collars rise above the shoulder joints; coats run past the hips
   if (region === "upper") return { top: jointY - torso * 0.45, bottom: hipY + torso * 0.55 };
   return { top: jointY - torso * 0.45, bottom: ankleY };
+}
+
+function share(categories: Uint8Array, wanted: ReadonlySet<number>): number {
+  let count = 0;
+  for (const category of categories) if (wanted.has(category)) count += 1;
+  return count / Math.max(1, categories.length);
 }
 
 // -----------------------------------------------------------------

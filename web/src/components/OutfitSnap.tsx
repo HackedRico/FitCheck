@@ -90,7 +90,7 @@ export function OutfitSnap({ snapshot, onClose }: OutfitSnapProps): ReactNode {
         {render.status === "done" && <p className="fc-muted">AI render of the whole outfit.</p>}
         {render.status === "stand-in" && (
           <>
-            <p className="fc-muted">The AI renderer is busy right now, so this stays the on-device try-on.</p>
+            <p className="fc-muted">No AI render is available right now, so this stays the on-device try-on.</p>
             <button type="button" className="fc-btn is-ghost" onClick={() => void makeRender()}>
               Try the AI render again
             </button>

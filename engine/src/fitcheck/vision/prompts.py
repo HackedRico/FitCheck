@@ -42,9 +42,9 @@ _FENCE = re.compile(r"^```(?:json)?\s*|\s*```$", re.MULTILINE)
 # =============================================================================
 # Module Overview
 # =============================================================================
-# The tagging prompt and output contract shared by every vision tagger, so Qwen3-VL
-# on Ollama and Llama 4 on Cortex read garments the same way. `tags_json_schema`
-# feeds constrained decoding; `parse_tags` turns any model's text into `GarmentTags`.
+# The prompts and output contract for vision taggers, kept apart from any one host.
+# `tags_json_schema` feeds constrained decoding and `parse_tags` turns a model's text
+# into `GarmentTags`; `found_json_schema` and `parse_found` do the same for closet scans.
 
 
 def tags_json_schema() -> dict[str, Any]:

@@ -2,8 +2,18 @@
   "name": "fitcheck-web",
   "private": true,
   "version": "0.1.0",
+  "description": "FitCheck's phone app: scan or link a garment, see it on you, and get BUY, SKIP or TRY-WITH against your closet, weather and plans.",
   "type": "module",
   "license": "Apache-2.0",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/HackedRico/FitCheck.git",
+    "directory": "web"
+  },
+  "homepage": "https://github.com/HackedRico/FitCheck#readme",
+  "bugs": {
+    "url": "https://github.com/HackedRico/FitCheck/issues"
+  },
   "scripts": {
     "dev": "vite --host",
     "build": "tsc --noEmit && vite build",
@@ -12,10 +22,7 @@
     "gen:api": "openapi-typescript openapi.json -o src/api/schema.d.ts"
   },
   "dependencies": {
-    "@fontsource/big-shoulders-display": "^5.3.0",
-    "@fontsource/dm-mono": "^5.3.0",
     "@fontsource/instrument-sans": "^5.3.0",
-    "@fontsource/instrument-serif": "^5.3.0",
     "@mediapipe/tasks-vision": "^1.0.1",
     "openapi-fetch": "^0.17.0",
     "react": "^19.3.0",

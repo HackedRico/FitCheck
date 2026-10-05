@@ -9,7 +9,9 @@ import { captureFrame, useCamera, type Facing } from "../lib/camera";
 import { placeGarment, smoothPlacement, type Landmark, type Placement } from "../lib/fit";
 import { drawOnJoints, type JointPair } from "../lib/composite";
 import type { GarmentSprite, Point } from "../lib/garmentSprite";
+import { createOccluder, type Occluder } from "../lib/occlusion";
 import { loadPoseLandmarker } from "../lib/pose";
+import { canGoBackInApp } from "../lib/route";
 import { useApp } from "../state/app";
 import { byLayer, candidateWearable, closetWearable, wearablesFromPhoto, type Wearable } from "../state/outfit";
 
@@ -22,12 +24,16 @@ import { byLayer, candidateWearable, closetWearable, wearablesFromPhoto, type We
 // bottom can be worn together, bottoms drawn first. When a garment photo showed
 // it worn, `extractGarment` kept the wearer's shoulders (or hips), and those map
 // onto the owner's joints so the garment sits the way it was worn; otherwise the
-// cutout is fitted by `placeGarment`. Snapping the candidate alone keeps that
-// frame as its render; any other outfit opens in `OutfitSnap`.
+// cutout's outline gives where the joints would sit. The owner's hair, face,
+// neck and hands are drawn back over the garments (`createOccluder`). Snapping
+// the candidate alone keeps that frame as its render; any other outfit opens in
+// `OutfitSnap`.
 
 // Higher follows faster, lower holds steadier against landmark jitter
 const SMOOTHING = 0.45;
 const MIN_VISIBILITY = 0.5;
+// The hair and skin mask costs about twice the pose, so it refreshes at most 15 times a second
+const OCCLUSION_INTERVAL_MS = 66;
 
 // MediaPipe Pose landmark indices
 const LEFT_SHOULDER = 11;
@@ -121,6 +127,15 @@ export function LiveScreen(): ReactNode {
     let stopped = false;
     let frameHandle = 0;
 
+    let occluder: Occluder | null = null;
+    // Without it the garments still draw, only over the face and hands
+    createOccluder()
+      .then((ready) => {
+        if (stopped) ready.close();
+        else occluder = ready;
+      })
+      .catch((error: unknown) => console.warn("[live] Occlusion segmenter failed to load.", error));
+
     void (async () => {
       let landmarker;
       try {
@@ -136,6 +151,7 @@ export function LiveScreen(): ReactNode {
       let frames = 0;
       let fpsSince = performance.now();
       let lastSeen = false;
+      let lastOcclusion = 0;
 
       const draw = (): void => {
         if (stopped) return;
@@ -151,6 +167,12 @@ export function LiveScreen(): ReactNode {
             lastVideoTime = video.currentTime;
             const pose = landmarker.detectForVideo(video, performance.now()).landmarks[0];
             for (const layer of layers) fitLayer(layer, pose, frame);
+            // A face moves little between frames, so the mask can lag the pose and save the time
+            const now = performance.now();
+            if (occluder && layers.length > 0 && now - lastOcclusion >= OCCLUSION_INTERVAL_MS) {
+              lastOcclusion = now;
+              occluder.update(video, now, pose);
+            }
             const seen = pose !== undefined && (layers.length === 0 || layers.some((l) => l.joints ?? l.placement));
             if (seen !== lastSeen) {
               lastSeen = seen;
@@ -160,6 +182,7 @@ export function LiveScreen(): ReactNode {
           }
           context.drawImage(video, 0, 0, canvas.width, canvas.height);
           for (const layer of layers) drawLayer(context, layer);
+          if (occluder && layers.length > 0) occluder.draw(context, video);
           const now = performance.now();
           if (now - fpsSince > 1000) {
             setFps(Math.round((frames * 1000) / (now - fpsSince)));
@@ -175,6 +198,7 @@ export function LiveScreen(): ReactNode {
     return () => {
       stopped = true;
       cancelAnimationFrame(frameHandle);
+      occluder?.close();
     };
   }, [camera.status, camera.videoRef]);
 
@@ -195,9 +219,18 @@ export function LiveScreen(): ReactNode {
     const video = camera.videoRef.current;
     const canvas = canvasRef.current;
     if (!video || !canvas) return;
-    const person = await captureFrame(video);
+    let person: Blob;
+    try {
+      person = await captureFrame(video);
+    } catch (cause) {
+      setNotice(errorMessage(cause));
+      return;
+    }
     const image = await new Promise<Blob | null>((resolve) => canvas.toBlob(resolve, "image/png"));
-    if (!image) return;
+    if (!image) {
+      setNotice("This browser could not save the frame. Try the snap again.");
+      return;
+    }
     const worn = outfit.worn;
     // The candidate alone is the verdict's own try-on, so the snap becomes its render
     if (candidate !== null && worn.length === 1 && worn[0]?.key === candidate.key) {
@@ -210,7 +243,8 @@ export function LiveScreen(): ReactNode {
 
   const back = (): void => {
     // Live is reached from the verdict, the closet or the camera; go back to whichever it was
-    if (window.history.length > 1) window.history.back();
+    // Opened straight on #/live, there is no FitCheck screen behind it to go back to
+    if (canGoBackInApp()) window.history.back();
     else navigate("home");
   };
 

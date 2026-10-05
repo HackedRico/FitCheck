@@ -101,3 +101,14 @@ def test_build_reports_this_machine() -> None:
     renderer = build(Settings())
 
     assert renderer.info.runs_on is RunsOn.THIS_MACHINE
+
+
+def test_overlay_marks_itself_as_a_stand_in(png_bytes: bytes) -> None:
+    """The overlay is never a model's try-on, so the app must know to build its own preview."""
+    from fitcheck.domain import TryOnRegion, TryOnRequest
+    from fitcheck.tryon.overlay import OverlayRenderer
+
+    request = TryOnRequest(
+        person_image=png_bytes, garment_image=png_bytes, region=TryOnRegion.UPPER
+    )
+    assert OverlayRenderer().render(request).fallback is True

@@ -3,6 +3,8 @@
    =============================================================================
    Design tokens for FitCheck: black type on warm white, one sans family, and
    colour reserved for the verdict itself (green BUY, red SKIP, blue TRY-WITH).
+   Every text colour clears 4.5:1 on `--bg`, except `--fg-muted`, which is for
+   decoration only.
    Camera screens flip to `.is-dark` tokens so controls read over live video. */
 
 :root {
@@ -22,26 +24,21 @@
   --buy: #1d7a45;
   --skip: #c8371f;
   --try: #2846c4;
-  --warn: #a8630a;
+  --warn: #965808;
   --accent: var(--fg);
 
-  /* ---------- type: one family, a serif only for the verdict sentence ---------- */
+  /* ---------- type: one family ---------- */
   --sans: "Instrument Sans", "Helvetica Neue", Helvetica, Arial, sans-serif;
-  --serif: "Instrument Serif", Georgia, serif;
   --display: var(--sans);
   --mono: var(--sans);
 
   /* ---------- motion ---------- */
   --ease-out: cubic-bezier(0.2, 0.8, 0.2, 1);
-  --ease-swing: cubic-bezier(0.2, 0.8, 0.2, 1);
   --fast: 160ms;
   --medium: 280ms;
 
   /* ---------- layout ---------- */
   --gutter: 20px;
-  --radius: 14px;
-  --tabbar-h: 0px;
-  --masthead-h: 0px;
 
   color-scheme: light;
 }

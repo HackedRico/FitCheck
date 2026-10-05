@@ -104,7 +104,6 @@ class Settings(BaseSettings):
     snowflake_warehouse: str = "FITCHECK_WH"
     snowflake_database: str = "FITCHECK"
     snowflake_schema: str = "PUBLIC"
-    snowflake_stage: str = "FITCHECK_IMAGES"
     # llama4-maverick went legacy in August 2026; new accounts cannot start it
     cortex_model: str = "llama3.3-70b"
     cortex_search_service: str = "CLOSET_SEARCH"

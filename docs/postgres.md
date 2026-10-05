@@ -1,6 +1,6 @@
 # Postgres on the open path
 
-On the open path the closet lives in Postgres 17, run by Docker from `docker-compose.yml`. The image is `pgvector/pgvector:pg17`, so vector search later needs only `CREATE EXTENSION vector`.
+The default closet store is SQLite in `.fitcheck/closet.db`, which needs no server. Set `FITCHECK_STORE=postgres` to keep the closet in Postgres 17 instead, run by Docker from `docker-compose.yml`. The image is `pgvector/pgvector:pg17`, so vector search later needs only `CREATE EXTENSION vector`.
 
 ## Start
 
@@ -22,22 +22,13 @@ docker compose exec postgres psql -U fitcheck
 
 ## Seed the demo closet
 
-The memory store loads `demo/closet.json` every time it starts. Postgres keeps what it has, so seed it once. A `fitcheck seed` command builds only the store slot from settings, then saves each seed garment:
+The sqlite store seeds the demo closet into an empty database by itself. Postgres keeps what it has, so seed it once:
 
-```python
-import importlib
-
-from fitcheck.seed import load_seed
-from fitcheck.settings import Settings
-from fitcheck.wiring import ADAPTERS
-
-settings = Settings()
-store = importlib.import_module(ADAPTERS["store"][settings.store]).build(settings)
-for garment in load_seed(settings.seed_path) if settings.seed_path else []:
-    store.save(garment)
+```sh
+cd engine && uv run --env-file ../env/open.env fitcheck seed
 ```
 
-`save` replaces a garment with the same owner and id, so seeding twice changes nothing. Seed images stay in `demo/images/` and are never copied into the database.
+`save` replaces a garment with the same owner and id, so seeding twice changes nothing. Seed images stay in `demo/images/` and never go into the database.
 
 ## Reset
 
@@ -50,7 +41,7 @@ Restart the engine afterwards so it recreates the table, then seed again. To cle
 
 ## Schema
 
-`engine/src/fitcheck/closet/sql/postgres.sql` defines one table, `garments`, keyed by `(owner, id)` so one owner's id can never overwrite another's garment. It has one column per `Garment` field with the tags flattened out: `category`, `color_family`, `pattern`, `warmth`, `waterproof`, `formality` and `description`. `price` is an unconstrained `numeric`, so a price keeps its exact digits, and `created_at` is a `timestamptz` that the store hands back in UTC. A generated `search` column holds a `tsvector` of category, color family, pattern and description under a GIN index. `search` ranks full-text matches with `ts_rank` and, when stemming and stop words leave nothing to match, falls back to substring matching. The engine runs the file on every start; each statement uses `IF NOT EXISTS`, so changing a column needs a migration or a reset.
+`engine/src/fitcheck/closet/sql/postgres.sql` defines one table, `garments`, keyed by `(owner, id)` so one owner's id can never overwrite another's garment. It has one column per `Garment` field with the tags flattened out: `category`, `color_family`, `pattern`, `warmth`, `waterproof`, `formality` and `description`, plus `source_url` for a garment brought in by shop link. `price` is an unconstrained `numeric`, so a price keeps its exact digits, and `created_at` is a `timestamptz` that the store hands back in UTC. A generated `search` column holds a `tsvector` of category, color family, pattern and description under a GIN index. `search` ranks full-text matches with `ts_rank` and, when stemming and stop words leave nothing to match, falls back to substring matching. The engine runs the file on every start; each statement uses `IF NOT EXISTS`, so adding a column takes an `ALTER TABLE ... ADD COLUMN IF NOT EXISTS` line and any other change needs a reset.
 
 ## Tests
 

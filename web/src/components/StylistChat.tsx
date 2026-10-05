@@ -22,11 +22,17 @@ export function StylistChat({ onRender }: { onRender: () => void }): ReactNode {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const logRef = useRef<HTMLOListElement | null>(null);
+  // The scan this conversation is about; `null` once it is gone, so a late reply cannot render on the next one
+  const scanId = useRef<number | null>(flow.id);
 
   // A new scan is a new conversation
   useEffect(() => {
+    scanId.current = flow.id;
     setHistory([]);
     setError(null);
+    return () => {
+      scanId.current = null;
+    };
   }, [flow.id]);
 
   // The log scrolls inside the dock, so pin it to the newest turn rather than moving the page
@@ -45,6 +51,7 @@ export function StylistChat({ onRender }: { onRender: () => void }): ReactNode {
     setBusy(true);
     setError(null);
     const before = history;
+    const askedAbout = flow.id;
     setHistory([...before, { role: "user", text }]);
     try {
       const out = await api.chat({
@@ -56,6 +63,7 @@ export function StylistChat({ onRender }: { onRender: () => void }): ReactNode {
         location: location.location,
       });
       pipelines.record("chat", out.pipeline);
+      if (scanId.current !== askedAbout) return;
       setHistory((turns) => [...turns, { role: "stylist", text: out.reply.text }]);
       if (out.reply.render) {
         if (person.photo) {
@@ -118,6 +126,7 @@ export function StylistChat({ onRender }: { onRender: () => void }): ReactNode {
         <input
           value={draft}
           maxLength={2000}
+          aria-label="Ask the stylist"
           placeholder="Ask anything about this piece"
           onChange={(event) => setDraft(event.target.value)}
         />

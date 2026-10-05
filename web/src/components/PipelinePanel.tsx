@@ -11,10 +11,10 @@ import { Sheet } from "./Sheet";
 // =============================================================================
 // Module Overview
 // =============================================================================
-// What ran where. `PrivacyRail` is the always-visible badge under the masthead;
-// it reads "Photo never left hardware we control" unless a step that touched the
-// person photo ran on a public API (ADR 0003). `PipelinePanel` lists every step
-// of the last responses with adapter, model, licence, where it ran and its time.
+// What ran where. `PipelinePanel` leads with the privacy badge, which reads
+// "Photo never left hardware we control" unless a step that touched the person
+// photo ran on a public API (ADR 0003), then lists every step of the last
+// responses with adapter, model, licence, where it ran and its time.
 
 const KIND_TITLE: Record<PipelineKind, string> = {
   scan: "Scan",
@@ -23,24 +23,6 @@ const KIND_TITLE: Record<PipelineKind, string> = {
   chat: "Stylist",
   closet: "Closet",
 };
-
-/** The privacy badge; tapping it opens the pipeline panel. */
-export function PrivacyRail(): ReactNode {
-  const { pipelines, openSheet } = useApp();
-  const leaked = photoLeftOurHardware(pipelines.records);
-  const steps = PIPELINE_KINDS.reduce((n, kind) => n + (pipelines.records[kind]?.steps.length ?? 0), 0);
-  return (
-    <button type="button" className="privacy-rail" data-warn={leaked} onClick={() => openSheet("pipeline")}>
-      <Icon name={leaked ? "warn" : "lock"} />
-      <span className="privacy-text">
-        {leaked ? "Warning: your photo was sent to a public API for the render" : "Photo never left hardware we control"}
-      </span>
-      <span className="privacy-more">
-        Pipeline {steps > 0 ? `· ${steps} steps` : ""} <Icon name="arrow" />
-      </span>
-    </button>
-  );
-}
 
 function StepRow({ step }: { step: PipelineStep }): ReactNode {
   const exposed = step.touched_person_image && step.adapter.runs_on === "public_api";

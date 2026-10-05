@@ -24,7 +24,7 @@ CREATE SCHEMA IF NOT EXISTS FITCHECK.PUBLIC;
 GRANT USAGE ON WAREHOUSE FITCHECK_WH TO ROLE FITCHECK;
 GRANT USAGE ON DATABASE FITCHECK TO ROLE FITCHECK;
 GRANT USAGE ON SCHEMA FITCHECK.PUBLIC TO ROLE FITCHECK;
-GRANT CREATE TABLE, CREATE STAGE, CREATE CORTEX SEARCH SERVICE ON SCHEMA FITCHECK.PUBLIC TO ROLE FITCHECK;
+GRANT CREATE TABLE, CREATE CORTEX SEARCH SERVICE ON SCHEMA FITCHECK.PUBLIC TO ROLE FITCHECK;
 GRANT DATABASE ROLE SNOWFLAKE.CORTEX_USER TO ROLE FITCHECK;
 
 -- Everything below is owned by FITCHECK, so the app role needs no further grants
@@ -47,20 +47,17 @@ CREATE TABLE IF NOT EXISTS GARMENTS (
     PRICE         NUMBER(10, 2),
     WEARS         NUMBER(9, 0)  NOT NULL DEFAULT 0,
     IMAGE_REF     VARCHAR,
+    SOURCE_URL    VARCHAR,
     CREATED_AT    TIMESTAMP_TZ  NOT NULL,
     CONSTRAINT GARMENTS_PK PRIMARY KEY (OWNER, ID)
 )
 COMMENT = 'FitCheck closet: garment records per owner, never a person photo';
 
+-- Tables made before shop links were stored lack this column; a no-op once it exists
+ALTER TABLE GARMENTS ADD COLUMN IF NOT EXISTS SOURCE_URL VARCHAR;
+
 -- Cortex Search needs change tracking on its source table
 ALTER TABLE GARMENTS SET CHANGE_TRACKING = TRUE;
-
--- AI functions read staged images only from server-side encrypted stages.
--- Encryption cannot change after creation: drop and rerun if an older stage lacks it.
-CREATE STAGE IF NOT EXISTS FITCHECK_IMAGES
-  DIRECTORY = (ENABLE = TRUE)
-  ENCRYPTION = (TYPE = 'SNOWFLAKE_SSE')
-  COMMENT = 'Garment cutouts only, never a person photo';
 
 -- Hybrid (vector + keyword) search over each owner's closet, filtered by OWNER.
 -- SEARCH_TEXT matches the keyword text in engine/src/fitcheck/closet/snowflake.py.

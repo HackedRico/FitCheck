@@ -1,8 +1,9 @@
 /* =============================================================================
    Module Overview
    =============================================================================
-   Reset, page atmosphere and the shared primitives: buttons, the mono kicker,
-   empty states and the spinner. Screen-specific rules live in their own files. */
+   Reset, focus ring and the shared primitives: the kicker and display type, the
+   settings sheet's button, the engine error line and the spinner. Components
+   live in app.css, the `fc-` screens in flow.css. */
 
 *,
 *::before,
@@ -27,7 +28,6 @@ body {
   -webkit-tap-highlight-color: transparent;
   overscroll-behavior: none;
 }
-
 
 img,
 video,
@@ -60,15 +60,6 @@ p {
   margin: 0;
 }
 
-.visually-hidden {
-  position: absolute;
-  width: 1px;
-  height: 1px;
-  overflow: hidden;
-  clip-path: inset(50%);
-  white-space: nowrap;
-}
-
 /* ---------- type primitives ---------- */
 
 .kicker {
@@ -86,12 +77,6 @@ p {
   line-height: 0.86;
   letter-spacing: -0.005em;
   text-transform: uppercase;
-}
-
-.serif {
-  font-family: var(--serif);
-  font-style: italic;
-  font-weight: 400;
 }
 
 /* ---------- buttons ---------- */
@@ -131,72 +116,12 @@ p {
   color: var(--bg);
 }
 
-.btn-accent {
-  border-color: var(--accent);
-  background: var(--accent);
-  color: var(--bg);
-}
-
-.btn-quiet {
-  border-color: var(--line-strong);
-}
-
-.btn-danger {
-  border-color: var(--skip);
-  color: var(--skip);
-}
-
-.btn-danger.is-armed {
-  background: var(--skip);
-  color: var(--bg);
-}
-
 .btn:disabled {
   opacity: 0.4;
   cursor: not-allowed;
 }
 
-.icon-btn {
-  display: inline-grid;
-  place-items: center;
-  width: 44px;
-  height: 44px;
-  border: 1px solid var(--line);
-  border-radius: 999px;
-  background: rgba(14, 14, 12, 0.55);
-  backdrop-filter: blur(8px);
-}
-
-.icon-btn svg {
-  width: 20px;
-  height: 20px;
-}
-
 /* ---------- states ---------- */
-
-.empty {
-  display: grid;
-  align-content: center;
-  justify-items: start;
-  gap: 18px;
-  min-height: 60vh;
-  padding: 32px var(--gutter);
-  max-width: 640px;
-}
-
-.empty h1 {
-  font-family: var(--display);
-  font-size: clamp(52px, 13vw, 104px);
-  font-weight: 900;
-  line-height: 0.86;
-  text-transform: uppercase;
-}
-
-.empty p {
-  max-width: 34ch;
-  color: var(--fog);
-  font-size: 17px;
-}
 
 .error-line {
   display: flex;

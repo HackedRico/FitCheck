@@ -6,7 +6,7 @@ import { loadImagePoseLandmarker } from "./pose";
 // =============================================================================
 // Module Overview
 // =============================================================================
-// A quick try-on made entirely on the device, for when the AI renderer is busy:
+// A quick try-on made entirely on the device, for when no AI render is available:
 // the garment's clothes are cut out, and its wearer's shoulders (or hips) are
 // mapped onto the person's, the same way the live preview works. `drawOnJoints`
 // is the shared mapping; `compositeOnPerson` builds a whole still.

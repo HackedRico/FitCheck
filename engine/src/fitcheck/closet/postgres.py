@@ -36,6 +36,7 @@ _FIELDS = (
     "price",
     "wears",
     "image_ref",
+    "source_url",
     "created_at",
 )
 _COLUMNS = ", ".join(_FIELDS)
@@ -150,7 +151,7 @@ class PostgresClosetStore:
         """Delete everything stored for `owner` and return how many garments went."""
         with self._cursor() as cur:
             cur.execute(_DELETE_OWNER, (owner,))
-            return cur.rowcount
+            return int(cur.rowcount)
 
     @contextmanager
     def _cursor(self) -> Iterator[Cursor[DictRow]]:
@@ -202,6 +203,7 @@ def _to_params(garment: Garment) -> dict[str, object]:
         "price": garment.price,
         "wears": garment.wears,
         "image_ref": garment.image_ref,
+        "source_url": garment.source_url,
         "created_at": garment.created_at,
     }
 
@@ -224,6 +226,7 @@ def _to_garment(row: DictRow) -> Garment:
         price=row["price"],
         wears=row["wears"],
         image_ref=row["image_ref"],
+        source_url=row["source_url"],
         # Postgres answers in the session's zone; normalise so every store hands back UTC
         created_at=row["created_at"].astimezone(UTC),
     )

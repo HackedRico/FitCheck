@@ -51,6 +51,7 @@ def fetch_garment(url: str) -> LinkedGarment:
         headers={"User-Agent": _USER_AGENT, "Accept": "text/html,image/*;q=0.9,*/*;q=0.5"},
         timeout=_TIMEOUT_S,
         follow_redirects=False,
+        transport=_PinnedTransport(),
     ) as client:
         final_url, content_type, body = _get(client, url)
         if content_type.startswith("image/"):
@@ -74,6 +75,23 @@ def fetch_garment(url: str) -> LinkedGarment:
 # =============================================================================
 # Fetching
 # =============================================================================
+
+
+class _PinnedTransport(httpx.HTTPTransport):
+    """Connects only to an address the private-network check already approved.
+
+    Rewriting the target here rather than in the URL keeps the request addressed to
+    the shop, so redirects and relative image links still resolve against its name.
+    """
+
+    def handle_request(self, request: httpx.Request) -> httpx.Response:
+        host = request.url.host
+        address = _public_addresses(str(request.url))[0]
+        if address != host:
+            request.headers.setdefault("Host", request.url.netloc.decode("ascii"))
+            request.extensions = {**request.extensions, "sni_hostname": host}
+            request.url = request.url.copy_with(host=address)
+        return super().handle_request(request)
 
 
 def _get(client: httpx.Client, url: str) -> tuple[str, str, bytes]:
@@ -115,18 +133,28 @@ def _read_capped(response: httpx.Response) -> bytes:
 
 def _require_public_url(url: str) -> None:
     """Reject anything but http(s) to a public address, so a link cannot probe our network."""
+    _public_addresses(url)
+
+
+def _public_addresses(url: str) -> list[str]:
+    """Return every address `url`'s host resolves to, once they are all public."""
     parts = urlsplit(url)
     if parts.scheme not in ("http", "https") or not parts.hostname:
         raise InvalidInput("Paste a full link starting with `https://`.")
     try:
-        addresses = {info[4][0] for info in socket.getaddrinfo(parts.hostname, None)}
+        addresses = {str(info[4][0]) for info in socket.getaddrinfo(parts.hostname, None)}
     except socket.gaierror as exc:
         raise InvalidInput(f"Could not find `{parts.hostname}`; check the link.") from exc
+    if not addresses:
+        raise InvalidInput(f"Could not find `{parts.hostname}`; check the link.")
     for address in addresses:
-        ip = ipaddress.ip_address(str(address).split("%")[0])
-        # Checks the address at lookup time; a host that re-resolves between checks is not covered
-        if not ip.is_global:
+        ip = ipaddress.ip_address(address.split("%")[0])
+        # Older Python releases judge `::ffff:127.0.0.1` by its IPv6 form, which looks global
+        mapped = ip.ipv4_mapped if isinstance(ip, ipaddress.IPv6Address) else None
+        if not ip.is_global or (mapped is not None and not mapped.is_global):
             raise InvalidInput("That link points at a private network address.")
+    # IPv4 first: many home and venue networks resolve AAAA records but cannot route IPv6
+    return sorted(addresses, key=lambda address: (":" in address, address))
 
 
 def _to_png(data: bytes) -> bytes:
@@ -134,6 +162,9 @@ def _to_png(data: bytes) -> bytes:
     try:
         image = Image.open(io.BytesIO(data))
         image.load()
+    except Image.DecompressionBombError as exc:
+        # Not an `OSError`, so it would otherwise leave the API as an unhandled 500
+        raise InvalidInput("The linked image is too large to decode.") from exc
     except (UnidentifiedImageError, OSError) as exc:
         raise InvalidInput("The linked image is in a format we cannot read.") from exc
     image.thumbnail((_MAX_SIDE, _MAX_SIDE))

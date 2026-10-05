@@ -61,7 +61,8 @@ export function useCamera(facing: Facing, enabled: boolean): CameraHandle {
         if (!video) return;
         video.srcObject = opened;
         await video.play();
-        setStatus("live");
+        // A camera switch during `play` must not mark the next stream live before it opens
+        if (!cancelled) setStatus("live");
       })
       .catch((cause: unknown) => {
         if (cancelled) return;

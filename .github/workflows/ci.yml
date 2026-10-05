@@ -1,4 +1,4 @@
-# Runs the same checks as `make check` plus the web build on every push and PR.
+# Runs `make check`, the worker tests and the web build on every push and PR.
 name: ci
 
 on:
@@ -19,6 +19,17 @@ jobs:
       - run: uv run ruff check src tests
       - run: uv run ruff format --check src tests
       - run: uv run mypy src
+      - run: uv run pytest -q
+
+  worker:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: worker
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v6
+      - run: uv sync
       - run: uv run pytest -q
 
   web:

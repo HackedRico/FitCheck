@@ -46,7 +46,6 @@ const PATHS = {
       <path d="M12 10v4M12 17v.5" />
     </>
   ),
-  chat: <path d="M4 5h16v11H9l-5 4z" />,
   close: <path d="M6 6l12 12M18 6 6 18" />,
   gear: (
     <>
@@ -80,21 +79,12 @@ const PATHS = {
     </>
   ),
   send: <path d="M4 12 20 4l-6 16-3-7z" />,
-  expand: <path d="M4 10V4h6M20 14v6h-6M4 4l6 6M20 20l-6-6" />,
-  pipeline: (
-    <>
-      <circle cx="5" cy="6" r="2" />
-      <circle cx="5" cy="18" r="2" />
-      <circle cx="19" cy="12" r="2" />
-      <path d="M7 6h4l4 6M7 18h4l4-6" />
-    </>
-  ),
 } satisfies Record<string, ReactNode>;
 
 export type IconName = keyof typeof PATHS;
 
-/** A 24 px line icon in the current text colour. */
-export function Icon({ name, title }: { name: IconName; title?: string }): ReactNode {
+/** A decorative 24 px line icon in the current text colour; its button or label carries the name. */
+export function Icon({ name }: { name: IconName }): ReactNode {
   return (
     <svg
       viewBox="0 0 24 24"
@@ -103,10 +93,8 @@ export function Icon({ name, title }: { name: IconName; title?: string }): React
       strokeWidth="1.8"
       strokeLinecap="square"
       strokeLinejoin="miter"
-      aria-hidden={title === undefined}
-      role={title === undefined ? undefined : "img"}
+      aria-hidden="true"
     >
-      {title !== undefined && <title>{title}</title>}
       {PATHS[name]}
     </svg>
   );

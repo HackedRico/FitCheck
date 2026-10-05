@@ -14,7 +14,7 @@ import { WeatherGlyph } from "./Icons";
 
 function FormalityDots({ value }: { value: number }): ReactNode {
   return (
-    <span className="dots" aria-label={`dress code ${dressCode(value)}`}>
+    <span className="dots" role="img" aria-label={`dress code ${dressCode(value)}`}>
       {[1, 2, 3, 4, 5].map((n) => (
         <span key={n} data-on={n <= value} />
       ))}
@@ -71,15 +71,15 @@ export function WeekStrip({ week }: { week: WeekContext }): ReactNode {
               >
                 <span className="week-dow">{date.toLocaleDateString([], { weekday: "short" })}</span>
                 <span className="week-date">{date.getDate()}</span>
-                <span className="week-glyph" title={weatherWord(kind)}>
+                <span className="week-glyph" role="img" aria-label={weatherWord(kind)} title={weatherWord(kind)}>
                   <WeatherGlyph kind={kind} />
                 </span>
                 <span className="week-hi">{Math.round(day.temp_max_c)}°</span>
                 <span className="week-lo">{Math.round(day.temp_min_c)}°</span>
-                <span className="week-rain" aria-label={`${Math.round(rain)}% chance of rain`}>
+                <span className="week-rain" role="img" aria-label={`${Math.round(rain)}% chance of rain`}>
                   <span />
                 </span>
-                {planned > 0 && <span className="week-plan" aria-label={`${planned} plans`} />}
+                {planned > 0 && <span className="week-plan" role="img" aria-label={`${planned} plans`} />}
               </li>
             );
           })}

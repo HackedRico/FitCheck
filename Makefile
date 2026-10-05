@@ -35,7 +35,7 @@ demo-snowflake: ## Same as demo, engine on the Snowflake path (env/snowflake.env
 	npm run dev & \
 	wait
 
-api: ## Run the API offline: fakes and fixtures, no accounts, no GPU
+api: ## Run the API; fakes and fixtures unless engine/.env picks real adapters
 	$(ENGINE) uv run fitcheck serve --reload
 
 api-open: ## Run the API on the open path (see env/open.env)
@@ -47,7 +47,7 @@ api-snowflake: ## Run the API on the Snowflake path (see env/snowflake.env)
 test: ## Run the engine tests that need no external service
 	$(ENGINE) uv run pytest -q
 
-test-live: ## Also run tests against real Ollama, Postgres, Snowflake, Open-Meteo
+test-live: ## Also run tests against real model endpoints, Postgres, Snowflake, Open-Meteo, the Leffa Space
 	$(ENGINE) FITCHECK_LIVE=1 uv run pytest -q
 
 check: ## Lint, type-check and test the engine
@@ -65,7 +65,7 @@ web-install: ## Install web app dependencies
 web: ## Run the web app; open the printed https URL on your phone
 	cd web && npm run dev
 
-db-up: ## Start Postgres for the open path
+db-up: ## Start Postgres for FITCHECK_STORE=postgres
 	docker compose up -d postgres
 
 db-down: ## Stop Postgres
@@ -74,11 +74,11 @@ db-down: ## Stop Postgres
 db-reset: ## Wipe Postgres data and start fresh; needed after a schema change
 	docker compose down -v && docker compose up -d postgres
 
-ollama-pull: ## Download an open-weight vision model to serve from this machine
-	ollama pull qwen3-vl:8b
+ollama-pull: ## Download the tagger's open-weight vision model for your own Ollama server
+	ollama pull qwen3-vl:8b-instruct
 
 worker-test: ## Run the try-on worker's tests
 	cd worker && uv run pytest -q
 
-worker: ## Run the try-on GPU worker locally (needs a CUDA or Apple GPU)
+worker: ## Run the try-on worker on 127.0.0.1:8008; only the echo backend ships, no GPU needed
 	cd worker && uv run fitcheck-worker

@@ -6,10 +6,12 @@ __pycache__/
 .pytest_cache/
 .ruff_cache/
 
-# Node
+# Node and Vite
 node_modules/
 dist/
 dev-dist/
+.vite/
+web/vite.preview.local.ts
 
 # Next.js
 .next/
@@ -18,17 +20,25 @@ next-env.d.ts
 
 # Secrets and local config
 .env
+.env.*
+!.env.example
 *.env.local
 env/*.local.env
 *.p8
+*.pem
 rsa_key.pub
 
-# Runtime data: stored garment images, model weights, cloned model repos
+# Runtime data: closet database, stored garment images, model weights, cloned model repos
 .fitcheck/
 worker/weights/
 worker/vendor/
 *.safetensors
 *.ckpt
+
+# Claude Code, per machine
+.claude/worktrees/
+.claude/launch.json
+.claude/settings.local.json
 
 # OS and editors
 .DS_Store
@@ -37,3 +47,6 @@ worker/vendor/
 public/uploads/
 snowflake.log
 *.swp
+
+# Local agent installs of skills/fit-check (see skills/fit-check/README.md)
+.claude/skills/

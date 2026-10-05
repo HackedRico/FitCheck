@@ -240,7 +240,8 @@ class TryOnResult(_Value):
     image_png: bytes
     # True when a fallback served a pre-computed render; the UI must label it "cached"
     cached: bool = False
-    # True when the backup renderer stood in because the main one was unavailable
+    # True when the image is a stand-in, not a model's try-on: a backup renderer stood in, or
+    # the plain overlay drew it; the web app then builds its own on-device preview instead
     fallback: bool = False
 
 

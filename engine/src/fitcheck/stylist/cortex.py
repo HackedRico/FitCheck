@@ -19,7 +19,7 @@ from fitcheck.stylist.prompts import (
     reply_json_schema,
 )
 
-# Same values as the Ollama stylist, so both paths sound alike on stage
+# Same values as the OpenAI-compatible stylist, so both paths sound alike on stage
 TEMPERATURE = 0.3
 MAX_TOKENS = 400
 # Recent turns only: the FACTS lead the prompt and must never be crowded out by old chat

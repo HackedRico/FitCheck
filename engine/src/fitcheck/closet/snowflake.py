@@ -37,6 +37,7 @@ _FIELDS = (
     "PRICE",
     "WEARS",
     "IMAGE_REF",
+    "SOURCE_URL",
     "CREATED_AT",
 )
 _COLUMNS = ", ".join(_FIELDS)
@@ -56,7 +57,7 @@ _MERGE = (
     "%(color_family)s AS COLOR_FAMILY, %(pattern)s AS PATTERN, %(warmth)s AS WARMTH, "
     "%(waterproof)s AS WATERPROOF, %(formality)s AS FORMALITY, "
     "%(description)s AS DESCRIPTION, %(price)s::NUMBER(10, 2) AS PRICE, %(wears)s AS WEARS, "
-    "%(image_ref)s AS IMAGE_REF, "
+    "%(image_ref)s AS IMAGE_REF, %(source_url)s AS SOURCE_URL, "
     f"TO_TIMESTAMP_TZ(%(created_at)s, '{_TIMESTAMP_FORMAT}') AS CREATED_AT) AS s "
     "ON t.OWNER = s.OWNER AND t.ID = s.ID "
     "WHEN MATCHED THEN UPDATE SET "
@@ -227,6 +228,7 @@ def _to_params(garment: Garment) -> dict[str, object]:
         "price": None if garment.price is None else str(garment.price),
         "wears": garment.wears,
         "image_ref": garment.image_ref,
+        "source_url": garment.source_url,
         "created_at": _utc(garment.created_at).isoformat(timespec="microseconds"),
     }
 
@@ -250,6 +252,7 @@ def _to_garment(row: Sequence[Any]) -> Garment:
         price=values["PRICE"],
         wears=values["WEARS"],
         image_ref=values["IMAGE_REF"],
+        source_url=values["SOURCE_URL"],
         created_at=_utc(values["CREATED_AT"]),
     )
 

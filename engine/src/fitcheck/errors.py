@@ -24,4 +24,4 @@ class TaggingFailed(FitCheckError):
 
 
 class AdapterUnavailable(FitCheckError):
-    """A backing service (Ollama, GPU worker, database) is down or misconfigured. Maps to 503."""
+    """A model server, GPU worker or database is down or misconfigured. Maps to HTTP 503."""

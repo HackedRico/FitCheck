@@ -198,7 +198,14 @@ def _chat(args: argparse.Namespace) -> None:
 def _render(args: argparse.Namespace) -> None:
     result = _engine().render(_read(args.person), _read(args.garment), args.region)
     args.out.write_bytes(result.image_png)
-    _emit({"out": str(args.out), "cached": result.cached, "pipeline": result.pipeline})
+    _emit(
+        {
+            "out": str(args.out),
+            "cached": result.cached,
+            "fallback": result.fallback,
+            "pipeline": result.pipeline,
+        }
+    )
 
 
 def _closet_list(args: argparse.Namespace) -> None:
@@ -252,7 +259,12 @@ def _location_of(args: argparse.Namespace) -> Location | None:
         return None
     if args.lat is None or args.lon is None:
         raise InvalidInput("Pass both `--lat` and `--lon`, or neither.")
-    return Location(latitude=args.lat, longitude=args.lon)
+    try:
+        return Location(latitude=args.lat, longitude=args.lon)
+    except ValueError as exc:
+        raise InvalidInput(
+            "`--lat` must be within -90 to 90 and `--lon` within -180 to 180."
+        ) from exc
 
 
 def _read(path: Path) -> bytes:

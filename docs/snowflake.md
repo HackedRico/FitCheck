@@ -6,7 +6,7 @@ The Snowflake path keeps the closet in a Snowflake table, ranks closet search wi
 
 ### 1. Get an account
 
-Use the account the organizers hand out. Otherwise sign up for the 30-day trial at https://signup.snowflake.com. Pick AWS US West 2 (Oregon) if offered: `llama3.3-70b` runs there natively.
+Sign up for the 30-day trial at https://signup.snowflake.com. Pick AWS US West 2 (Oregon) if offered: `llama3.3-70b` runs there natively.
 
 On a self-service trial, AI features stay off until you add a credit card under Admin, Billing. Adding a card does not end the trial or start billing ([trial accounts](https://docs.snowflake.com/en/user-guide/admin-trial-account)). Note your account identifier (bottom left in Snowsight, account menu, "Copy account identifier", shaped like `ORGNAME-ACCOUNTNAME`).
 
@@ -31,7 +31,7 @@ ALTER USER <your_user> SET RSA_PUBLIC_KEY = '<output of the grep line>';
 
 ### 3. Run setup.sql
 
-Open a Snowsight SQL worksheet, paste all of `engine/sql/snowflake/setup.sql`, and run all (ctrl or cmd + shift + enter). It runs as ACCOUNTADMIN and creates role `FITCHECK`, warehouse `FITCHECK_WH`, database `FITCHECK`, table `GARMENTS`, the encrypted stage `FITCHECK_IMAGES` and the Cortex Search service `CLOSET_SEARCH`, then grants role `FITCHECK` to you. The last two statements are smoke checks; both must return a row. Running it again is safe.
+Open a Snowsight SQL worksheet, paste all of `engine/sql/snowflake/setup.sql`, and run all (ctrl or cmd + shift + enter). It runs as ACCOUNTADMIN and creates role `FITCHECK`, warehouse `FITCHECK_WH`, database `FITCHECK`, table `GARMENTS` and the Cortex Search service `CLOSET_SEARCH`, then grants role `FITCHECK` to you. The last two statements are smoke checks; both must return a row. Running it again is safe.
 
 ### 4. Set the env vars
 
@@ -47,7 +47,7 @@ FITCHECK_SNOWFLAKE_ROLE=FITCHECK
 FITCHECK_CORTEX_MODEL=llama3.3-70b
 ```
 
-A relative key path resolves from the folder the server starts in, which is `engine/` for `make` targets. Leave the warehouse, database, schema, stage and service names at their defaults unless you changed `setup.sql`. If the key file is encrypted, also set `FITCHECK_SNOWFLAKE_PRIVATE_KEY_PASSPHRASE`.
+A relative key path resolves from the folder the server starts in, which is `engine/` for `make` targets. Leave the warehouse, database, schema and service names at their defaults unless you changed `setup.sql`. If the key file is encrypted, also set `FITCHECK_SNOWFLAKE_PRIVATE_KEY_PASSPHRASE`.
 
 ### 5. Load the demo closet and start
 
@@ -61,17 +61,17 @@ cd .. && make api-snowflake
 
 `fitcheck closet` should list the seeded garments. Cortex Search picks them up within the one-minute target lag; until then search ranks by keyword overlap and logs a warning. `GET /health` should show `snowflake-store` and `cortex-stylist` with `runs_on: snowflake`.
 
-### 6. Insights for the demo screen
+### 6. Closet insights
 
-Run `engine/sql/snowflake/insights.sql` in a worksheet: cost per wear, most and least worn, garments per category, and an `AI_AGG` closet summary.
+Run `engine/sql/snowflake/insights.sql` in a worksheet: cost per wear, most and least worn, garments per category, and an `AI_AGG` closet summary. The web app does not show these yet.
 
-## How each challenge example maps to FitCheck
+## How the Best Use of Snowflake examples map to FitCheck
 
 | Challenge example | FitCheck feature | What delivers it |
 | --- | --- | --- |
 | RAG chatbot | The stylist chat: ask "what goes with this?" and get an answer grounded in your own closet | `SNOWFLAKE.CORTEX.SEARCH_PREVIEW` on `CLOSET_SEARCH`, filtered by `OWNER`, retrieves closet garments (`closet/snowflake.py`); `AI_COMPLETE` with `response_format` answers from those facts (`stylist/cortex.py`) |
 | AI features: generation, extraction | Stylist replies as structured JSON with garment ids to render | `AI_COMPLETE(model, prompt, model_parameters, response_format => {'type': 'json', ...})` |
-| AI features: summarization | Closet summary on the insights screen | `AI_AGG` over `GARMENTS` in `insights.sql` |
+| AI features: summarization | Closet summary in a worksheet | `AI_AGG` over `GARMENTS` in `insights.sql` |
 | Data application | Closet store and insights: cost per wear, most and least worn, category counts | `GARMENTS` table with tags as columns; queries in `insights.sql` |
 
 ## Design notes
@@ -95,7 +95,6 @@ cd engine && FITCHECK_LIVE=1 uv run --env-file ../env/snowflake.env pytest -q te
 ## Sources
 
 - AI_COMPLETE single string, structured output: https://docs.snowflake.com/en/sql-reference/functions/ai_complete-single-string and https://docs.snowflake.com/en/user-guide/snowflake-cortex/complete-structured-outputs
-- AI_COMPLETE with images (TO_FILE, SNOWFLAKE_SSE stage): https://docs.snowflake.com/en/sql-reference/functions/ai_complete-single-file and https://docs.snowflake.com/en/user-guide/snowflake-cortex/complete-multimodal
 - Models, regions, legacy status: https://docs.snowflake.com/en/user-guide/snowflake-cortex/aisql-regional-availability and https://docs.snowflake.com/en/release-notes/bcr-bundles/un-bundled/bcr-august-model-deprecations
 - Cross-region inference: https://docs.snowflake.com/en/user-guide/snowflake-cortex/cross-region-inference
 - Privileges: https://docs.snowflake.com/en/user-guide/snowflake-cortex/aisql-privileges-and-access

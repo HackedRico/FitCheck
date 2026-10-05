@@ -57,19 +57,19 @@ export function garmentName(tags: GarmentTags): string {
 }
 
 interface DecisionWording {
+  // The short label on the camera's last-verdict thumbnail
   word: string;
-  spoken: string;
   // The sentence-case answer the result page leads with
   hero: string;
 }
 
 const DECISION_WORDING: Record<Decision, DecisionWording> = {
-  buy: { word: "BUY", spoken: "Buy it", hero: "Buy it." },
-  skip: { word: "SKIP", spoken: "Skip it", hero: "Skip it." },
-  try_with: { word: "TRY-WITH", spoken: "Try it with", hero: "Try it first." },
+  buy: { word: "BUY", hero: "Buy it." },
+  skip: { word: "SKIP", hero: "Skip it." },
+  try_with: { word: "TRY-WITH", hero: "Try it first." },
 };
 
-/** The large-type word and a spoken phrase for a decision. */
+/** The thumbnail label and the result page's lead sentence for a decision. */
 export function decisionWording(decision: Decision): DecisionWording {
   return DECISION_WORDING[decision];
 }

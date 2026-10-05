@@ -1,14 +1,14 @@
 # Demo
 
-`closet.json` is Ricky's seed closet: 15 garments that `fitcheck.seed.load_seed` loads into the memory store at startup. Against the default weather and calendar fixtures it gives the stage script:
+`closet.json` is the seed closet for the demo owner, `ricky`: 15 garments. The default sqlite store loads them into `.fitcheck/closet.db` only when that database is empty, the memory store loads them on every start, and `fitcheck seed` loads them into Postgres or Snowflake. Against the default weather and calendar fixtures it gives the stage script:
 
 | Candidate | Verdict | Why |
 | --- | --- | --- |
 | Yellow raincoat, outerwear, waterproof, formality 2 | BUY | Rain on 3 of 7 days and Ricky owns no waterproof outerwear; pairs with 10 garments, black jeans included |
 | Navy crewneck, sweater, formality 2 | SKIP | Ricky owns 3 navy sweaters at formality 2 and 3 |
-| Bold floral shirt, multi, formality 3 | TRY_WITH | Statement piece; best pairing is her black straight-leg jeans |
+| Bold floral shirt, multi, formality 3 | TRY_WITH | Statement piece; best pairing is the black straight-leg jeans |
 
-Her black blazer, formality 4, and white oxford shirt, formality 3, keep the job interview from opening an event gap. `engine/tests/verdict/test_demo_closet.py` checks all of this, so run it after any edit here.
+The black blazer, formality 4, and white oxford shirt, formality 3, keep the job interview from opening an event gap. `engine/tests/verdict/test_demo_closet.py` checks all of this, so run it after any edit here.
 
 ## Adding real photos
 

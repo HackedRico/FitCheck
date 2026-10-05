@@ -1,71 +1,88 @@
-# FitCheck
+```
+ _____ _ _    ____ _               _
+|  ___(_) |_ / ___| |__   ___  ___| | __
+| |_  | | __| |   | '_ \ / _ \/ __| |/ /
+|  _| | | |_| |___| | | |  __/ (__|   <
+|_|   |_|\__|\____|_| |_|\___|\___|_|\_\
 
-A second opinion in the fitting-room line. Point your phone at a garment, see it on you, and get **BUY, SKIP or TRY-WITH** against your closet, this week's weather and your calendar.
+        a second opinion in the fitting-room line
+```
 
-Garment vision and chat run on open-weight models (Apache 2.0) through any OpenAI-compatible host, including your own server. Your body photo goes only to the try-on renderer and is never stored.
+[![License: Apache 2.0](https://img.shields.io/badge/license-Apache%202.0-blue.svg)](LICENSE)
+[![CI](https://github.com/HackedRico/FitCheck/actions/workflows/ci.yml/badge.svg)](https://github.com/HackedRico/FitCheck/actions/workflows/ci.yml)
+[![Hacktoberfest](https://img.shields.io/badge/Hacktoberfest-friendly-orange.svg)](CONTRIBUTING.md)
 
-## Prerequisites
+Point your phone at a garment, or paste a shop link. FitCheck reads it, checks it against what you already own, this week's weather and your calendar, and tells you straight: **BUY**, **SKIP** or **TRY-WITH**. Then it shows the garment on you.
 
-- [uv](https://docs.astral.sh/uv/) for the engine (`brew install uv` on macOS). It fetches Python 3.12 itself if you don't have it.
-- Node.js 20.19+ or 22.12+ with npm, for the web app.
-- `make`, which ships with macOS and Linux.
+## What it does
 
-The offline flow needs nothing else. The open path (`make api-open`) also needs Docker for Postgres (`make db-up`) and a running try-on worker (see `worker/README.md`). The Snowflake path needs a Snowflake account (see `docs/snowflake.md`).
+- **Scan or link a garment.** Camera, photo, or any product page. An open-weight vision model tags it.
+- **Get a verdict.** Plain rules weigh your closet, a 7-day forecast and your plans, so the answer is the same every time. A stylist chat explains it.
+- **See it on you.** Live on the camera, tracked to your body on the device, or as an AI try-on render.
+- **Keep a closet.** Add pieces one by one, by shop link, or scan a whole rack in one photo.
 
-## Run it
+```
+   snap   |   shop link   |   photo
+       \        |        /
+        v       v       v
+   [ tag the garment ]       open-weight vision model
+             |
+             v
+   [ decide ]                rules: closet + weather + calendar
+             |
+             v
+   BUY / SKIP / TRY-WITH  +  see it on you  +  ask the stylist
+```
+
+Your body photo stays on your phone. It only leaves for a try-on render, is never stored, and the app tells you where every step ran.
+
+## Quick start
+
+You need [uv](https://docs.astral.sh/uv/), Node.js 20.19 or newer, and `make`.
 
 ```bash
 make sync          # engine dependencies
 make web-install   # web app dependencies
-make dev           # engine on :8000 and web app on :5173 together; Ctrl+C stops both
+make dev           # engine on :8000, web app on https://localhost:5173
 ```
 
-Or run them in two terminals with `make api` and `make web`. Open https://localhost:5173 and accept the self-signed certificate once. On your phone, use the Network URL Vite prints, on the same Wi-Fi; the camera only works over https.
+It runs offline out of the box, with a demo closet and a demo week. Your phone can join on the same Wi-Fi through the network URL Vite prints.
 
-With nothing configured the whole flow runs offline. Closets, and the photos and shop links people add, are saved in `.fitcheck/` (a SQLite file plus the garment images), so they survive restarts; delete that folder to start from the demo closet again. To use real models, copy `engine/.env.example` to `engine/.env` and set the keys, then start the engine with `make api-open` or `make api-snowflake`. Keys alone don't switch anything: those targets load `env/open.env` or `env/snowflake.env`, which move every slot off the fakes at once.
-
-## How it decides
-
-Plain rules decide the verdict, so the demo repeats exactly; the stylist model explains it. A candidate that fills a gap in your week, such as rain with no rain shell, is a BUY. Two near duplicates in your closet is a SKIP. Details in `docs/verdict-rules.md`.
-
-## Two tracks, one repo
-
-- **Open source:** open-weight models only, Postgres, a public repo under Apache 2.0, and the `fit-check` agent skill in `skills/`.
-- **Snowflake:** the closet lives in Snowflake, Cortex Search retrieves closet garments and Cortex AI_COMPLETE answers as the stylist, a RAG chatbot over your own data. See `docs/snowflake.md`.
-
-## One demo, two moments
-
-FitCheck covers both moments a person decides what to wear.
-
-| Moment | Surface | Port |
-|---|---|---|
-| Morning: "what do I wear today?" | Next.js app at the repo root. Closet, taste profile, live weather, calendar, daily outfit, gap fillers, try-on. | 3000 |
-| In store: "should I buy this?" | PWA in `web/` on the engine in `engine/`. Scan, verdict, stylist chat, live try-on. | 5173 |
-
-Both use the same engine for the weather week, try-on renders and shop links. The morning app's **In Store** link opens the PWA.
-
-```bash
-make demo-install     # once
-make demo             # engine :8000, PWA :5173, morning app :3000
-make demo-snowflake   # same, engine on Snowflake Cortex
-```
-
-Demo script: register in the morning app, upload three garments, open the dashboard for today's fit and the gap fillers, press Try It On, then click In Store and scan one of the gap fillers for a BUY verdict.
+For real models, copy `engine/.env.example` to `engine/.env`, set `FITCHECK_TAGGER` and `FITCHECK_STYLIST` to `openai_compat`, and add a key for any OpenAI-compatible host such as [Featherless](https://featherless.ai), or point them at your own Ollama or vLLM server. For AI try-on renders, set `FITCHECK_TRYON=hf_space` and add a free [Hugging Face](https://huggingface.co/settings/tokens) token as `HF_TOKEN`.
 
 ## Morning outfit app (Next.js, Snowflake Cortex)
 
-A second surface in this repo, at the repo root: upload your closet, set a taste profile, and get a daily outfit from live weather plus shopping suggestions for the gaps. Every AI call is Snowflake Cortex SQL (`pixtral-large` for garment vision, `llama3.1-70b` for the outfit and shopping, `EMBED_TEXT_768` for search). It can also call the engine above for try-on renders.
+A second surface in this repo, at the repo root, for the other moment you decide what to wear: the morning. Upload your closet, set a taste profile, and get a daily outfit from live weather and your calendar, plus shopping suggestions for the gaps and a try-on fitted to your body in the browser. Every AI call is Snowflake Cortex SQL: `pixtral-large` tags garments, `llama3.1-70b` builds the outfit and the shopping list, `EMBED_TEXT_768` powers closet search. It talks to the same engine for the weather week, garment cutouts and shop links, and its **In Store** link opens the web app above.
 
 ```bash
-npm install
-cp .env.local.example .env.local   # or see CLAUDE.md for the variables
-node scripts/setup-schema.mjs      # creates the Snowflake tables + stage, safe to re-run
-npm run dev                        # http://localhost:3000
-make api                           # optional: engine on :8000 for the Try It On card
+make demo-install     # engine, web app and morning app dependencies
+cp .env.local.example .env.local && node scripts/setup-schema.mjs
+make demo             # engine :8000, web app :5173, morning app :3000
 ```
 
-Details in `CLAUDE.md`.
+Details in [`CLAUDE.md`](CLAUDE.md).
 
-## For the team
+## Repo map
 
-Start with `AGENTS.md`, then `CONTEXT.md` for the vocabulary. Run `make check` before every PR. Models and licenses are in `THIRD_PARTY_LICENSES.md`.
+| Path | What's there |
+| --- | --- |
+| `engine/` | Python engine and API: verdict rules, adapters, CLI |
+| `web/` | Mobile-first web app (Vite, React, TypeScript) |
+| `app/`, `lib/`, `components/` | Morning outfit app (Next.js, Snowflake Cortex) at the repo root |
+| `worker/` | Optional GPU try-on worker for Colab, Kaggle or Modal |
+| `skills/fit-check/` | Agent skill that drives FitCheck from a shell |
+| `docs/` | Guides and decision records |
+
+New here? Read [`AGENTS.md`](AGENTS.md) for how the code fits together and [`CONTEXT.md`](CONTEXT.md) for the vocabulary.
+
+## Built at Hacktoberfest
+
+FitCheck was built for a Hacktoberfest mini hackathon run by [Technica](https://gotechnica.org), [Bitcamp](https://bit.camp) and [Hack4Impact UMD](https://umd.hack4impact.org), where it won the **open source track**. Thanks to the organizers, and to everyone in the [contributors list](https://github.com/HackedRico/FitCheck/graphs/contributors).
+
+## Contributing
+
+Issues and pull requests are welcome, Hacktoberfest or not. Start with [`CONTRIBUTING.md`](CONTRIBUTING.md).
+
+## License
+
+[Apache 2.0](LICENSE). Models, data and photos FitCheck uses keep their own licenses; see [`THIRD_PARTY_LICENSES.md`](THIRD_PARTY_LICENSES.md).

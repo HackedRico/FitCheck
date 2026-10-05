@@ -5,7 +5,7 @@ import logging
 from collections.abc import Iterator, Mapping, Sequence
 from datetime import UTC, datetime
 from decimal import Decimal
-from typing import IO, Any
+from typing import Any
 
 import pytest
 from support.closet_contract import ClosetStoreContract, Owners, make_garment, unique_owners
@@ -49,13 +49,7 @@ class FakeCursor:
         self._rows: list[tuple[Any, ...]] = []
         self.rowcount: int | None = None
 
-    def execute(
-        self,
-        command: str,
-        params: Mapping[str, Any] | None = None,
-        *,
-        file_stream: IO[bytes] | None = None,
-    ) -> object:
+    def execute(self, command: str, params: Mapping[str, Any] | None = None) -> object:
         self._conn.calls.append((command, dict(params or {})))
         for needle, reply in self._conn.replies.items():
             if needle in command:
@@ -121,7 +115,7 @@ def _row(garment_id: str, owner: str = "maya", **fields: Any) -> tuple[Any, ...]
     return (
         g.owner, g.id, g.source.value, t.category.value, t.color_family.value,
         t.pattern.value, t.warmth, t.waterproof, t.formality, t.description,
-        g.price, g.wears, g.image_ref, g.created_at,
+        g.price, g.wears, g.image_ref, g.source_url, g.created_at,
     )  # fmt: skip
 
 

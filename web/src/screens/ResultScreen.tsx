@@ -12,13 +12,14 @@ import { useObjectUrl } from "../lib/objectUrl";
 import { formatMs, useElapsed } from "../lib/time";
 import { useApp } from "../state/app";
 import type { Step } from "../state/candidate";
+import { candidateWearable } from "../state/outfit";
 import { photoLeftOurHardware } from "../state/pipelines";
 
 // =============================================================================
 // Module Overview
 // =============================================================================
 // One scan, told top to bottom: the snapped garment, a checklist while the
-// engine works, then the verdict as a giant tag, the garment on the owner, why,
+// engine works, then the verdict in large type, the garment on the owner, why,
 // what it goes with and the week. A dock pinned to the bottom keeps the stylist,
 // "scan another" and "try it live" under the thumb the whole way down.
 
@@ -33,7 +34,7 @@ const REASON_LABEL: Record<Reason["code"], string> = {
 
 /** The story of the current scan. */
 export function ResultScreen(): ReactNode {
-  const { flow, navigate, settings } = useApp();
+  const { flow, outfit, navigate, settings } = useApp();
   const onYouRef = useRef<HTMLElement | null>(null);
   const frameUrl = useObjectUrl(flow.frame);
 
@@ -56,6 +57,12 @@ export function ResultScreen(): ReactNode {
   const scanAnother = (): void => {
     flow.reset();
     navigate("home");
+  };
+
+  const tryLive = (): void => {
+    const candidate = flow.scan.status === "done" ? candidateWearable(flow.scan.value) : null;
+    if (candidate) outfit.wear(candidate);
+    navigate("live");
   };
 
   return (
@@ -116,7 +123,7 @@ export function ResultScreen(): ReactNode {
             type="button"
             className="fc-btn is-primary"
             disabled={flow.scan.status !== "done"}
-            onClick={() => navigate("live")}
+            onClick={tryLive}
           >
             <Icon name="live" /> Try it live
           </button>
@@ -244,7 +251,7 @@ function OnYou(): ReactNode {
         {render.value.cached && <p className="fc-note">Cached render, not live.</p>}
         {render.value.preview && render.value.origin !== "live" && (
           <div className="fc-onyou-more">
-            <p className="fc-muted">Quick preview made on this phone. The AI renderer is busy right now.</p>
+            <p className="fc-muted">Quick preview made on this phone, not an AI render.</p>
             <button
               type="button"
               className="fc-btn is-ghost"

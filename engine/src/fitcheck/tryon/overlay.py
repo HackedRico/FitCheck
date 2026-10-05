@@ -54,7 +54,8 @@ class OverlayRenderer:
 
         buffer = io.BytesIO()
         person.convert("RGB").save(buffer, format="PNG")
-        return TryOnResult(image_png=buffer.getvalue())
+        # A pasted photo is never a real try-on, so let the app swap in its on-device preview
+        return TryOnResult(image_png=buffer.getvalue(), fallback=True)
 
 
 def build(settings: Settings) -> OverlayRenderer:
@@ -72,6 +73,9 @@ def _open(data: bytes, field: str) -> Image.Image:
     try:
         image = Image.open(io.BytesIO(data))
         image.load()
+    # Not an `OSError`, so it would otherwise leave the API as an unhandled 500
+    except Image.DecompressionBombError as exc:
+        raise InvalidInput(f"{field} is too large to decode.") from exc
     except (UnidentifiedImageError, OSError) as exc:
         raise InvalidInput(f"{field} is not a readable image.") from exc
     return ImageOps.exif_transpose(image)

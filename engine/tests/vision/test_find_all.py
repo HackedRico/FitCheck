@@ -126,6 +126,24 @@ def test_scan_closet_adds_each_found_garment_with_its_own_crop(tmp_path: Path) -
     assert result.pipeline[0].step == "find_garments"
 
 
+def test_scan_closet_crops_a_phone_photo_the_way_the_tagger_saw_it(tmp_path: Path) -> None:
+    store = MemoryClosetStore()
+    # Stored 200x100 with EXIF "rotate 90", so it is 100x200 upright, as the tagger sees it
+    exif = Image.Exif()
+    exif[0x0112] = 6
+    photo = io.BytesIO()
+    Image.new("RGB", (200, 100), "white").save(photo, format="JPEG", exif=exif.tobytes())
+
+    result = _engine(tmp_path, store).scan_closet("ricky", photo.getvalue())
+
+    for garment in result.garments:
+        assert garment.image_ref is not None
+        with Image.open(tmp_path / "garments" / garment.image_ref) as crop:
+            # Half the upright width plus margin, and the full upright height
+            assert crop.size[0] < 60
+            assert crop.size[1] == 200
+
+
 class _ScriptedClient:
     """A chat client that returns canned answers in order and records each request."""
 

@@ -5,7 +5,7 @@ import re
 from collections.abc import Callable, Iterator, Mapping, Sequence
 from contextlib import contextmanager
 from threading import Lock
-from typing import IO, Any, Protocol, cast
+from typing import Any, Protocol, cast
 
 from fitcheck.errors import AdapterUnavailable
 from fitcheck.settings import Settings
@@ -49,14 +49,8 @@ class Cursor(Protocol):
         """Rows the last DML statement changed, or `None` when unknown."""
         ...
 
-    def execute(
-        self,
-        command: str,
-        params: Mapping[str, Any] | None = None,
-        *,
-        file_stream: IO[bytes] | None = None,
-    ) -> object:
-        """Run one statement; `file_stream` feeds a `PUT` from memory."""
+    def execute(self, command: str, params: Mapping[str, Any] | None = None) -> object:
+        """Run one statement with pyformat `params`."""
         ...
 
     def fetchone(self) -> Sequence[Any] | None:

@@ -1,26 +1,39 @@
-import { useEffect, useRef, useState, type ReactNode } from "react";
+import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 
+import { api, errorMessage, type Garment } from "../api/client";
+import { AddGarmentSheet } from "../components/AddGarmentSheet";
 import { Icon } from "../components/Icons";
+import { OutfitSnap, type Snapshot } from "../components/OutfitSnap";
+import { OutfitTray } from "../components/OutfitTray";
 import { captureFrame, useCamera, type Facing } from "../lib/camera";
 import { placeGarment, smoothPlacement, type Landmark, type Placement } from "../lib/fit";
 import { drawOnJoints, type JointPair } from "../lib/composite";
-import { extractGarment, type GarmentSprite, type Point } from "../lib/garmentSprite";
+import type { GarmentSprite, Point } from "../lib/garmentSprite";
+import { createOccluder, type Occluder } from "../lib/occlusion";
 import { loadPoseLandmarker } from "../lib/pose";
+import { canGoBackInApp } from "../lib/route";
 import { useApp } from "../state/app";
+import { byLayer, candidateWearable, closetWearable, wearablesFromPhoto, type Wearable } from "../state/outfit";
 
 // =============================================================================
 // Module Overview
 // =============================================================================
-// The live preview (ADR 0004): the camera feed with the candidate drawn on the
-// owner's body, in the browser, every frame. When the garment photo showed it
-// worn, `extractGarment` kept the wearer's shoulders (or hips), and those map
-// onto the owner's joints so the garment sits the way it was worn; otherwise
-// the cutout is fitted by `placeGarment`. Snap keeps that frame as the owner's
-// "on you" image, no server needed.
+// The live preview (ADR 0004): the camera feed with the outfit drawn on the
+// owner's body, in the browser, every frame. The tray along the bottom holds the
+// candidate, the closet and anything brought in by link or photo; a top and a
+// bottom can be worn together, bottoms drawn first. When a garment photo showed
+// it worn, `extractGarment` kept the wearer's shoulders (or hips), and those map
+// onto the owner's joints so the garment sits the way it was worn; otherwise the
+// cutout's outline gives where the joints would sit. The owner's hair, face,
+// neck and hands are drawn back over the garments (`createOccluder`). Snapping
+// the candidate alone keeps that frame as its render; any other outfit opens in
+// `OutfitSnap`.
 
 // Higher follows faster, lower holds steadier against landmark jitter
 const SMOOTHING = 0.45;
 const MIN_VISIBILITY = 0.5;
+// The hair and skin mask costs about twice the pose, so it refreshes at most 15 times a second
+const OCCLUSION_INTERVAL_MS = 66;
 
 // MediaPipe Pose landmark indices
 const LEFT_SHOULDER = 11;
@@ -30,29 +43,103 @@ const RIGHT_HIP = 24;
 
 type PoseStatus = "loading" | "ready" | "failed";
 
-/** The candidate on the owner, live. */
+/** One worn garment's sprite and where it sat last frame. */
+interface Layer {
+  key: string;
+  item: Wearable;
+  sprite: GarmentSprite;
+  placement: Placement | null;
+  joints: JointPair | null;
+}
+
+/** The outfit on the owner, live. */
 export function LiveScreen(): ReactNode {
-  const { flow, navigate } = useApp();
+  const { flow, outfit, settings, pipelines, navigate } = useApp();
   const [facing, setFacing] = useState<Facing>("user");
-  const camera = useCamera(facing, flow.scan.status === "done");
+  const camera = useCamera(facing, true);
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
+  const layersRef = useRef<Layer[]>([]);
   const [poseStatus, setPoseStatus] = useState<PoseStatus>("loading");
   const [tracking, setTracking] = useState(false);
   const [fps, setFps] = useState(0);
+  const [dressing, setDressing] = useState(false);
+  const [notice, setNotice] = useState<string | null>(null);
+  const [closet, setCloset] = useState<Garment[]>([]);
+  const [sheetOpen, setSheetOpen] = useState(false);
+  const [adding, setAdding] = useState(false);
+  const [snapshot, setSnapshot] = useState<Snapshot | null>(null);
 
-  const candidate = flow.scan.status === "done" ? flow.scan.value : null;
+  const candidate = flow.scan.status === "done" ? candidateWearable(flow.scan.value) : null;
+  const owner = settings.owner;
 
   useEffect(() => {
-    if (candidate === null || candidate.region === null || camera.status !== "live") return undefined;
-    const region = candidate.region;
+    let cancelled = false;
+    api
+      .closet(owner)
+      .then((garments) => {
+        if (!cancelled) setCloset(garments);
+      })
+      .catch((error: unknown) => console.warn("[live] Closet did not load.", error));
+    return () => {
+      cancelled = true;
+    };
+  }, [owner]);
+
+  const items = useMemo(() => {
+    const fromCloset = closet.map((garment) => closetWearable(owner, garment));
+    // Worn ones go last so a tile stays put when tapped; they only show there once off the list
+    const all = [candidate, ...outfit.added, ...fromCloset, ...outfit.worn].filter((item): item is Wearable => item !== null);
+    return all.filter((item, index) => all.findIndex((other) => other.key === item.key) === index);
+  }, [candidate, outfit.added, outfit.worn, closet, owner]);
+
+  // Cut out each worn garment, keeping where the last frame drew the ones still on
+  useEffect(() => {
+    let cancelled = false;
+    const worn = byLayer(outfit.worn);
+    setDressing(worn.length > 0);
+    void Promise.allSettled(worn.map((item) => item.sprite())).then((results) => {
+      if (cancelled) return;
+      const previous = new Map(layersRef.current.map((layer) => [layer.key, layer]));
+      const layers: Layer[] = [];
+      const failed: string[] = [];
+      results.forEach((result, index) => {
+        const item = worn[index];
+        if (!item) return;
+        if (result.status === "rejected") {
+          console.warn("[live] Garment did not load.", result.reason);
+          failed.push(item.label);
+          return;
+        }
+        const last = previous.get(item.key);
+        layers.push({ key: item.key, item, sprite: result.value, placement: last?.placement ?? null, joints: last?.joints ?? null });
+      });
+      layersRef.current = layers;
+      setDressing(false);
+      setNotice(failed.length > 0 ? `The ${failed.join(" and the ")} did not load. Take it off and pick it again.` : null);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [outfit.worn]);
+
+  useEffect(() => {
+    if (camera.status !== "live") return undefined;
     let stopped = false;
     let frameHandle = 0;
 
+    let occluder: Occluder | null = null;
+    // Without it the garments still draw, only over the face and hands
+    createOccluder()
+      .then((ready) => {
+        if (stopped) ready.close();
+        else occluder = ready;
+      })
+      .catch((error: unknown) => console.warn("[live] Occlusion segmenter failed to load.", error));
+
     void (async () => {
       let landmarker;
-      let sprite: GarmentSprite;
       try {
-        [landmarker, sprite] = await Promise.all([loadPoseLandmarker(), extractGarment(candidate.cutout, region)]);
+        landmarker = await loadPoseLandmarker();
       } catch (error) {
         console.warn("[live] Pose model failed to load.", error);
         if (!stopped) setPoseStatus("failed");
@@ -60,14 +147,11 @@ export function LiveScreen(): ReactNode {
       }
       if (stopped) return;
       setPoseStatus("ready");
-      const garment = sprite.canvas;
-      const lower = region === "lower";
-      let placement: Placement | null = null;
-      let joints: JointPair | null = null;
       let lastVideoTime = -1;
       let frames = 0;
       let fpsSince = performance.now();
       let lastSeen = false;
+      let lastOcclusion = 0;
 
       const draw = (): void => {
         if (stopped) return;
@@ -78,17 +162,18 @@ export function LiveScreen(): ReactNode {
           if (canvas.width !== video.videoWidth) canvas.width = video.videoWidth;
           if (canvas.height !== video.videoHeight) canvas.height = video.videoHeight;
           const frame = { width: canvas.width, height: canvas.height };
+          const layers = layersRef.current;
           if (video.currentTime !== lastVideoTime) {
             lastVideoTime = video.currentTime;
             const pose = landmarker.detectForVideo(video, performance.now()).landmarks[0];
-            if (sprite.anchors) {
-              const next = pose ? jointPair(pose, lower, frame) : null;
-              joints = next ? smoothJoints(joints, next) : null;
-            } else {
-              const next = pose ? placeGarment(pose, region, frame, garment.width / garment.height) : null;
-              placement = next ? smoothPlacement(placement, next, SMOOTHING) : null;
+            for (const layer of layers) fitLayer(layer, pose, frame);
+            // A face moves little between frames, so the mask can lag the pose and save the time
+            const now = performance.now();
+            if (occluder && layers.length > 0 && now - lastOcclusion >= OCCLUSION_INTERVAL_MS) {
+              lastOcclusion = now;
+              occluder.update(video, now, pose);
             }
-            const seen = joints !== null || placement !== null;
+            const seen = pose !== undefined && (layers.length === 0 || layers.some((l) => l.joints ?? l.placement));
             if (seen !== lastSeen) {
               lastSeen = seen;
               setTracking(seen);
@@ -96,15 +181,8 @@ export function LiveScreen(): ReactNode {
             frames += 1;
           }
           context.drawImage(video, 0, 0, canvas.width, canvas.height);
-          if (sprite.anchors && joints) {
-            drawOnJoints(context, garment, sprite.anchors, joints);
-          } else if (placement) {
-            context.save();
-            context.translate(placement.topX, placement.topY);
-            context.rotate(placement.angle);
-            context.drawImage(garment, -placement.width / 2, 0, placement.width, placement.height);
-            context.restore();
-          }
+          for (const layer of layers) drawLayer(context, layer);
+          if (occluder && layers.length > 0) occluder.draw(context, video);
           const now = performance.now();
           if (now - fpsSince > 1000) {
             setFps(Math.round((frames * 1000) / (now - fpsSince)));
@@ -120,42 +198,72 @@ export function LiveScreen(): ReactNode {
     return () => {
       stopped = true;
       cancelAnimationFrame(frameHandle);
+      occluder?.close();
     };
-  }, [candidate, camera.status, camera.videoRef]);
+  }, [camera.status, camera.videoRef]);
 
-  if (candidate === null) {
-    return (
-      <div className="fc-page fc-empty">
-        <p className="fc-kicker">Live preview</p>
-        <h1 className="display">Scan a garment first</h1>
-        <p className="fc-muted">The live preview pins the garment to you on the camera, on this phone, in real time.</p>
-        <button type="button" className="fc-btn is-primary" onClick={() => navigate("home")}>
-          <Icon name="camera" /> Scan a garment
-        </button>
-      </div>
-    );
-  }
+  const addPhoto = async (image: Blob): Promise<void> => {
+    setSheetOpen(false);
+    setAdding(true);
+    setNotice(null);
+    try {
+      outfit.add(await wearablesFromPhoto(image, pipelines.record));
+    } catch (cause) {
+      setNotice(errorMessage(cause));
+    } finally {
+      setAdding(false);
+    }
+  };
 
   const snap = async (): Promise<void> => {
     const video = camera.videoRef.current;
     const canvas = canvasRef.current;
     if (!video || !canvas) return;
-    const person = await captureFrame(video);
-    const composite = await new Promise<Blob | null>((resolve) => canvas.toBlob(resolve, "image/png"));
-    if (composite) flow.keepRender(composite, person);
-    navigate("result");
+    let person: Blob;
+    try {
+      person = await captureFrame(video);
+    } catch (cause) {
+      setNotice(errorMessage(cause));
+      return;
+    }
+    const image = await new Promise<Blob | null>((resolve) => canvas.toBlob(resolve, "image/png"));
+    if (!image) {
+      setNotice("This browser could not save the frame. Try the snap again.");
+      return;
+    }
+    const worn = outfit.worn;
+    // The candidate alone is the verdict's own try-on, so the snap becomes its render
+    if (candidate !== null && worn.length === 1 && worn[0]?.key === candidate.key) {
+      flow.keepRender(image, person);
+      navigate("result");
+      return;
+    }
+    setSnapshot({ person, image, worn });
+  };
+
+  const back = (): void => {
+    // Live is reached from the verdict, the closet or the camera; go back to whichever it was
+    // Opened straight on #/live, there is no FitCheck screen behind it to go back to
+    if (canGoBackInApp()) window.history.back();
+    else navigate("home");
   };
 
   const hint =
-    candidate.region === null
-      ? "The live preview covers tops, bottoms and dresses."
-      : poseStatus === "loading"
-        ? "Loading the pose model"
-        : poseStatus === "failed"
-          ? "The pose model could not load. Check the connection and come back."
-          : tracking
-            ? null
-            : "Step back until your shoulders and hips are in view";
+    camera.error ??
+    notice ??
+    (poseStatus === "loading"
+      ? "Loading the pose model"
+      : poseStatus === "failed"
+        ? "The pose model could not load. Check the connection and come back."
+        : items.length === 0
+          ? "Tap + to bring in a garment by shop link or photo"
+          : outfit.worn.length === 0
+            ? "Pick something below to put it on"
+            : dressing
+              ? "Getting the garment ready"
+              : tracking
+                ? null
+                : "Step back until your shoulders and hips are in view");
 
   return (
     <section className="fc-cam is-dark fc-live">
@@ -164,7 +272,7 @@ export function LiveScreen(): ReactNode {
       <div className="fc-cam-shade" aria-hidden="true" />
 
       <header className="fc-topbar">
-        <button type="button" className="fc-round fc-back" onClick={() => navigate("result")} aria-label="Back to the verdict">
+        <button type="button" className="fc-round fc-back" onClick={back} aria-label="Back">
           <Icon name="arrow" />
         </button>
         <p className="fc-live-badge">
@@ -180,24 +288,73 @@ export function LiveScreen(): ReactNode {
         </button>
       </header>
 
-      {(hint ?? camera.error) && <p className="fc-cam-hint">{camera.error ?? hint}</p>}
+      {hint && <p className="fc-cam-hint">{hint}</p>}
+
+      <OutfitTray
+        items={items}
+        worn={outfit.worn}
+        onToggle={outfit.toggle}
+        onAdd={() => setSheetOpen(true)}
+        adding={adding}
+      />
 
       <footer className="fc-shutterbar">
         <span className="fc-round is-ghost" aria-hidden="true" />
         <button
           type="button"
           className="fc-shutter is-render"
-          disabled={camera.status !== "live" || candidate.region === null}
+          disabled={camera.status !== "live" || outfit.worn.length === 0}
           onClick={() => void snap()}
-          aria-label="Snap and render"
+          aria-label="Snap the outfit"
         >
           <span />
         </button>
         <span className="fc-round is-ghost" aria-hidden="true" />
       </footer>
       <p className="fc-live-note">Snap for the full render, with drape and fit.</p>
+
+      <AddGarmentSheet
+        open={sheetOpen}
+        onClose={() => setSheetOpen(false)}
+        onGarment={(image) => void addPhoto(image)}
+        title="Try something on"
+        linkLabel="Found it online? Paste the link to the garment or outfit"
+        busy={adding}
+      />
+      {snapshot && <OutfitSnap snapshot={snapshot} onClose={() => setSnapshot(null)} />}
     </section>
   );
+}
+
+// -----------------------------------------------------------------
+// Fitting and drawing one worn garment
+// -----------------------------------------------------------------
+
+/** Move `layer` to where the owner's body is this frame, or clear it when out of view. */
+function fitLayer(layer: Layer, pose: readonly Landmark[] | undefined, frame: { width: number; height: number }): void {
+  const region = layer.item.region;
+  const { sprite } = layer;
+  if (sprite.anchors) {
+    const next = pose ? jointPair(pose, region === "lower", frame) : null;
+    layer.joints = next ? smoothJoints(layer.joints, next) : null;
+  } else {
+    const next = pose ? placeGarment(pose, region, frame, sprite.canvas.width / sprite.canvas.height) : null;
+    layer.placement = next ? smoothPlacement(layer.placement, next, SMOOTHING) : null;
+  }
+}
+
+function drawLayer(context: CanvasRenderingContext2D, layer: Layer): void {
+  const garment = layer.sprite.canvas;
+  if (layer.sprite.anchors && layer.joints) {
+    drawOnJoints(context, garment, layer.sprite.anchors, layer.joints);
+  } else if (layer.placement) {
+    const placement = layer.placement;
+    context.save();
+    context.translate(placement.topX, placement.topY);
+    context.rotate(placement.angle);
+    context.drawImage(garment, -placement.width / 2, 0, placement.width, placement.height);
+    context.restore();
+  }
 }
 
 // -----------------------------------------------------------------

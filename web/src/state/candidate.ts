@@ -222,7 +222,7 @@ export function useCandidateFlow(deps: FlowDeps): Flow {
 
       const person = depsRef.current.personPhoto;
       if (person === null) {
-        setStep("render", { status: "skipped", reason: "Add your photo in Me to see a render." }, isCurrent);
+        setStep("render", { status: "skipped", reason: "Add your photo on the You screen to see a render." }, isCurrent);
         return;
       }
       await runRender(id, candidate, person, "photo");

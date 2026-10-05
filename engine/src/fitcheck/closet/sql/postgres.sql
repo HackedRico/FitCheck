@@ -17,6 +17,7 @@ CREATE TABLE IF NOT EXISTS garments (
     price         numeric,
     wears         integer     NOT NULL DEFAULT 0 CHECK (wears >= 0),
     image_ref     text,
+    source_url    text,
     created_at    timestamptz NOT NULL,
     -- Kept in step with the tag columns by Postgres; the search query must use the same text
     search        tsvector    GENERATED ALWAYS AS (
@@ -25,6 +26,9 @@ CREATE TABLE IF NOT EXISTS garments (
     -- Keyed per owner, so one owner's id can never overwrite another owner's garment
     PRIMARY KEY (owner, id)
 );
+
+-- Tables made before shop links were stored lack this column; a no-op once it exists
+ALTER TABLE garments ADD COLUMN IF NOT EXISTS source_url text;
 
 CREATE INDEX IF NOT EXISTS garments_owner_created_idx ON garments (owner, created_at, id);
 

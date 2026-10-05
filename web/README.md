@@ -19,7 +19,7 @@ The camera needs a secure origin, so the dev server serves HTTPS on every interf
 - Same wifi: open the `Network:` https address `make web` prints and accept the certificate warning.
 - Any network: run `FITCHECK_HTTP=1 npm run dev`, then `cloudflared tunnel --url http://localhost:5173` and open the `trycloudflare.com` address. The tunnel adds real HTTPS.
 
-The live preview loads the pose model from Google's model bucket. For an offline stage, download `pose_landmarker_lite.task` into `public/models/` and set `VITE_POSE_MODEL_URL=/models/pose_landmarker_lite.task`.
+The live preview loads its models from Google's model bucket: the pose model, a segmenter that cuts garments out of their photos, and one that keeps your face, hair and hands in front of them. For an offline stage, download `pose_landmarker_lite.task` into `public/models/` and set `VITE_POSE_MODEL_URL=/models/pose_landmarker_lite.task`.
 
 ## Regenerate API types
 

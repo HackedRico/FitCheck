@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState, type ChangeEvent, type FormEvent, type ReactNode } from "react";
 
 import { api, errorMessage, pngFromBase64 } from "../api/client";
-import { shrinkImage } from "../lib/camera";
+import { pickedPhoto } from "../lib/camera";
 import { useApp } from "../state/app";
 import { CameraCapture } from "./CameraCapture";
 import { Icon } from "./Icons";
@@ -32,7 +32,7 @@ export function AddGarmentSheet({
   onClose,
   onGarment,
   title = "Judge a garment",
-  linkLabel = "Shopping online? Paste the product link",
+  linkLabel = "Shopping online? Paste the shop link",
   busy: callerBusy = false,
   camera = true,
 }: AddGarmentSheetProps): ReactNode {
@@ -53,9 +53,8 @@ export function AddGarmentSheet({
   }, [open]);
 
   const pick = async (event: ChangeEvent<HTMLInputElement>): Promise<void> => {
-    const file = event.target.files?.[0];
-    event.target.value = "";
-    if (file) onGarment(await shrinkImage(file));
+    const photo = await pickedPhoto(event.target);
+    if (photo) onGarment(photo);
   };
 
   const fetchLink = async (event: FormEvent): Promise<void> => {

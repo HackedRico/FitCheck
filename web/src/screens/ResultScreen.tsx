@@ -245,31 +245,23 @@ function OnYou(): ReactNode {
   const renderUrl = useObjectUrl(render.status === "done" ? render.value.image : null);
 
   if (render.status === "done" && personUrl && renderUrl) {
+    const { value } = render;
+    // Anything made on this phone offers the AI render it stands in for
+    const onDevice =
+      value.origin === "live"
+        ? { note: "Snapped from the live preview, on this phone.", action: "Make an AI render" }
+        : value.preview
+          ? { note: "Quick preview made on this phone, not an AI render.", action: "Try the AI render again" }
+          : null;
     return (
       <div className="fc-onyou">
         <BeforeAfter before={personUrl} after={renderUrl} beforeLabel="You" afterLabel="With it" />
-        {render.value.cached && <p className="fc-note">Cached render, not live.</p>}
-        {render.value.preview && render.value.origin !== "live" && (
+        {value.cached && <p className="fc-note">Cached render, not live.</p>}
+        {onDevice && (
           <div className="fc-onyou-more">
-            <p className="fc-muted">Quick preview made on this phone, not an AI render.</p>
-            <button
-              type="button"
-              className="fc-btn is-ghost"
-              onClick={() => flow.requestRender(render.value.person, "photo")}
-            >
-              Try the AI render again
-            </button>
-          </div>
-        )}
-        {render.value.origin === "live" && (
-          <div className="fc-onyou-more">
-            <p className="fc-muted">Snapped from the live preview, on this phone.</p>
-            <button
-              type="button"
-              className="fc-btn is-ghost"
-              onClick={() => flow.requestRender(render.value.person, "photo")}
-            >
-              Make an AI render
+            <p className="fc-muted">{onDevice.note}</p>
+            <button type="button" className="fc-btn is-ghost" onClick={() => flow.requestRender(value.person, "photo")}>
+              {onDevice.action}
             </button>
           </div>
         )}

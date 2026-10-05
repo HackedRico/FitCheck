@@ -12,7 +12,7 @@ import {
   type WeekContext,
 } from "../api/client";
 import { compositeOnPerson } from "../lib/composite";
-import { framePerson } from "../lib/framePerson";
+import { framedForRender } from "../lib/framePerson";
 import { regionFor } from "../lib/garments";
 import type { PipelineKind } from "./pipelines";
 
@@ -153,27 +153,23 @@ export function useCandidateFlow(deps: FlowDeps): Flow {
       await runStep(
         "render",
         async () => {
-          // Try-on models need one person filling a portrait; a wide room shot makes them erase you
-          const framed = await framePerson(person).catch((error: unknown) => {
-            console.warn("[flow] Could not frame the person photo; sending it as is.", error);
-            return { image: person, found: true, fill: 1, people: 1 };
-          });
-          if (!framed.found) {
+          const framed = await framedForRender(person);
+          if (framed === null) {
             throw new Error("No one is visible in your photo. Retake it on the You screen, head to knees.");
           }
-          const out = await api.render(framed.image, candidate.cutout, region);
+          const out = await api.render(framed, candidate.cutout, region);
           depsRef.current.record("render", out.pipeline);
           if (out.fallback) {
             // The engine's stand-in pastes the raw photo; the device can map the clothes onto you
-            const local = await compositeOnPerson(framed.image, candidate.cutout, region).catch((error: unknown) => {
+            const local = await compositeOnPerson(framed, candidate.cutout, region).catch((error: unknown) => {
               console.warn("[flow] On-device preview failed; showing the engine's stand-in.", error);
               return null;
             });
-            if (local) return { image: local, person: framed.image, cached: false, origin, preview: true };
+            if (local) return { image: local, person: framed, cached: false, origin, preview: true };
           }
           return {
             image: pngFromBase64(out.image_png_base64),
-            person: framed.image,
+            person: framed,
             cached: out.cached,
             origin,
             preview: out.fallback,

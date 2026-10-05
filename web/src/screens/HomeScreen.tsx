@@ -1,5 +1,6 @@
 import { useState, type ReactNode } from "react";
 
+import { errorMessage } from "../api/client";
 import { AddGarmentSheet } from "../components/AddGarmentSheet";
 import { Icon } from "../components/Icons";
 import { captureFrame, useCamera } from "../lib/camera";
@@ -38,7 +39,7 @@ export function HomeScreen(): ReactNode {
       setFlash((n) => n + 1);
       begin(frame);
     } catch (cause) {
-      setError(cause instanceof Error ? cause.message : String(cause));
+      setError(errorMessage(cause));
     }
   };
 

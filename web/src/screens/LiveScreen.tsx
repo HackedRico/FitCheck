@@ -6,9 +6,18 @@ import { Icon } from "../components/Icons";
 import { OutfitSnap, type Snapshot } from "../components/OutfitSnap";
 import { OutfitTray } from "../components/OutfitTray";
 import { captureFrame, useCamera, type Facing } from "../lib/camera";
-import { placeGarment, smoothPlacement, type Landmark, type Placement } from "../lib/fit";
-import { drawOnJoints, type JointPair } from "../lib/composite";
-import type { GarmentSprite, Point } from "../lib/garmentSprite";
+import { encodeCanvas } from "../lib/canvas";
+import { drawOnJoints, drawPlaced } from "../lib/composite";
+import {
+  jointPair,
+  placeGarment,
+  smoothJoints,
+  smoothPlacement,
+  type JointPair,
+  type Landmark,
+  type Placement,
+} from "../lib/fit";
+import type { GarmentSprite } from "../lib/garmentSprite";
 import { createOccluder, type Occluder } from "../lib/occlusion";
 import { loadPoseLandmarker } from "../lib/pose";
 import { canGoBackInApp } from "../lib/route";
@@ -31,15 +40,8 @@ import { byLayer, candidateWearable, closetWearable, wearablesFromPhoto, type We
 
 // Higher follows faster, lower holds steadier against landmark jitter
 const SMOOTHING = 0.45;
-const MIN_VISIBILITY = 0.5;
 // The hair and skin mask costs about twice the pose, so it refreshes at most 15 times a second
 const OCCLUSION_INTERVAL_MS = 66;
-
-// MediaPipe Pose landmark indices
-const LEFT_SHOULDER = 11;
-const RIGHT_SHOULDER = 12;
-const LEFT_HIP = 23;
-const RIGHT_HIP = 24;
 
 type PoseStatus = "loading" | "ready" | "failed";
 
@@ -226,7 +228,7 @@ export function LiveScreen(): ReactNode {
       setNotice(errorMessage(cause));
       return;
     }
-    const image = await new Promise<Blob | null>((resolve) => canvas.toBlob(resolve, "image/png"));
+    const image = await encodeCanvas(canvas, "image/png");
     if (!image) {
       setNotice("This browser could not save the frame. Try the snap again.");
       return;
@@ -335,8 +337,8 @@ function fitLayer(layer: Layer, pose: readonly Landmark[] | undefined, frame: { 
   const region = layer.item.region;
   const { sprite } = layer;
   if (sprite.anchors) {
-    const next = pose ? jointPair(pose, region === "lower", frame) : null;
-    layer.joints = next ? smoothJoints(layer.joints, next) : null;
+    const next = pose ? jointPair(pose, region, frame) : null;
+    layer.joints = next ? smoothJoints(layer.joints, next, SMOOTHING) : null;
   } else {
     const next = pose ? placeGarment(pose, region, frame, sprite.canvas.width / sprite.canvas.height) : null;
     layer.placement = next ? smoothPlacement(layer.placement, next, SMOOTHING) : null;
@@ -345,39 +347,6 @@ function fitLayer(layer: Layer, pose: readonly Landmark[] | undefined, frame: { 
 
 function drawLayer(context: CanvasRenderingContext2D, layer: Layer): void {
   const garment = layer.sprite.canvas;
-  if (layer.sprite.anchors && layer.joints) {
-    drawOnJoints(context, garment, layer.sprite.anchors, layer.joints);
-  } else if (layer.placement) {
-    const placement = layer.placement;
-    context.save();
-    context.translate(placement.topX, placement.topY);
-    context.rotate(placement.angle);
-    context.drawImage(garment, -placement.width / 2, 0, placement.width, placement.height);
-    context.restore();
-  }
-}
-
-// -----------------------------------------------------------------
-// Mapping the wearer's joints onto the owner's
-// -----------------------------------------------------------------
-
-/** The owner's shoulders (or hips for bottoms) in frame pixels, or `null` when out of view. */
-function jointPair(pose: readonly Landmark[], lower: boolean, frame: { width: number; height: number }): JointPair | null {
-  const at = (index: number): Point | null => {
-    const mark = pose[index];
-    if (!mark || (mark.visibility ?? 1) < MIN_VISIBILITY) return null;
-    return { x: mark.x * frame.width, y: mark.y * frame.height };
-  };
-  const left = at(lower ? LEFT_HIP : LEFT_SHOULDER);
-  const right = at(lower ? RIGHT_HIP : RIGHT_SHOULDER);
-  return left && right ? { left, right } : null;
-}
-
-function smoothJoints(previous: JointPair | null, next: JointPair): JointPair {
-  if (previous === null) return next;
-  const mix = (a: Point, b: Point): Point => ({
-    x: a.x + (b.x - a.x) * SMOOTHING,
-    y: a.y + (b.y - a.y) * SMOOTHING,
-  });
-  return { left: mix(previous.left, next.left), right: mix(previous.right, next.right) };
+  if (layer.sprite.anchors && layer.joints) drawOnJoints(context, garment, layer.sprite.anchors, layer.joints);
+  else if (layer.placement) drawPlaced(context, garment, layer.placement);
 }

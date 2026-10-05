@@ -2,6 +2,8 @@ import type { PoseLandmarker, PoseLandmarkerOptions } from "@mediapipe/tasks-vis
 import wasmLoaderPath from "@mediapipe/tasks-vision/vision_wasm_internal.js?url";
 import wasmBinaryPath from "@mediapipe/tasks-vision/vision_wasm_internal.wasm?url";
 
+import { once } from "./once";
+
 // =============================================================================
 // Module Overview
 // =============================================================================
@@ -21,35 +23,18 @@ const IMAGE_MODEL_URL =
 // Enough to tell the subject from a bystander in the same photo
 const IMAGE_MAX_POSES = 3;
 
-let pending: Promise<PoseLandmarker> | null = null;
-
 /** Return the shared Pose Landmarker, creating it on first call. */
-export function loadPoseLandmarker(): Promise<PoseLandmarker> {
-  pending ??= createLandmarker().catch((error: unknown) => {
-    // Forget the failure so the next visit to the live preview can try again
-    pending = null;
-    throw error;
-  });
-  return pending;
-}
-
-let imagePending: Promise<PoseLandmarker> | null = null;
+export const loadPoseLandmarker: () => Promise<PoseLandmarker> = once(createLandmarker);
 
 /** Return the shared IMAGE-mode Pose Landmarker for stills, creating it on first call. */
-export function loadImagePoseLandmarker(): Promise<PoseLandmarker> {
+export const loadImagePoseLandmarker: () => Promise<PoseLandmarker> = once(async () => {
   // A separate instance: the live preview's VIDEO-mode one needs increasing timestamps
-  imagePending ??= (async () => {
-    const { PoseLandmarker } = await import("@mediapipe/tasks-vision");
-    return PoseLandmarker.createFromOptions(
-      { wasmLoaderPath, wasmBinaryPath },
-      { baseOptions: { modelAssetPath: IMAGE_MODEL_URL }, runningMode: "IMAGE", numPoses: IMAGE_MAX_POSES },
-    );
-  })().catch((error: unknown) => {
-    imagePending = null;
-    throw error;
-  });
-  return imagePending;
-}
+  const { PoseLandmarker } = await import("@mediapipe/tasks-vision");
+  return PoseLandmarker.createFromOptions(
+    { wasmLoaderPath, wasmBinaryPath },
+    { baseOptions: { modelAssetPath: IMAGE_MODEL_URL }, runningMode: "IMAGE", numPoses: IMAGE_MAX_POSES },
+  );
+});
 
 async function createLandmarker(): Promise<PoseLandmarker> {
   // Lazy import keeps the 1 MB vision bundle out of the first page load

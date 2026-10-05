@@ -1,11 +1,13 @@
 import { useEffect, useRef, useState, type RefObject } from "react";
 
+import { encodeCanvas, makeCanvas } from "./canvas";
+
 // =============================================================================
 // Module Overview
 // =============================================================================
 // Camera access for every screen. `useCamera` opens the front or rear camera
 // into a `<video>` and closes it when the screen goes away; `captureFrame` and
-// `shrinkImage` turn a frame or a picked file into a JPEG small enough to upload fast.
+// `pickedPhoto` turn a frame or a picked file into a JPEG small enough to upload fast.
 
 export type Facing = "user" | "environment";
 export type CameraStatus = "off" | "starting" | "live" | "denied" | "unavailable";
@@ -95,8 +97,16 @@ export function captureFrame(video: HTMLVideoElement): Promise<Blob> {
   return drawToJpeg(video, video.videoWidth, video.videoHeight);
 }
 
+/** The photo just chosen in a file `input`, upload-sized, or `null` when none was chosen. */
+export async function pickedPhoto(input: HTMLInputElement): Promise<Blob | null> {
+  const file = input.files?.[0];
+  // Cleared, so choosing the same file again still fires a change
+  input.value = "";
+  return file ? shrinkImage(file) : null;
+}
+
 /** Downscale a picked photo to an upload-sized JPEG; returns it unchanged if it cannot be decoded. */
-export async function shrinkImage(file: Blob): Promise<Blob> {
+async function shrinkImage(file: Blob): Promise<Blob> {
   try {
     const bitmap = await createImageBitmap(file);
     try {
@@ -110,19 +120,13 @@ export async function shrinkImage(file: Blob): Promise<Blob> {
   }
 }
 
-function drawToJpeg(source: CanvasImageSource, width: number, height: number): Promise<Blob> {
+async function drawToJpeg(source: CanvasImageSource, width: number, height: number): Promise<Blob> {
   const scale = Math.min(1, UPLOAD_MAX_SIDE / Math.max(width, height));
-  const canvas = document.createElement("canvas");
-  canvas.width = Math.round(width * scale);
-  canvas.height = Math.round(height * scale);
+  const canvas = makeCanvas(Math.round(width * scale), Math.round(height * scale));
   const context = canvas.getContext("2d");
-  if (!context) return Promise.reject(new Error("This browser cannot draw images."));
+  if (!context) throw new Error("This browser cannot draw images.");
   context.drawImage(source, 0, 0, canvas.width, canvas.height);
-  return new Promise((resolve, reject) => {
-    canvas.toBlob(
-      (blob) => (blob ? resolve(blob) : reject(new Error("Could not encode the photo."))),
-      "image/jpeg",
-      JPEG_QUALITY,
-    );
-  });
+  const blob = await encodeCanvas(canvas, "image/jpeg", JPEG_QUALITY);
+  if (!blob) throw new Error("Could not encode the photo.");
+  return blob;
 }

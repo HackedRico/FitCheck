@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState, type ChangeEvent, type ReactNode } from "react";
 
 import { errorMessage } from "../api/client";
-import { captureFrame, shrinkImage, useCamera } from "../lib/camera";
+import { captureFrame, pickedPhoto, useCamera } from "../lib/camera";
 import { Icon } from "./Icons";
 
 // =============================================================================
@@ -48,9 +48,8 @@ export function PhotoBooth({ onPhoto, onCancel }: PhotoBoothProps): ReactNode {
   }, [count, camera.videoRef]);
 
   const pick = async (event: ChangeEvent<HTMLInputElement>): Promise<void> => {
-    const file = event.target.files?.[0];
-    event.target.value = "";
-    if (file) await onPhoto(await shrinkImage(file));
+    const photo = await pickedPhoto(event.target);
+    if (photo) await onPhoto(photo);
   };
 
   const live = camera.status === "live";

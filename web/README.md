@@ -38,7 +38,7 @@ After an engine route or schema change: `make openapi` from the repo root, then 
 | `src/state/` | App context, settings, location, person photo, pipelines, the outfit, and the scan, verdict and render flow |
 | `src/screens/` | Welcome, Home (the camera), Result, Live, You, Closet |
 | `src/components/` | Sheets, the in-app camera and photo booth, tag chips, week strip, closet thumbnails, before-and-after slider, stylist chat, outfit tray |
-| `src/lib/` | Camera, routing, storage, weather codes, pose loading, fit math, garment cutouts, occlusion, person framing |
+| `src/lib/` | Camera, routing, storage, weather codes, pose loading, fit math, garment cutouts, occlusion, person framing, shared canvas and load-once helpers |
 | `src/styles/` | `tokens.css` colours and type, `base.css` reset and primitives, `app.css` shared components, `flow.css` the `fc-` screens |
 | `public/` | Manifest and icons (`icons/*.svg` are the sources, PNGs made with `rsvg-convert`) |
 

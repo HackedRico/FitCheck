@@ -2,6 +2,9 @@ import type { InteractiveSegmenterLegacy } from "@mediapipe/tasks-vision";
 import wasmLoaderPath from "@mediapipe/tasks-vision/vision_wasm_internal.js?url";
 import wasmBinaryPath from "@mediapipe/tasks-vision/vision_wasm_internal.wasm?url";
 
+import { cropCanvas, decodeScaled, type Rect } from "./canvas";
+import { once } from "./once";
+
 // =============================================================================
 // Module Overview
 // =============================================================================
@@ -46,15 +49,10 @@ const THIN_PART = 0.06;
 
 /** Decode `png`, key out a plain background if it has no transparency, clean the outline and trim it. */
 export async function prepareCutout(png: Blob): Promise<HTMLCanvasElement> {
-  const bitmap = await createImageBitmap(png);
-  const scale = Math.min(1, MAX_SIDE / Math.max(bitmap.width, bitmap.height));
-  const width = Math.max(1, Math.round(bitmap.width * scale));
-  const height = Math.max(1, Math.round(bitmap.height * scale));
-  const source = makeCanvas(width, height);
+  const source = await decodeScaled(png, MAX_SIDE);
+  const { width, height } = source;
   const context = source.getContext("2d", { willReadFrequently: true });
   if (!context) throw new Error("This browser cannot draw the cutout.");
-  context.drawImage(bitmap, 0, 0, width, height);
-  bitmap.close();
 
   const image = context.getImageData(0, 0, width, height);
   if (!hasTransparency(image)) {
@@ -76,7 +74,7 @@ export async function prepareCutout(png: Blob): Promise<HTMLCanvasElement> {
   const bounds = opaqueBounds(image);
   if (bounds === null) return source;
   context.putImageData(image, 0, 0);
-  return cropTo(source, bounds);
+  return cropCanvas(source, bounds);
 }
 
 // -----------------------------------------------------------------
@@ -116,27 +114,19 @@ async function segmentGarment(source: HTMLCanvasElement, image: ImageData): Prom
   return share >= MIN_GARMENT_SHARE && share <= MAX_GARMENT_SHARE;
 }
 
-let segmenterPending: Promise<InteractiveSegmenterLegacy> | null = null;
-
-function loadSegmenter(): Promise<InteractiveSegmenterLegacy> {
-  segmenterPending ??= (async () => {
-    const { InteractiveSegmenterLegacy } = await import("@mediapipe/tasks-vision");
-    const create = (delegate: "GPU" | "CPU"): Promise<InteractiveSegmenterLegacy> =>
-      InteractiveSegmenterLegacy.createFromOptions(
-        { wasmLoaderPath, wasmBinaryPath },
-        { baseOptions: { modelAssetPath: SEGMENTER_URL, delegate }, outputConfidenceMasks: true, outputCategoryMask: false },
-      );
-    // About 40 ms a garment on the GPU against most of a second on the CPU
-    return create("GPU").catch((error: unknown) => {
-      console.warn("[cutout] GPU delegate unavailable; segmenting garments on the CPU.", error);
-      return create("CPU");
-    });
-  })().catch((error: unknown) => {
-    segmenterPending = null;
-    throw error;
+const loadSegmenter = once(async (): Promise<InteractiveSegmenterLegacy> => {
+  const { InteractiveSegmenterLegacy } = await import("@mediapipe/tasks-vision");
+  const create = (delegate: "GPU" | "CPU"): Promise<InteractiveSegmenterLegacy> =>
+    InteractiveSegmenterLegacy.createFromOptions(
+      { wasmLoaderPath, wasmBinaryPath },
+      { baseOptions: { modelAssetPath: SEGMENTER_URL, delegate }, outputConfidenceMasks: true, outputCategoryMask: false },
+    );
+  // About 40 ms a garment on the GPU against most of a second on the CPU
+  return create("GPU").catch((error: unknown) => {
+    console.warn("[cutout] GPU delegate unavailable; segmenting garments on the CPU.", error);
+    return create("CPU");
   });
-  return segmenterPending;
-}
+});
 
 // -----------------------------------------------------------------
 // Cleaning the outline
@@ -244,7 +234,7 @@ function largestComponent(mask: Uint8Array, width: number): Uint8Array {
   return out;
 }
 
-function maskBounds(mask: Uint8Array, width: number, height: number): Bounds | null {
+function maskBounds(mask: Uint8Array, width: number, height: number): Rect | null {
   let minX = width;
   let minY = height;
   let maxX = -1;
@@ -271,13 +261,6 @@ function opaqueShare(image: ImageData): number {
 // -----------------------------------------------------------------
 // Keying out a plain background
 // -----------------------------------------------------------------
-
-export function makeCanvas(width: number, height: number): HTMLCanvasElement {
-  const canvas = document.createElement("canvas");
-  canvas.width = width;
-  canvas.height = height;
-  return canvas;
-}
 
 function hasTransparency(image: ImageData): boolean {
   const { data } = image;
@@ -394,15 +377,8 @@ function isBackground(data: Uint8ClampedArray, pixel: number, reference: Referen
   return distance(data, pixel, reference) <= KEY_TOLERANCE;
 }
 
-interface Bounds {
-  x: number;
-  y: number;
-  width: number;
-  height: number;
-}
-
 /** The bounding box of every opaque pixel, or `null` when none is opaque. */
-function opaqueBounds(image: ImageData): Bounds | null {
+function opaqueBounds(image: ImageData): Rect | null {
   const { width, height, data } = image;
   let minX = width;
   let minY = height;
@@ -419,11 +395,4 @@ function opaqueBounds(image: ImageData): Bounds | null {
   }
   if (maxX < minX || maxY < minY) return null;
   return { x: minX, y: minY, width: maxX - minX + 1, height: maxY - minY + 1 };
-}
-
-function cropTo(source: HTMLCanvasElement, bounds: Bounds | null): HTMLCanvasElement {
-  if (bounds === null) return source;
-  const cropped = makeCanvas(bounds.width, bounds.height);
-  cropped.getContext("2d")?.drawImage(source, -bounds.x, -bounds.y);
-  return cropped;
 }

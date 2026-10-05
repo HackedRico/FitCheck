@@ -51,6 +51,11 @@ export function dressCode(formality: number): string {
   return DRESS_CODE[index] ?? "casual";
 }
 
+/** "1 garment", "3 garments". */
+export function garmentCount(count: number): string {
+  return `${count} ${count === 1 ? "garment" : "garments"}`;
+}
+
 /** A short noun phrase for a garment, such as "navy sweater". */
 export function garmentName(tags: GarmentTags): string {
   return `${tags.color_family} ${tags.category}`;

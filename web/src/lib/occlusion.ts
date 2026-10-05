@@ -2,8 +2,9 @@ import type { ImageSegmenter } from "@mediapipe/tasks-vision";
 import wasmLoaderPath from "@mediapipe/tasks-vision/vision_wasm_internal.js?url";
 import wasmBinaryPath from "@mediapipe/tasks-vision/vision_wasm_internal.wasm?url";
 
-import type { Landmark } from "./fit";
+import { landmarkPoint, LEFT_SHOULDER, RIGHT_SHOULDER, type Landmark, type Point } from "./fit";
 import { SEGMENTER_URL } from "./garmentSprite";
+import { once } from "./once";
 
 // =============================================================================
 // Module Overview
@@ -20,13 +21,10 @@ const HAIR = 1;
 const BODY_SKIN = 2;
 const FACE_SKIN = 3;
 
-// MediaPipe Pose landmark indices
-const LEFT_SHOULDER = 11;
-const RIGHT_SHOULDER = 12;
+// MediaPipe Pose landmark indices for the wrists and fingertips
 const HANDS = [15, 16, 17, 18, 19, 20, 21, 22];
 // A hand reaches this share of the shoulder span from its wrist and fingertip landmarks
 const HAND_REACH = 0.3;
-const MIN_VISIBILITY = 0.5;
 
 /** Hair and skin from the camera, drawn back over the garments. */
 export interface Occluder {
@@ -101,18 +99,12 @@ function frontTest(
   width: number,
   height: number,
 ): (category: number, x: number, y: number) => boolean {
-  const seen = (index: number): Landmark | null => {
-    const mark = pose?.[index];
-    return mark && (mark.visibility ?? 1) >= MIN_VISIBILITY ? mark : null;
-  };
-  const left = seen(LEFT_SHOULDER);
-  const right = seen(RIGHT_SHOULDER);
-  const shoulderY = left && right ? ((left.y + right.y) / 2) * height : -1;
-  const span = left && right ? Math.hypot((left.x - right.x) * width, (left.y - right.y) * height) : 0;
-  const reach = span * HAND_REACH;
-  const hands = HANDS.map(seen)
-    .filter((mark): mark is Landmark => mark !== null)
-    .map((mark) => ({ x: mark.x * width, y: mark.y * height }));
+  const frame = { width, height };
+  const left = landmarkPoint(pose, LEFT_SHOULDER, frame);
+  const right = landmarkPoint(pose, RIGHT_SHOULDER, frame);
+  const shoulderY = left && right ? (left.y + right.y) / 2 : -1;
+  const reach = left && right ? Math.hypot(left.x - right.x, left.y - right.y) * HAND_REACH : 0;
+  const hands = HANDS.map((index) => landmarkPoint(pose, index, frame)).filter((hand): hand is Point => hand !== null);
 
   return (category, x, y) => {
     if (category === HAIR || category === FACE_SKIN) return true;
@@ -122,28 +114,20 @@ function frontTest(
   };
 }
 
-let pending: Promise<ImageSegmenter> | null = null;
-
-function loadSegmenter(): Promise<ImageSegmenter> {
-  pending ??= (async () => {
-    const { ImageSegmenter } = await import("@mediapipe/tasks-vision");
-    const create = (delegate: "GPU" | "CPU"): Promise<ImageSegmenter> =>
-      ImageSegmenter.createFromOptions(
-        { wasmLoaderPath, wasmBinaryPath },
-        {
-          baseOptions: { modelAssetPath: SEGMENTER_URL, delegate },
-          runningMode: "VIDEO",
-          outputCategoryMask: true,
-          outputConfidenceMasks: false,
-        },
-      );
-    return create("GPU").catch((error: unknown) => {
-      console.warn("[occlusion] GPU delegate unavailable; segmenting on the CPU.", error);
-      return create("CPU");
-    });
-  })().catch((error: unknown) => {
-    pending = null;
-    throw error;
+const loadSegmenter = once(async (): Promise<ImageSegmenter> => {
+  const { ImageSegmenter } = await import("@mediapipe/tasks-vision");
+  const create = (delegate: "GPU" | "CPU"): Promise<ImageSegmenter> =>
+    ImageSegmenter.createFromOptions(
+      { wasmLoaderPath, wasmBinaryPath },
+      {
+        baseOptions: { modelAssetPath: SEGMENTER_URL, delegate },
+        runningMode: "VIDEO",
+        outputCategoryMask: true,
+        outputConfidenceMasks: false,
+      },
+    );
+  return create("GPU").catch((error: unknown) => {
+    console.warn("[occlusion] GPU delegate unavailable; segmenting on the CPU.", error);
+    return create("CPU");
   });
-  return pending;
-}
+});

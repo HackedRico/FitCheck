@@ -96,7 +96,7 @@ const HIP_DROP = 0.2;
  * Where a wearer's shoulders (or hips) would be on a garment nobody wears, from its outline:
  * the shoulder seams of a top or dress, the waistband of a bottom. `null` if there is no outline.
  */
-export function outlineAnchors(canvas: HTMLCanvasElement, region: TryOnRegion): GarmentSprite["anchors"] {
+function outlineAnchors(canvas: HTMLCanvasElement, region: TryOnRegion): GarmentSprite["anchors"] {
   const { width, height } = canvas;
   const context = canvas.getContext("2d", { willReadFrequently: true });
   if (!context || width < 8 || height < 8) return null;

@@ -7,16 +7,20 @@ import { useCallback, useEffect, useState } from "react";
 // story of one scan, `live` is the on-device preview, `you` holds the person
 // photo and `closet` the owner's garments. A hash route survives a phone reload.
 
-export const ROUTES = ["home", "result", "live", "you", "closet"] as const;
+const ROUTES = ["home", "result", "live", "you", "closet"] as const;
 export type Route = (typeof ROUTES)[number];
 
-// Old links from the tabbed layout still land somewhere sensible
-const LEGACY: Record<string, Route> = { scan: "home", render: "result", me: "you" };
+// Screens this tab has moved to inside the app; above zero, history.back() stays in FitCheck
+let inAppSteps = 0;
+
+/** Whether going back in history lands on another FitCheck screen rather than leaving the app. */
+export function canGoBackInApp(): boolean {
+  return inAppSteps > 0;
+}
 
 function readRoute(): Route {
   const name = window.location.hash.replace(/^#\/?/, "");
-  if ((ROUTES as readonly string[]).includes(name)) return name as Route;
-  return LEGACY[name] ?? "home";
+  return (ROUTES as readonly string[]).includes(name) ? (name as Route) : "home";
 }
 
 /** Return the current screen and a function that moves to another. */
@@ -33,6 +37,7 @@ export function useRoute(): [Route, (next: Route) => void] {
   }, []);
 
   const navigate = useCallback((next: Route) => {
+    if (readRoute() !== next) inAppSteps += 1;
     window.location.hash = `/${next}`;
   }, []);
 

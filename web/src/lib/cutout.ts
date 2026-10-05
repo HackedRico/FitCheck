@@ -143,7 +143,7 @@ function loadSegmenter(): Promise<InteractiveSegmenterLegacy> {
 // -----------------------------------------------------------------
 
 /** Keep the garment's main body, drop thin parts and specks, and soften the outline, in place. */
-export function cleanMask(image: ImageData): void {
+function cleanMask(image: ImageData): void {
   const { width, height, data } = image;
   const solid = new Uint8Array(width * height);
   for (let i = 0; i < solid.length; i += 1) solid[i] = (data[i * 4 + 3] ?? 0) >= 128 ? 1 : 0;

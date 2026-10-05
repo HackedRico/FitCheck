@@ -19,7 +19,7 @@ import { photoLeftOurHardware } from "../state/pipelines";
 // Module Overview
 // =============================================================================
 // One scan, told top to bottom: the snapped garment, a checklist while the
-// engine works, then the verdict as a giant tag, the garment on the owner, why,
+// engine works, then the verdict in large type, the garment on the owner, why,
 // what it goes with and the week. A dock pinned to the bottom keeps the stylist,
 // "scan another" and "try it live" under the thumb the whole way down.
 
@@ -251,7 +251,7 @@ function OnYou(): ReactNode {
         {render.value.cached && <p className="fc-note">Cached render, not live.</p>}
         {render.value.preview && render.value.origin !== "live" && (
           <div className="fc-onyou-more">
-            <p className="fc-muted">Quick preview made on this phone. The AI renderer is busy right now.</p>
+            <p className="fc-muted">Quick preview made on this phone, not an AI render.</p>
             <button
               type="button"
               className="fc-btn is-ghost"

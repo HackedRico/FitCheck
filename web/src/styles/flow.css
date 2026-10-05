@@ -838,7 +838,7 @@ body {
 }
 
 .fc-check[data-status="idle"] {
-  color: var(--fg-muted);
+  color: var(--fog);
 }
 
 .fc-check-mark {
@@ -1105,6 +1105,10 @@ body {
   background: var(--bg-1);
 }
 
+.fc-chat-form:focus-within {
+  border-color: var(--fg);
+}
+
 .fc-chat-form input {
   flex: 1;
   min-width: 0;
@@ -1261,7 +1265,7 @@ body {
   letter-spacing: -0.035em;
 }
 
-/* ---------- wider screens: the projector ---------- */
+/* ---------- wider screens: two columns ---------- */
 
 @media (min-width: 900px) {
   .fc-result {
@@ -1310,102 +1314,13 @@ body {
 /* ---------- shared pieces from app.css, quieted for the flow ---------- */
 
 /* Sentence case and normal tracking everywhere inside a page; labels shout nowhere */
-.fc-page :is(.kicker, .chip, .thumb-meta, .thumb-badge, .thumb-swatch-label, .week *, .events *, .event *, .shelf *) {
+.fc-page :is(.kicker, .week *, .events *, .event *, .shelf *) {
   letter-spacing: normal;
   text-transform: none;
 }
 
 .fc-btn {
   white-space: nowrap;
-}
-
-.fc .chips-description {
-  margin-bottom: 12px;
-  color: var(--fg-2);
-  font: 500 17px/1.4 var(--sans);
-}
-
-.fc .chips-description::first-letter {
-  text-transform: uppercase;
-}
-
-.fc .chip {
-  gap: 6px;
-  padding: 7px 12px;
-  border: 1px solid var(--line-strong);
-  border-radius: 999px;
-  background: var(--bg-1);
-  color: var(--fg);
-  outline: 0;
-  font: 500 14px/1.2 var(--sans);
-  transform: none;
-  animation: fc-enter 300ms var(--ease-out) both;
-  animation-delay: calc(var(--i, 0) * 40ms);
-}
-
-.fc .chip::first-letter {
-  text-transform: uppercase;
-}
-
-.fc .chip-swatch {
-  width: 12px;
-  height: 12px;
-  border-color: var(--line-strong);
-}
-
-.fc .chip-blank {
-  min-width: 64px;
-  min-height: 32px;
-  background: var(--bg-2);
-  border-color: transparent;
-}
-
-.fc .shelf h3 {
-  margin-bottom: 10px;
-}
-
-.fc .thumb-frame {
-  border-radius: 14px;
-  background: var(--bg-2);
-}
-
-.fc .thumb[data-badge="true"] .thumb-frame {
-  outline: 2px solid var(--fg);
-  outline-offset: -2px;
-}
-
-.fc .thumb-swatch-label {
-  padding: 3px 8px;
-  border-radius: 999px;
-  background: rgba(255, 255, 255, 0.85);
-  color: #141412;
-  font: 500 12px/1.2 var(--sans);
-}
-
-.fc .thumb-badge {
-  inset: 8px auto auto 8px;
-  padding: 4px 8px;
-  border-radius: 999px;
-  background: var(--fg);
-  color: var(--bg);
-  font: 600 11px/1 var(--sans);
-}
-
-.fc .thumb-name::first-letter {
-  text-transform: uppercase;
-}
-
-.fc .thumb-name {
-  font-weight: 500;
-  text-transform: none;
-}
-
-.fc .thumb-meta {
-  font: 400 13px/1.3 var(--sans);
-}
-
-.fc .week-day {
-  border-radius: 12px;
 }
 
 /* ---------- add a garment: shop link or photo ---------- */
@@ -1577,6 +1492,12 @@ body {
   text-transform: uppercase;
 }
 
+.closet-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
 .fc-page.closet .closet-actions .fc-btn {
   min-height: 44px;
   padding: 0 16px;
@@ -1601,6 +1522,7 @@ body {
 }
 
 .fc-page.closet .closet-grid {
+  display: grid;
   grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
   gap: 20px 16px;
 }
@@ -1625,28 +1547,7 @@ body {
   height: 16px;
 }
 
-/* ---------- sheets: pipeline and settings ---------- */
-
-.fc .sheet {
-  border: 0;
-  border-radius: 22px 22px 0 0;
-  box-shadow: 0 -10px 40px rgba(0, 0, 0, 0.12);
-}
-
-.fc .sheet-head h2 {
-  font: 600 20px/1.2 var(--sans);
-  letter-spacing: -0.01em;
-}
-
-.fc .sheet-scrim {
-  background: rgba(0, 0, 0, 0.35);
-}
-
-@media (min-width: 900px) {
-  .fc .sheet {
-    border-radius: 22px 0 0 22px;
-  }
-}
+/* ---------- on you: the follow-up under a render ---------- */
 
 .fc-onyou-more {
   display: flex;
@@ -1664,11 +1565,6 @@ body {
 }
 
 /* ---------- closet garment art: a silhouette in the garment's colour when there is no photo ---------- */
-
-.fc .thumb-frame {
-  border: 1px solid var(--line);
-  background: var(--bg-1);
-}
 
 .thumb-art {
   width: 68%;
@@ -1717,14 +1613,6 @@ body {
   --shape: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Cpath d='M25 38 L75 38 L82 88 L18 88 Z M38 38 Q38 18 50 18 Q62 18 62 38 L56 38 Q56 25 50 25 Q44 25 44 38 Z' fill='black'/%3E%3C/svg%3E");
 }
 
-/* Closed panels stay hidden even while a rotation or resize re-runs their slide transition */
-.fc .sheet-layer:not([data-open="true"]) .sheet {
-  visibility: hidden;
-  transition:
-    transform var(--medium) var(--ease-out),
-    visibility 0s linear var(--medium);
-}
-
 .fc-addsheet-photos {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -1744,58 +1632,7 @@ body {
   font-size: 14px;
 }
 
-/* Show the whole garment in its square, however tall the crop from a closet scan is;
-   pinned to the frame because a percentage height does not resolve against aspect-ratio */
-.fc .thumb-frame img {
-  position: absolute;
-  inset: 0;
-  box-sizing: border-box;
-  width: 100%;
-  height: 100%;
-  padding: 6px;
-  object-fit: contain;
-}
-
-.fc .thumb-source {
-  overflow: hidden;
-  color: var(--fog);
-  font-size: 12px;
-  text-decoration: underline;
-  text-underline-offset: 2px;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
 /* ---------- before and after ---------- */
-
-.fc .compare-label {
-  top: 12px;
-  padding: 5px 10px;
-  border-radius: 999px;
-  background: rgba(255, 255, 255, 0.92);
-  color: #141412;
-  font: 600 12px/1 var(--sans);
-  letter-spacing: normal;
-  text-transform: none;
-  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.15);
-}
-
-.fc .compare-handle {
-  width: 2px;
-  margin-left: -1px;
-  background: #fff;
-  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.15);
-}
-
-.fc .compare-handle span {
-  width: 36px;
-  height: 36px;
-  margin: -18px 0 0 -18px;
-  border: 2px solid #fff;
-  background: rgba(20, 20, 18, 0.55);
-  backdrop-filter: blur(6px);
-  -webkit-backdrop-filter: blur(6px);
-}
 
 /* Two images of different shapes: side by side, each whole, same height */
 .compare-pair {
@@ -1822,19 +1659,6 @@ body {
   color: var(--fog);
   font-size: 13px;
   text-align: center;
-}
-
-/* Closet matches on a result use the closet page's grid, so a garment looks the same everywhere */
-.fc .shelf-row {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
-  gap: 18px 14px;
-  overflow: visible;
-  padding-bottom: 0;
-}
-
-.fc .shelf-row .thumb {
-  flex: none;
 }
 
 .fc-warning {

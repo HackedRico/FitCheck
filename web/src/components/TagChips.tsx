@@ -6,9 +6,9 @@ import { dressCode, swatchFor } from "../lib/garments";
 // =============================================================================
 // Module Overview
 // =============================================================================
-// The candidate's tags as woven care labels that drop in one after another, the
-// first thing to land after a snap. While tags are being read, blank labels
-// stitch in place so the panel is never empty.
+// The candidate's tags as chips that fade in one after another, the first thing
+// to land after a snap. While tags are being read, blank chips hold their place
+// so the panel is never empty.
 
 interface Chip {
   key: string;
@@ -27,15 +27,12 @@ function chipsFor(tags: GarmentTags): Chip[] {
   ];
 }
 
-// Each label lands at its own slight angle, like tags tossed on a counter
-const TILTS = [-3, 2, -1.5, 3, -2.5, 1.5];
-
 /** Tag chips for `tags`, or reading placeholders when `tags` is `null`. */
 export function TagChips({ tags }: { tags: GarmentTags | null }): ReactNode {
   if (tags === null) {
     return (
       <div className="chips is-reading" aria-label="Reading tags">
-        <p className="chips-description serif">Reading the tags</p>
+        <p className="chips-description">Reading the tags</p>
         <ul className="chip-list">
           {[0, 1, 2, 3, 4].map((i) => (
             <li key={i} className="chip chip-blank" style={{ "--i": i } as CSSProperties}>
@@ -48,13 +45,13 @@ export function TagChips({ tags }: { tags: GarmentTags | null }): ReactNode {
   }
   return (
     <div className="chips">
-      <p className="chips-description serif">{tags.description}</p>
+      <p className="chips-description">{tags.description}</p>
       <ul className="chip-list" aria-label="Tags">
         {chipsFor(tags).map((chip, i) => (
           <li
             key={chip.key}
             className="chip"
-            style={{ "--i": i, "--tilt": `${TILTS[i % TILTS.length] ?? 0}deg` } as CSSProperties}
+            style={{ "--i": i } as CSSProperties}
           >
             {chip.swatch !== undefined && (
               <span className="chip-swatch" style={{ background: chip.swatch }} aria-hidden="true" />

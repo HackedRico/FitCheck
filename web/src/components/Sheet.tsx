@@ -23,7 +23,7 @@ export function Sheet({ open, title, onClose, children }: SheetProps): ReactNode
       <aside className="sheet" role="dialog" aria-label={title} inert={!open}>
         <header className="sheet-head">
           <h2 className="display">{title}</h2>
-          <button type="button" className="icon-btn" onClick={onClose} aria-label="Close">
+          <button type="button" className="fc-round" onClick={onClose} aria-label="Close">
             <Icon name="close" />
           </button>
         </header>

@@ -50,7 +50,9 @@ export function WelcomeScreen({ onDone }: { onDone: () => void }): ReactNode {
       <ol className="fc-steps">
         {STEPS.map((step) => (
           <li key={step.n}>
-            <span className="fc-step-n">{step.n}</span>
+            <span className="fc-step-n" aria-hidden="true">
+              {step.n}
+            </span>
             <span>
               <strong>{step.title}</strong>
               <span>{step.body}</span>

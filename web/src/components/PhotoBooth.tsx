@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState, type ChangeEvent, type ReactNode } from "react";
 
+import { errorMessage } from "../api/client";
 import { captureFrame, shrinkImage, useCamera } from "../lib/camera";
 import { Icon } from "./Icons";
 
@@ -21,19 +22,30 @@ interface PhotoBoothProps {
 export function PhotoBooth({ onPhoto, onCancel }: PhotoBoothProps): ReactNode {
   const camera = useCamera("user", true);
   const [count, setCount] = useState<number | null>(null);
+  const [error, setError] = useState<string | null>(null);
   const fileRef = useRef<HTMLInputElement | null>(null);
+  // Callers pass a fresh `onPhoto` each render; reading it through a ref keeps the countdown ticking
+  const onPhotoRef = useRef(onPhoto);
+
+  useEffect(() => {
+    onPhotoRef.current = onPhoto;
+  });
 
   useEffect(() => {
     if (count === null) return undefined;
     if (count === 0) {
       const video = camera.videoRef.current;
       setCount(null);
-      if (video) void captureFrame(video).then(onPhoto);
+      if (video) {
+        captureFrame(video)
+          .then((photo) => onPhotoRef.current(photo))
+          .catch((cause: unknown) => setError(errorMessage(cause)));
+      }
       return undefined;
     }
     const timer = window.setTimeout(() => setCount(count - 1), 1000);
     return () => window.clearTimeout(timer);
-  }, [count, camera.videoRef, onPhoto]);
+  }, [count, camera.videoRef]);
 
   const pick = async (event: ChangeEvent<HTMLInputElement>): Promise<void> => {
     const file = event.target.files?.[0];
@@ -59,11 +71,12 @@ export function PhotoBooth({ onPhoto, onCancel }: PhotoBoothProps): ReactNode {
       </header>
 
       <p className="fc-cam-hint">
-        {live
-          ? count === null
-            ? "Step back until your head and knees fit the outline"
-            : "Hold still"
-          : (camera.error ?? "Starting the camera")}
+        {error ??
+          (live
+            ? count === null
+              ? "Step back until your head and knees fit the outline"
+              : "Hold still"
+            : (camera.error ?? "Starting the camera"))}
       </p>
 
       <footer className="fc-shutterbar">
@@ -74,7 +87,10 @@ export function PhotoBooth({ onPhoto, onCancel }: PhotoBoothProps): ReactNode {
           type="button"
           className="fc-shutter"
           disabled={!live || count !== null}
-          onClick={() => setCount(COUNTDOWN_S)}
+          onClick={() => {
+            setError(null);
+            setCount(COUNTDOWN_S);
+          }}
           aria-label={`Take the photo in ${COUNTDOWN_S} seconds`}
         >
           <span />

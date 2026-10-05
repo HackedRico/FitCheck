@@ -11,6 +11,7 @@ import { drawOnJoints, type JointPair } from "../lib/composite";
 import type { GarmentSprite, Point } from "../lib/garmentSprite";
 import { createOccluder, type Occluder } from "../lib/occlusion";
 import { loadPoseLandmarker } from "../lib/pose";
+import { canGoBackInApp } from "../lib/route";
 import { useApp } from "../state/app";
 import { byLayer, candidateWearable, closetWearable, wearablesFromPhoto, type Wearable } from "../state/outfit";
 
@@ -218,9 +219,18 @@ export function LiveScreen(): ReactNode {
     const video = camera.videoRef.current;
     const canvas = canvasRef.current;
     if (!video || !canvas) return;
-    const person = await captureFrame(video);
+    let person: Blob;
+    try {
+      person = await captureFrame(video);
+    } catch (cause) {
+      setNotice(errorMessage(cause));
+      return;
+    }
     const image = await new Promise<Blob | null>((resolve) => canvas.toBlob(resolve, "image/png"));
-    if (!image) return;
+    if (!image) {
+      setNotice("This browser could not save the frame. Try the snap again.");
+      return;
+    }
     const worn = outfit.worn;
     // The candidate alone is the verdict's own try-on, so the snap becomes its render
     if (candidate !== null && worn.length === 1 && worn[0]?.key === candidate.key) {
@@ -233,7 +243,8 @@ export function LiveScreen(): ReactNode {
 
   const back = (): void => {
     // Live is reached from the verdict, the closet or the camera; go back to whichever it was
-    if (window.history.length > 1) window.history.back();
+    // Opened straight on #/live, there is no FitCheck screen behind it to go back to
+    if (canGoBackInApp()) window.history.back();
     else navigate("home");
   };
 

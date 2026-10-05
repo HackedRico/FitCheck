@@ -8,17 +8,15 @@ from fitcheck.errors import InvalidInput
 from fitcheck.openai_compat import ChatClient, Message, adapter_info
 from fitcheck.settings import Settings
 from fitcheck.stylist.prompts import (
+    MAX_HISTORY_TURNS,
+    MAX_TOKENS,
     STYLIST_SYSTEM_PROMPT,
+    TEMPERATURE,
     parse_reply,
     render_brief,
     reply_json_schema,
 )
 
-# Low enough that a rehearsed question gets much the same answer on stage
-TEMPERATURE = 0.3
-MAX_TOKENS = 400
-# Keep only recent turns so a long chat never pushes the FACTS out of the context window
-MAX_HISTORY_TURNS = 12
 _RETRY_NOTE = 'Reply again as JSON only: {"text": "...", "render_garment_ids": [...]}.'
 
 # =============================================================================

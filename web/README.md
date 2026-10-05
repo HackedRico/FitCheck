@@ -19,7 +19,7 @@ The camera needs a secure origin, so the dev server serves HTTPS on every interf
 - Same wifi: open the `Network:` https address `make web` prints and accept the certificate warning.
 - Any network: run `FITCHECK_HTTP=1 npm run dev`, then `cloudflared tunnel --url http://localhost:5173` and open the `trycloudflare.com` address. The tunnel adds real HTTPS.
 
-The live preview and the on-device cutouts run MediaPipe models in the browser, loaded from Google's model bucket. For an offline stage, download `pose_landmarker_lite.task` into `public/models/` and set `VITE_POSE_MODEL_URL=/models/pose_landmarker_lite.task`.
+The live preview and the on-device cutouts run MediaPipe models in the browser, loaded from Google's model bucket. The live pose model can be served locally: download `pose_landmarker_lite.task` into `public/models/` and set `VITE_POSE_MODEL_URL=/models/pose_landmarker_lite.task`. The stills pose model, the selfie segmenter and the cutout segmenter still load from Google, so the first scan and the first try-on need the network.
 
 ## Regenerate API types
 

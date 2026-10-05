@@ -3,7 +3,7 @@ import wasmLoaderPath from "@mediapipe/tasks-vision/vision_wasm_internal.js?url"
 import wasmBinaryPath from "@mediapipe/tasks-vision/vision_wasm_internal.wasm?url";
 
 import type { TryOnRegion } from "../api/client";
-import { prepareCutout } from "./cutout";
+import { makeCanvas, prepareCutout } from "./cutout";
 import { loadImagePoseLandmarker } from "./pose";
 
 // =============================================================================
@@ -19,7 +19,7 @@ import { loadImagePoseLandmarker } from "./pose";
 // garment's outline, so every garment is pinned the same way. `extractWornGarment`
 // pulls a second piece out of an outfit photo, and only when a wearer is visible.
 
-const SEGMENTER_URL =
+export const SEGMENTER_URL =
   "https://storage.googleapis.com/mediapipe-models/image_segmenter/selfie_multiclass_256x256/float32/latest/selfie_multiclass_256x256.tflite";
 
 // selfie_multiclass_256x256 categories: 0 background, 1 hair, 2 body skin, 3 face skin, 4 clothes, 5 other
@@ -271,12 +271,5 @@ async function drawScaled(image: Blob): Promise<HTMLCanvasElement> {
   const canvas = makeCanvas(Math.max(1, Math.round(bitmap.width * scale)), Math.max(1, Math.round(bitmap.height * scale)));
   canvas.getContext("2d", { willReadFrequently: true })?.drawImage(bitmap, 0, 0, canvas.width, canvas.height);
   bitmap.close();
-  return canvas;
-}
-
-function makeCanvas(width: number, height: number): HTMLCanvasElement {
-  const canvas = document.createElement("canvas");
-  canvas.width = width;
-  canvas.height = height;
   return canvas;
 }

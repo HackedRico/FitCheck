@@ -56,7 +56,7 @@ For real models, copy `engine/.env.example` to `engine/.env`, set `FITCHECK_TAGG
 | --- | --- |
 | `engine/` | Python engine and API: verdict rules, adapters, CLI |
 | `web/` | Mobile-first web app (Vite, React, TypeScript) |
-| `worker/` | Optional GPU try-on worker for Colab, Kaggle or Modal |
+| `worker/` | Try-on worker the `remote` adapter calls; only an `echo` backend ships |
 | `skills/fit-check/` | Agent skill that drives FitCheck from a shell |
 | `docs/` | Guides and decision records |
 

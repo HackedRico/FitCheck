@@ -145,7 +145,7 @@ def decide(
     caveat = _caveat(duplicates, statement, pairings)
     return Verdict(
         decision=Decision.TRY_WITH,
-        headline=f"Try it with your {_phrase(pairings[0])}: {caveat}.",
+        headline=f"Try it with your {phrase(pairings[0])}: {caveat}.",
         reasons=reasons,
         duplicates=duplicates,
         pairings=pairings,
@@ -315,7 +315,7 @@ def _when(day: date, today: date) -> str:
 def _caveat(duplicates: Sequence[Garment], statement: bool, pairings: Sequence[Garment]) -> str:
     """Say why a TRY_WITH is not a BUY, naming the strongest cause only."""
     if duplicates:
-        return f"it is close to your {_phrase(duplicates[0])}, so make sure it adds something"
+        return f"it is close to your {phrase(duplicates[0])}, so make sure it adds something"
     if statement:
         return (
             "a bold print can clash with clothes that match it on paper, so see them together first"
@@ -333,7 +333,7 @@ _STATEMENT_REASON = Reason(
 def _duplicates_reason(duplicates: Sequence[Garment]) -> Reason:
     return Reason(
         code=ReasonCode.DUPLICATES,
-        message=f"You already own {len(duplicates)} like it: {_list_garments(duplicates)}.",
+        message=f"You already own {len(duplicates)} like it: {list_garments(duplicates)}.",
         garment_ids=_ids(duplicates),
     )
 
@@ -349,13 +349,13 @@ def _pairings_reason(pairings: Sequence[Garment]) -> Reason:
         verb = "goes" if len(pairings) == 1 else "go"
         return Reason(
             code=ReasonCode.FEW_PAIRINGS,
-            message=f"Only {_list_garments(pairings)} {verb} with it.",
+            message=f"Only {list_garments(pairings)} {verb} with it.",
             garment_ids=_ids(pairings),
         )
     return Reason(
         code=ReasonCode.PAIRS_WELL,
         message=(
-            f"It goes with {len(pairings)} things you own, best with your {_phrase(pairings[0])}."
+            f"It goes with {len(pairings)} things you own, best with your {phrase(pairings[0])}."
         ),
         garment_ids=_ids(pairings),
     )
@@ -369,15 +369,15 @@ def _ids(garments: Sequence[Garment]) -> tuple[str, ...]:
     return tuple(g.id for g in garments)
 
 
-def _list_garments(garments: Sequence[Garment]) -> str:
+def list_garments(garments: Sequence[Garment]) -> str:
     """Join garments as "your a, your b and your c" for a sentence."""
-    phrases = [f"your {_phrase(g)}" for g in garments]
+    phrases = [f"your {phrase(g)}" for g in garments]
     if len(phrases) == 1:
         return phrases[0]
     return f"{', '.join(phrases[:-1])} and {phrases[-1]}"
 
 
-def _phrase(garment: Garment) -> str:
+def phrase(garment: Garment) -> str:
     """Return the garment's description ready to sit mid-sentence."""
     text = garment.tags.description.strip().rstrip(".")
     # Taggers write sentence case; lower the first letter unless the word is an acronym

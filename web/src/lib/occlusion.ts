@@ -3,6 +3,7 @@ import wasmLoaderPath from "@mediapipe/tasks-vision/vision_wasm_internal.js?url"
 import wasmBinaryPath from "@mediapipe/tasks-vision/vision_wasm_internal.wasm?url";
 
 import type { Landmark } from "./fit";
+import { SEGMENTER_URL } from "./garmentSprite";
 
 // =============================================================================
 // Module Overview
@@ -13,9 +14,6 @@ import type { Landmark } from "./fit";
 // segmenter (Apache-2.0) marks hair and skin; `draw` copies those pixels from the
 // camera over the garments. Skin counts only at the neck and the hands, so bare
 // shoulders and arms still go under a garment that covers them.
-
-const MODEL_URL =
-  "https://storage.googleapis.com/mediapipe-models/image_segmenter/selfie_multiclass_256x256/float32/latest/selfie_multiclass_256x256.tflite";
 
 // selfie_multiclass_256x256 categories
 const HAIR = 1;
@@ -133,7 +131,7 @@ function loadSegmenter(): Promise<ImageSegmenter> {
       ImageSegmenter.createFromOptions(
         { wasmLoaderPath, wasmBinaryPath },
         {
-          baseOptions: { modelAssetPath: MODEL_URL, delegate },
+          baseOptions: { modelAssetPath: SEGMENTER_URL, delegate },
           runningMode: "VIDEO",
           outputCategoryMask: true,
           outputConfidenceMasks: false,

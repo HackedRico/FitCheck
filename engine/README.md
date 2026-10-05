@@ -8,7 +8,7 @@ The Python package `fitcheck`: domain types, the verdict rules, one adapter per 
 cd engine
 uv sync --all-extras        # every adapter's dependencies; the core needs none of them
 uv run fitcheck serve       # API on http://localhost:8000, offline on fakes by default
-uv run fitcheck --help      # scan, judge, week, chat, render and closet commands, all printing JSON
+uv run fitcheck --help      # serve, health, scan, judge, week, chat, render, closet, add, forget, seed and openapi, all printing JSON
 ```
 
 With nothing configured, the engine keeps closets in SQLite under `.fitcheck/` at the repo root, tags with a color-only fake, uses a fixture week and pastes garments flat for try-on, so a fresh clone runs with no accounts or GPU.

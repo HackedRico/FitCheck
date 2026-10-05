@@ -9,9 +9,7 @@ __pycache__/
 # Node and Vite
 node_modules/
 dist/
-dev-dist/
 .vite/
-web/vite.preview.local.ts
 
 # Secrets and local config
 .env

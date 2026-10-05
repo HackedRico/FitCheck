@@ -126,21 +126,6 @@ class TryOnRegion(StrEnum):
     FULL = "full"
 
 
-_REGION_BY_CATEGORY: dict[Category, TryOnRegion] = {
-    Category.TOP: TryOnRegion.UPPER,
-    Category.SWEATER: TryOnRegion.UPPER,
-    Category.SHIRT: TryOnRegion.UPPER,
-    Category.OUTERWEAR: TryOnRegion.UPPER,
-    Category.DRESS: TryOnRegion.FULL,
-    Category.BOTTOM: TryOnRegion.LOWER,
-}
-
-
-def region_for(category: Category) -> TryOnRegion | None:
-    """Return the try-on region for `category`, or `None` when try-on cannot show it."""
-    return _REGION_BY_CATEGORY.get(category)
-
-
 # =============================================================================
 # Week context: weather and calendar
 # =============================================================================

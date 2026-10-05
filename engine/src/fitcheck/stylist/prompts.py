@@ -23,6 +23,12 @@ STYLIST_SYSTEM_PROMPT = (
 
 _FENCE = re.compile(r"^```(?:json)?\s*|\s*```$", re.MULTILINE)
 
+# Low enough that a rehearsed question gets much the same answer on stage
+TEMPERATURE = 0.3
+MAX_TOKENS = 400
+# Keep only recent turns so a long chat never pushes the FACTS out of the context window
+MAX_HISTORY_TURNS = 12
+
 # =============================================================================
 # Module Overview
 # =============================================================================

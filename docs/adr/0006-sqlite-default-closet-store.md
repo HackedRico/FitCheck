@@ -1,0 +1,3 @@
+# SQLite is the default closet store
+
+The default `FITCHECK_STORE` is `sqlite`, one file at `.fitcheck/closet.db` that stores each garment whole as JSON, instead of the memory store or Postgres. The memory store lost every garment people added on each restart, and Postgres asks a new contributor to run Docker before the app keeps anything. SQLite needs no server and survives restarts. The cost: search ranks in Python like the memory store, with no full-text index, and the demo closet loads only into an empty database, so changes to `demo/closet.json` need `.fitcheck/closet.db` deleted to show up.

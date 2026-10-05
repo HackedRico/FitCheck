@@ -47,7 +47,7 @@ A title with none of these, such as "Dentist", gets no dress code and does not c
 
 The secret address works like a password: anyone holding it can read the calendar. Never commit it or paste it in chat. FitCheck keeps it in a `SecretStr` and leaves it out of every log line and error message. If it leaks, reset it on the same Google settings page.
 
-The adapter expands recurring events, drops cancelled ones and caches the feed for 5 minutes. Google can take a while to publish edits to the feed, so add demo events well before you go on stage. One feed serves every owner.
+The adapter expands recurring events, drops cancelled ones and caches the feed for 5 minutes. Google can take a while to publish edits to the feed, so add events well before a demo. One feed serves every owner.
 
 For an offline demo, point the same setting at a file: `FITCHECK_CALENDAR_ICS_URL=tests/context/week.ics`. A relative path resolves from the folder the API starts in, which is `engine/` for `make api`.
 
@@ -59,4 +59,4 @@ Reading a calendar through Google's API needs a Google Cloud project, an OAuth c
 
 Open-Meteo's forecast data is licensed CC BY 4.0, so every screen that shows forecast numbers must credit it. The adapter sets `Forecast.attribution` to "Weather data by Open-Meteo.com"; the web app shows that text as a link to https://open-meteo.com/ wherever the forecast appears. The fixture sets its own attribution, "Demo weather, not a real forecast", so the UI never credits Open-Meteo for numbers it did not make. Show whatever `attribution` says rather than hard-coding the line.
 
-Requests send only coordinates, rounded to two decimals (about 1 km), and never an image. Answers are cached in memory for 30 minutes per location and day count, so a wifi drop within 30 minutes of a successful call does not lose the forecast. Call `GET /week/{owner}` once just before going on stage. The free API is for non-commercial use.
+Requests send only coordinates, rounded to two decimals (about 1 km), and never an image. Answers are cached in memory for 30 minutes per location and day count, so a wifi drop within 30 minutes of a successful call does not lose the forecast. Call `GET /week/{owner}` once just before a demo. The free API is for non-commercial use.

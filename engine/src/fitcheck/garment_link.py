@@ -121,12 +121,13 @@ def _get(client: httpx.Client, url: str) -> tuple[str, str, bytes]:
 
 
 def _read_capped(response: httpx.Response) -> bytes:
+    """Read the body chunk by chunk, stopping as soon as it passes `_MAX_BYTES`."""
     chunks: list[bytes] = []
     size = 0
     for chunk in response.iter_bytes():
         size += len(chunk)
         if size > _MAX_BYTES:
-            raise InvalidInput("The linked file is over 12 MB.")
+            raise InvalidInput(f"The linked file is over {_MAX_BYTES // (1024 * 1024)} MB.")
         chunks.append(chunk)
     return b"".join(chunks)
 

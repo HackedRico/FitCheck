@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 from decimal import Decimal
-from pathlib import Path
 
 import pytest
 
@@ -19,9 +18,8 @@ from fitcheck.wiring import build_engine
 
 
 @pytest.fixture
-def engine(tmp_path: Path) -> Engine:
-    settings = Settings(_env_file=None, store="memory", data_dir=tmp_path, seed_path=None)  # type: ignore[call-arg]
-    return build_engine(settings)
+def engine(offline_settings: Settings) -> Engine:
+    return build_engine(offline_settings)
 
 
 def test_a_shop_link_is_kept(engine: Engine, png_bytes: bytes) -> None:

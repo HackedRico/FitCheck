@@ -10,7 +10,7 @@ from typing import Any
 
 from pydantic import BaseModel
 
-from fitcheck.domain import GarmentTags, Location, TryOnRegion
+from fitcheck.domain import GarmentTags, Location, PipelineStep, TryOnRegion
 from fitcheck.engine import Engine
 from fitcheck.errors import AdapterUnavailable, FitCheckError, InvalidInput, NotFound
 from fitcheck.settings import Settings
@@ -148,7 +148,7 @@ def _openapi(args: argparse.Namespace) -> None:
 
 
 def _health(args: argparse.Namespace) -> None:
-    _emit({slot: info for slot, info in _engine().adapters().items()})
+    _emit(_engine().adapters())
 
 
 def _scan(args: argparse.Namespace) -> None:
@@ -160,7 +160,7 @@ def _scan(args: argparse.Namespace) -> None:
 
 def _judge(args: argparse.Namespace) -> None:
     engine = _engine()
-    pipeline: list[Any] = []
+    pipeline: list[PipelineStep] = []
     if args.image or args.url:
         if args.url:
             linked = engine.import_link(args.url)

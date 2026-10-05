@@ -272,7 +272,7 @@ function opaqueShare(image: ImageData): number {
 // Keying out a plain background
 // -----------------------------------------------------------------
 
-function makeCanvas(width: number, height: number): HTMLCanvasElement {
+export function makeCanvas(width: number, height: number): HTMLCanvasElement {
   const canvas = document.createElement("canvas");
   canvas.width = width;
   canvas.height = height;

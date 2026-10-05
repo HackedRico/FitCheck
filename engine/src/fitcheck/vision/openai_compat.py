@@ -41,6 +41,10 @@ FIND_ALL_MAX_SIDE_PX = 1280
 # are sent, never person photos.
 
 
+def _data_url(jpeg: bytes) -> str:
+    return f"data:image/jpeg;base64,{base64.b64encode(jpeg).decode('ascii')}"
+
+
 class OpenAICompatTagger:
     """Garment tags from a vision model behind an OpenAI-compatible chat API."""
 
@@ -53,7 +57,7 @@ class OpenAICompatTagger:
         """Read the garment in `image_png`; raise `TaggingFailed` if two answers are unusable."""
         image = images.flatten(images.open_image(image_png), BACKDROP)
         jpeg = images.encode_jpeg(images.fit_within(image, MAX_SIDE_PX))
-        data_url = f"data:image/jpeg;base64,{base64.b64encode(jpeg).decode('ascii')}"
+        data_url = _data_url(jpeg)
         messages: list[Message] = [
             {
                 "role": "user",
@@ -80,7 +84,7 @@ class OpenAICompatTagger:
         """Find every garment in a rack or closet photo; ask again once on a bad or empty answer."""
         image = images.flatten(images.open_image(image_png), BACKDROP)
         jpeg = images.encode_jpeg(images.fit_within(image, FIND_ALL_MAX_SIDE_PX))
-        data_url = f"data:image/jpeg;base64,{base64.b64encode(jpeg).decode('ascii')}"
+        data_url = _data_url(jpeg)
         messages: list[Message] = [
             {
                 "role": "user",

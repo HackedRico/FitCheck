@@ -7,7 +7,7 @@ import type { Category, ColorFamily, Decision, GarmentTags, RunsOn, TryOnRegion 
 // does not send: the try-on `regionFor` a category (mirrors `fitcheck.domain`),
 // colour swatches per colour family, dress-code words, and verdict wording.
 
-// Mirrors `_REGION_BY_CATEGORY` in `engine/src/fitcheck/domain.py`; shoes and accessories cannot be rendered
+// The categories a try-on renderer can repaint; shoes and accessories cannot be rendered
 const REGION_BY_CATEGORY: Partial<Record<Category, TryOnRegion>> = {
   top: "upper",
   sweater: "upper",

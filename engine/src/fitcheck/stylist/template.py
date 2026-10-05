@@ -14,6 +14,7 @@ from fitcheck.domain import (
     StylistReply,
 )
 from fitcheck.settings import Settings
+from fitcheck.verdict import list_garments
 
 _WORD = re.compile(r"[a-z0-9]+")
 # A render request names a way of seeing it, then "with" the garments to see it next to
@@ -80,7 +81,7 @@ class TemplateStylist:
         elif render is None:
             sentences.append(_closet_answer(brief.closet_matches))
         if render is not None:
-            sentences.append(f"Showing it with {_list_garments(render)}.")
+            sentences.append(f"Showing it with {list_garments(render)}.")
         action = RenderAction(garment_ids=tuple(g.id for g in render)) if render else None
         return StylistReply(text=" ".join(sentences), render=action)
 
@@ -88,7 +89,7 @@ class TemplateStylist:
 def _closet_answer(matches: Sequence[Garment]) -> str:
     if not matches:
         return "Nothing in your closet matches that."
-    return f"From your closet: {_list_garments(matches[:_MAX_LISTED])}."
+    return f"From your closet: {list_garments(matches[:_MAX_LISTED])}."
 
 
 def _render_request(matches: Sequence[Garment], message: str) -> list[Garment] | None:
@@ -111,23 +112,6 @@ def _render_request(matches: Sequence[Garment], message: str) -> list[Garment] |
 def _garment_words(garment: Garment) -> set[str]:
     t = garment.tags
     return set(_WORD.findall(f"{t.category} {t.color_family} {t.pattern} {t.description}".lower()))
-
-
-def _list_garments(garments: Sequence[Garment]) -> str:
-    """Join garments as "your a, your b and your c" for a sentence."""
-    phrases = [f"your {_phrase(g)}" for g in garments]
-    if len(phrases) == 1:
-        return phrases[0]
-    return f"{', '.join(phrases[:-1])} and {phrases[-1]}"
-
-
-def _phrase(garment: Garment) -> str:
-    """Return the garment's description ready to sit mid-sentence."""
-    text = garment.tags.description.strip().rstrip(".")
-    # Taggers write sentence case; lower the first letter unless the word is an acronym
-    if len(text) > 1 and text[1].islower():
-        return text[0].lower() + text[1:]
-    return text
 
 
 def build(settings: Settings) -> TemplateStylist:

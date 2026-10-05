@@ -69,7 +69,7 @@ Details in [`CLAUDE.md`](CLAUDE.md).
 | `engine/` | Python engine and API: verdict rules, adapters, CLI |
 | `web/` | Mobile-first web app (Vite, React, TypeScript) |
 | `app/`, `lib/`, `components/` | Morning outfit app (Next.js, Snowflake Cortex) at the repo root |
-| `worker/` | Optional GPU try-on worker for Colab, Kaggle or Modal |
+| `worker/` | Try-on worker the `remote` adapter calls; only an `echo` backend ships |
 | `skills/fit-check/` | Agent skill that drives FitCheck from a shell |
 | `docs/` | Guides and decision records |
 

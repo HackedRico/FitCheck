@@ -13,17 +13,14 @@ from fitcheck.snowflake_session import (
     sql_object_constant,
 )
 from fitcheck.stylist.prompts import (
+    MAX_HISTORY_TURNS,
+    MAX_TOKENS,
     STYLIST_SYSTEM_PROMPT,
+    TEMPERATURE,
     parse_reply,
     render_brief,
     reply_json_schema,
 )
-
-# Same values as the OpenAI-compatible stylist, so both paths sound alike on stage
-TEMPERATURE = 0.3
-MAX_TOKENS = 400
-# Recent turns only: the FACTS lead the prompt and must never be crowded out by old chat
-MAX_HISTORY_TURNS = 12
 
 # AI_COMPLETE takes structured output only in its single-string form, so the system
 # prompt, FACTS and transcript travel as one prompt; response_format must be a constant

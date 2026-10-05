@@ -15,9 +15,9 @@ import { useSettings, type SettingsState } from "./settings";
 // One React context that every screen reads through `useApp`: the route, the
 // owner settings, device location, the person photo, the candidate `Flow`, the
 // outfit in the live preview, the recorded pipelines, engine health, and which
-// sheet or drawer is open.
+// sheet is open.
 
-export type Sheet = "pipeline" | "settings" | "stylist" | null;
+export type Sheet = "pipeline" | "settings" | null;
 
 export interface EngineHealth {
   health: HealthOut | null;

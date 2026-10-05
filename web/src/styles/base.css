@@ -62,21 +62,20 @@ p {
 
 /* ---------- type primitives ---------- */
 
-.kicker {
-  font-family: var(--mono);
-  font-size: 11px;
-  font-weight: 500;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
+.kicker,
+.fc-kicker {
+  margin: 0;
   color: var(--fog);
+  font: 600 12px/1.2 var(--sans);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
 }
 
 .display {
-  font-family: var(--display);
-  font-weight: 900;
+  font-family: var(--sans);
+  font-weight: 600;
   line-height: 0.86;
-  letter-spacing: -0.005em;
-  text-transform: uppercase;
+  letter-spacing: -0.02em;
 }
 
 /* ---------- buttons ---------- */

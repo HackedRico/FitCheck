@@ -1,6 +1,7 @@
 import type { TryOnRegion } from "../api/client";
-import { placeGarment } from "./fit";
-import { extractGarment, type Point } from "./garmentSprite";
+import { encodeCanvas, makeCanvas } from "./canvas";
+import { jointPair, placeGarment, type JointPair, type Placement } from "./fit";
+import { extractGarment } from "./garmentSprite";
 import { loadImagePoseLandmarker } from "./pose";
 
 // =============================================================================
@@ -9,20 +10,8 @@ import { loadImagePoseLandmarker } from "./pose";
 // A quick try-on made entirely on the device, for when no AI render is available:
 // the garment's clothes are cut out, and its wearer's shoulders (or hips) are
 // mapped onto the person's, the same way the live preview works. `drawOnJoints`
-// is the shared mapping; `compositeOnPerson` builds a whole still.
-
-// MediaPipe Pose landmark indices
-const LEFT_SHOULDER = 11;
-const RIGHT_SHOULDER = 12;
-const LEFT_HIP = 23;
-const RIGHT_HIP = 24;
-const MIN_VISIBILITY = 0.5;
-
-/** A wearer's left and right joint, in pixels of the image they belong to. */
-export interface JointPair {
-  left: Point;
-  right: Point;
-}
+// is the shared mapping, `drawPlaced` the fallback for a garment with no joints;
+// `compositeOnPerson` builds a whole still.
 
 /** Draw `garment` so its wearer's joints land on the person's: one scale, one turn, one shift. */
 export function drawOnJoints(
@@ -46,6 +35,15 @@ export function drawOnJoints(
   context.restore();
 }
 
+/** Draw `garment` at `placement`, its top centre pinned and turned about that point. */
+export function drawPlaced(context: CanvasRenderingContext2D, garment: HTMLCanvasElement, placement: Placement): void {
+  context.save();
+  context.translate(placement.topX, placement.topY);
+  context.rotate(placement.angle);
+  context.drawImage(garment, -placement.width / 2, 0, placement.width, placement.height);
+  context.restore();
+}
+
 /** Put `garment` on the person in `person` as a PNG, or `null` if no body is visible. */
 export async function compositeOnPerson(person: Blob, garment: Blob, region: TryOnRegion): Promise<Blob | null> {
   const [bitmap, sprite, landmarker] = await Promise.all([
@@ -53,9 +51,7 @@ export async function compositeOnPerson(person: Blob, garment: Blob, region: Try
     extractGarment(garment, region),
     loadImagePoseLandmarker(),
   ]);
-  const canvas = document.createElement("canvas");
-  canvas.width = bitmap.width;
-  canvas.height = bitmap.height;
+  const canvas = makeCanvas(bitmap.width, bitmap.height);
   const context = canvas.getContext("2d");
   if (!context) return null;
   context.drawImage(bitmap, 0, 0);
@@ -64,25 +60,13 @@ export async function compositeOnPerson(person: Blob, garment: Blob, region: Try
   const pose = landmarker.detect(canvas).landmarks[0];
   if (!pose) return null;
   const frame = { width: canvas.width, height: canvas.height };
-  const lower = region === "lower";
-  const at = (index: number): Point | null => {
-    const mark = pose[index];
-    if (!mark || (mark.visibility ?? 1) < MIN_VISIBILITY) return null;
-    return { x: mark.x * frame.width, y: mark.y * frame.height };
-  };
-  const left = at(lower ? LEFT_HIP : LEFT_SHOULDER);
-  const right = at(lower ? RIGHT_HIP : RIGHT_SHOULDER);
-
-  if (sprite.anchors && left && right) {
-    drawOnJoints(context, sprite.canvas, sprite.anchors, { left, right });
+  const joints = sprite.anchors ? jointPair(pose, region, frame) : null;
+  if (sprite.anchors && joints) {
+    drawOnJoints(context, sprite.canvas, sprite.anchors, joints);
   } else {
     const placement = placeGarment(pose, region, frame, sprite.canvas.width / sprite.canvas.height);
     if (!placement) return null;
-    context.save();
-    context.translate(placement.topX, placement.topY);
-    context.rotate(placement.angle);
-    context.drawImage(sprite.canvas, -placement.width / 2, 0, placement.width, placement.height);
-    context.restore();
+    drawPlaced(context, sprite.canvas, placement);
   }
-  return new Promise((resolve) => canvas.toBlob(resolve, "image/png"));
+  return encodeCanvas(canvas, "image/png");
 }

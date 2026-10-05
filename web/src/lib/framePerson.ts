@@ -1,3 +1,4 @@
+import { cropCanvas, encodeCanvas, makeCanvas, type Rect } from "./canvas";
 import { loadImagePoseLandmarker } from "./pose";
 
 // =============================================================================
@@ -7,7 +8,8 @@ import { loadImagePoseLandmarker } from "./pose";
 // filling a 3:4 portrait; a wide webcam shot of a room with a small figure in it
 // makes them erase the person instead of dressing them. `framePerson` finds the
 // largest person with Pose Landmarker on the device and crops a 3:4 portrait
-// around them. The photo never leaves the device for this step.
+// around them; `framedForRender` is that step as every render runs it. The photo
+// never leaves the device for this step.
 
 // Try-on models work in portrait 3:4 (Leffa renders 768x1024)
 const PORTRAIT = 3 / 4;
@@ -42,9 +44,7 @@ export async function framePerson(photo: Blob): Promise<FramedPerson> {
   const bitmap = await createImageBitmap(photo);
   const width = bitmap.width;
   const height = bitmap.height;
-  const source = document.createElement("canvas");
-  source.width = width;
-  source.height = height;
+  const source = makeCanvas(width, height);
   source.getContext("2d")?.drawImage(bitmap, 0, 0);
   bitmap.close();
 
@@ -61,10 +61,10 @@ export async function framePerson(photo: Blob): Promise<FramedPerson> {
       const marks = pose.filter((mark) => (mark.visibility ?? 1) >= MIN_VISIBILITY);
       if (marks.length < 6) continue;
       boxes.push({
-        left: window.left + Math.min(...marks.map((m) => m.x)) * view.width,
-        right: window.left + Math.max(...marks.map((m) => m.x)) * view.width,
-        top: window.top + Math.min(...marks.map((m) => m.y)) * view.height,
-        bottom: window.top + Math.max(...marks.map((m) => m.y)) * view.height,
+        left: window.x + Math.min(...marks.map((m) => m.x)) * view.width,
+        right: window.x + Math.max(...marks.map((m) => m.x)) * view.width,
+        top: window.y + Math.min(...marks.map((m) => m.y)) * view.height,
+        bottom: window.y + Math.max(...marks.map((m) => m.y)) * view.height,
       });
     }
     if (boxes.length > 0 && window.whole) break;
@@ -76,26 +76,37 @@ export async function framePerson(photo: Blob): Promise<FramedPerson> {
   const fill = Math.min(1, (person.bottom - person.top) / height);
   const crop = portraitAround(person, width, height);
 
-  const canvas = document.createElement("canvas");
-  canvas.width = Math.round(crop.right - crop.left);
-  canvas.height = Math.round(crop.bottom - crop.top);
-  canvas.getContext("2d")?.drawImage(source, crop.left, crop.top, canvas.width, canvas.height, 0, 0, canvas.width, canvas.height);
-  const image = await new Promise<Blob | null>((resolve) => canvas.toBlob(resolve, "image/jpeg", 0.92));
+  const canvas = cropCanvas(source, {
+    x: crop.left,
+    y: crop.top,
+    width: Math.round(crop.right - crop.left),
+    height: Math.round(crop.bottom - crop.top),
+  });
+  const image = await encodeCanvas(canvas, "image/jpeg", 0.92);
   return { image: image ?? photo, found: true, fill, people };
 }
 
-interface SearchWindow {
-  left: number;
-  top: number;
-  size: number;
-  width: number;
-  height: number;
+/**
+ * `photo` cropped for a render, or as it is when framing fails; `null` when no one is in it.
+ * Try-on models need one person filling a portrait; a wide room shot makes them erase the person.
+ */
+export async function framedForRender(photo: Blob): Promise<Blob | null> {
+  try {
+    const framed = await framePerson(photo);
+    return framed.found ? framed.image : null;
+  } catch (error) {
+    console.warn("[frame] Could not frame the person photo; sending it as is.", error);
+    return photo;
+  }
+}
+
+interface SearchWindow extends Rect {
   whole: boolean;
 }
 
 /** The whole photo first, then overlapping squares across a wide or tall photo. */
 function searchWindows(width: number, height: number): SearchWindow[] {
-  const windows: SearchWindow[] = [{ left: 0, top: 0, size: Math.max(width, height), width, height, whole: true }];
+  const windows: SearchWindow[] = [{ x: 0, y: 0, width, height, whole: true }];
   const side = Math.min(width, height);
   const span = Math.max(width, height) - side;
   if (span < side * 0.2) return windows;
@@ -105,19 +116,11 @@ function searchWindows(width: number, height: number): SearchWindow[] {
     const offset = Math.round((span * i) / steps);
     windows.push(
       width >= height
-        ? { left: offset, top: 0, size: side, width: side, height: side, whole: false }
-        : { left: 0, top: offset, size: side, width: side, height: side, whole: false },
+        ? { x: offset, y: 0, width: side, height: side, whole: false }
+        : { x: 0, y: offset, width: side, height: side, whole: false },
     );
   }
   return windows;
-}
-
-function cropCanvas(source: HTMLCanvasElement, window: SearchWindow): HTMLCanvasElement {
-  const canvas = document.createElement("canvas");
-  canvas.width = window.width;
-  canvas.height = window.height;
-  canvas.getContext("2d")?.drawImage(source, window.left, window.top, window.width, window.height, 0, 0, window.width, window.height);
-  return canvas;
 }
 
 /** Whether a framed photo is good enough to promise a convincing render. */

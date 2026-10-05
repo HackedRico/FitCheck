@@ -1,7 +1,5 @@
 from __future__ import annotations
 
-from pathlib import Path
-
 import pytest
 from fastapi.testclient import TestClient
 
@@ -17,9 +15,8 @@ from fitcheck.wiring import build_engine
 
 
 @pytest.fixture
-def client(tmp_path: Path) -> TestClient:
-    settings = Settings(_env_file=None, store="memory", data_dir=tmp_path, seed_path=None)  # type: ignore[call-arg]
-    return TestClient(create_app(build_engine(settings), settings))
+def client(offline_settings: Settings) -> TestClient:
+    return TestClient(create_app(build_engine(offline_settings), offline_settings))
 
 
 def test_week_answers_for_a_valid_location(client: TestClient) -> None:

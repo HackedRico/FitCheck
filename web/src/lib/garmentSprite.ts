@@ -3,7 +3,19 @@ import wasmLoaderPath from "@mediapipe/tasks-vision/vision_wasm_internal.js?url"
 import wasmBinaryPath from "@mediapipe/tasks-vision/vision_wasm_internal.wasm?url";
 
 import type { TryOnRegion } from "../api/client";
-import { makeCanvas, prepareCutout } from "./cutout";
+import { cropCanvas, decodeScaled } from "./canvas";
+import { prepareCutout } from "./cutout";
+import {
+  jointPair,
+  landmarkPoint,
+  LEFT_ANKLE,
+  LEFT_HIP,
+  RIGHT_ANKLE,
+  RIGHT_HIP,
+  type JointPair,
+  type Point,
+} from "./fit";
+import { once } from "./once";
 import { loadImagePoseLandmarker } from "./pose";
 
 // =============================================================================
@@ -31,31 +43,17 @@ const MIN_PERSON_SHARE = 0.01;
 const MAX_SIDE = 768;
 // Below this share of the band, the segmenter did not find a worn garment
 const MIN_CLOTHES_SHARE = 0.04;
-const MIN_VISIBILITY = 0.5;
-
-// MediaPipe Pose landmark indices
-const LEFT_SHOULDER = 11;
-const RIGHT_SHOULDER = 12;
-const LEFT_HIP = 23;
-const RIGHT_HIP = 24;
-const LEFT_ANKLE = 27;
-const RIGHT_ANKLE = 28;
-
-export interface Point {
-  x: number;
-  y: number;
-}
 
 /** A garment ready to draw, with the joints it was worn at when a person wore it. */
 export interface GarmentSprite {
   canvas: HTMLCanvasElement;
   // The wearer's left and right joint (shoulders, or hips for bottoms) in `canvas` pixels
-  anchors: { left: Point; right: Point } | null;
+  anchors: JointPair | null;
 }
 
 /** Cut the garment out of `image` for `region`, keeping where the wearer's joints were. */
 export async function extractGarment(image: Blob, region: TryOnRegion): Promise<GarmentSprite> {
-  const source = await drawScaled(image);
+  const source = await decodeScaled(image, MAX_SIDE);
   try {
     const sprite = await cutWornGarment(source, region);
     if (sprite) return sprite;
@@ -69,7 +67,7 @@ export async function extractGarment(image: Blob, region: TryOnRegion): Promise<
 /** The `region` garment a person wears in `image`, or `null` when nobody visibly wears one there. */
 export async function extractWornGarment(image: Blob, region: TryOnRegion): Promise<GarmentSprite | null> {
   try {
-    const sprite = await cutWornGarment(await drawScaled(image), region);
+    const sprite = await cutWornGarment(await decodeScaled(image, MAX_SIDE), region);
     // Without the wearer's joints there is no telling a worn piece from a stray patch of fabric
     return sprite?.anchors ? sprite : null;
   } catch (error) {
@@ -96,7 +94,7 @@ const HIP_DROP = 0.2;
  * Where a wearer's shoulders (or hips) would be on a garment nobody wears, from its outline:
  * the shoulder seams of a top or dress, the waistband of a bottom. `null` if there is no outline.
  */
-function outlineAnchors(canvas: HTMLCanvasElement, region: TryOnRegion): GarmentSprite["anchors"] {
+function outlineAnchors(canvas: HTMLCanvasElement, region: TryOnRegion): JointPair | null {
   const { width, height } = canvas;
   const context = canvas.getContext("2d", { willReadFrequently: true });
   if (!context || width < 8 || height < 8) return null;
@@ -150,17 +148,10 @@ async function cutWornGarment(source: HTMLCanvasElement, region: TryOnRegion): P
   const [segmenter, landmarker] = await Promise.all([loadSegmenter(), loadImagePoseLandmarker()]);
   const { width, height } = source;
   const pose = landmarker.detect(source).landmarks[0];
-  const at = (index: number): Point | null => {
-    const mark = pose?.[index];
-    if (!mark || (mark.visibility ?? 1) < MIN_VISIBILITY) return null;
-    return { x: mark.x * width, y: mark.y * height };
-  };
-  const lower = region === "lower";
-  const left = at(lower ? LEFT_HIP : LEFT_SHOULDER);
-  const right = at(lower ? RIGHT_HIP : RIGHT_SHOULDER);
+  const at = (index: number): Point | null => landmarkPoint(pose, index, source);
   // Shop photos often crop the model's head, which hides the pose; the clothes still cut out
-  const anchors = left && right ? { left, right } : null;
-  const band = anchors ? regionBand(region, anchors.left, anchors.right, at, height) : { top: 0, bottom: height };
+  const anchors = pose ? jointPair(pose, region, source) : null;
+  const band = anchors ? regionBand(region, anchors, at, height) : { top: 0, bottom: height };
 
   const result = segmenter.segment(source);
   const mask = result.categoryMask;
@@ -207,8 +198,7 @@ async function cutWornGarment(source: HTMLCanvasElement, region: TryOnRegion): P
 
   context.putImageData(pixels, 0, 0);
   const crop = { x: minX, y: minY, width: maxX - minX + 1, height: maxY - minY + 1 };
-  const canvas = makeCanvas(crop.width, crop.height);
-  canvas.getContext("2d")?.drawImage(source, crop.x, crop.y, crop.width, crop.height, 0, 0, crop.width, crop.height);
+  const canvas = cropCanvas(source, crop);
   const shift = (p: Point): Point => ({ x: p.x - crop.x, y: p.y - crop.y });
   return { canvas, anchors: anchors ? { left: shift(anchors.left), right: shift(anchors.right) } : null };
 }
@@ -216,8 +206,7 @@ async function cutWornGarment(source: HTMLCanvasElement, region: TryOnRegion): P
 /** The rows of the photo the garment can occupy, so a jacket does not take the trousers along. */
 function regionBand(
   region: TryOnRegion,
-  left: Point,
-  right: Point,
+  { left, right }: JointPair,
   at: (index: number) => Point | null,
   height: number,
 ): { top: number; bottom: number } {
@@ -245,31 +234,10 @@ function share(categories: Uint8Array, wanted: ReadonlySet<number>): number {
 // Model loading, once per page
 // -----------------------------------------------------------------
 
-let segmenterPending: Promise<ImageSegmenter> | null = null;
-
-function loadSegmenter(): Promise<ImageSegmenter> {
-  segmenterPending ??= (async () => {
-    const { ImageSegmenter } = await import("@mediapipe/tasks-vision");
-    return ImageSegmenter.createFromOptions(
-      { wasmLoaderPath, wasmBinaryPath },
-      { baseOptions: { modelAssetPath: SEGMENTER_URL }, runningMode: "IMAGE", outputCategoryMask: true, outputConfidenceMasks: false },
-    );
-  })().catch((error: unknown) => {
-    segmenterPending = null;
-    throw error;
-  });
-  return segmenterPending;
-}
-
-// -----------------------------------------------------------------
-// Canvas helpers
-// -----------------------------------------------------------------
-
-async function drawScaled(image: Blob): Promise<HTMLCanvasElement> {
-  const bitmap = await createImageBitmap(image);
-  const scale = Math.min(1, MAX_SIDE / Math.max(bitmap.width, bitmap.height));
-  const canvas = makeCanvas(Math.max(1, Math.round(bitmap.width * scale)), Math.max(1, Math.round(bitmap.height * scale)));
-  canvas.getContext("2d", { willReadFrequently: true })?.drawImage(bitmap, 0, 0, canvas.width, canvas.height);
-  bitmap.close();
-  return canvas;
-}
+const loadSegmenter = once(async (): Promise<ImageSegmenter> => {
+  const { ImageSegmenter } = await import("@mediapipe/tasks-vision");
+  return ImageSegmenter.createFromOptions(
+    { wasmLoaderPath, wasmBinaryPath },
+    { baseOptions: { modelAssetPath: SEGMENTER_URL }, runningMode: "IMAGE", outputCategoryMask: true, outputConfidenceMasks: false },
+  );
+});

@@ -4,10 +4,10 @@ import json
 import logging
 import re
 from collections.abc import Sequence
-from datetime import UTC, datetime
 from typing import Any
 
-from fitcheck.domain import AdapterInfo, Garment, GarmentTags, RunsOn
+from fitcheck.closet.rows import FIELDS, flatten, unflatten, utc
+from fitcheck.domain import AdapterInfo, Garment, RunsOn
 from fitcheck.errors import InvalidInput
 from fitcheck.settings import Settings
 from fitcheck.snowflake_session import SnowflakeQueryFailed, SnowflakeSession, session_for
@@ -22,24 +22,8 @@ _MAX_QUERY_WORDS = 16
 # A closet holds a few hundred garments at most; the cap bounds a query that matches everything
 _CANDIDATE_CAP = 200
 
-# OWNER and ID come first: they are the key, so a merge never updates them
-_FIELDS = (
-    "OWNER",
-    "ID",
-    "SOURCE",
-    "CATEGORY",
-    "COLOR_FAMILY",
-    "PATTERN",
-    "WARMTH",
-    "WATERPROOF",
-    "FORMALITY",
-    "DESCRIPTION",
-    "PRICE",
-    "WEARS",
-    "IMAGE_REF",
-    "SOURCE_URL",
-    "CREATED_AT",
-)
+# Snowflake folds unquoted names to upper case; OWNER and ID lead, as in `FIELDS`
+_FIELDS = tuple(f.upper() for f in FIELDS)
 _COLUMNS = ", ".join(_FIELDS)
 # Same text the CLOSET_SEARCH service indexes in engine/sql/snowflake/setup.sql
 _SEARCH_TEXT = "CONCAT_WS(' ', CATEGORY, COLOR_FAMILY, PATTERN, DESCRIPTION)"
@@ -212,56 +196,16 @@ def _result_ids(row: Sequence[Any] | None) -> list[str]:
 
 def _to_params(garment: Garment) -> dict[str, object]:
     """Flatten `garment` and its tags into the named parameters of `_MERGE`."""
-    tags = garment.tags
-    return {
-        "owner": garment.owner,
-        "id": garment.id,
-        "source": garment.source.value,
-        "category": tags.category.value,
-        "color_family": tags.color_family.value,
-        "pattern": tags.pattern.value,
-        "warmth": tags.warmth,
-        "waterproof": tags.waterproof,
-        "formality": tags.formality,
-        "description": tags.description,
+    return flatten(garment) | {
         # As text, so the exact decimal reaches NUMBER(10, 2) without a float in between
         "price": None if garment.price is None else str(garment.price),
-        "wears": garment.wears,
-        "image_ref": garment.image_ref,
-        "source_url": garment.source_url,
-        "created_at": _utc(garment.created_at).isoformat(timespec="microseconds"),
+        "created_at": utc(garment.created_at).isoformat(timespec="microseconds"),
     }
 
 
 def _to_garment(row: Sequence[Any]) -> Garment:
     """Rebuild a `Garment` from one row in `_FIELDS` order."""
-    values = dict(zip(_FIELDS, row, strict=True))
-    return Garment(
-        id=values["ID"],
-        owner=values["OWNER"],
-        source=values["SOURCE"],
-        tags=GarmentTags(
-            category=values["CATEGORY"],
-            color_family=values["COLOR_FAMILY"],
-            pattern=values["PATTERN"],
-            warmth=values["WARMTH"],
-            waterproof=values["WATERPROOF"],
-            formality=values["FORMALITY"],
-            description=values["DESCRIPTION"],
-        ),
-        price=values["PRICE"],
-        wears=values["WEARS"],
-        image_ref=values["IMAGE_REF"],
-        source_url=values["SOURCE_URL"],
-        created_at=_utc(values["CREATED_AT"]),
-    )
-
-
-def _utc(moment: datetime) -> datetime:
-    """Return `moment` in UTC; a naive time is read as UTC, never as this machine's zone."""
-    if moment.tzinfo is None:
-        return moment.replace(tzinfo=UTC)
-    return moment.astimezone(UTC)
+    return unflatten(dict(zip(FIELDS, row, strict=True)))
 
 
 def build(settings: Settings) -> SnowflakeClosetStore:

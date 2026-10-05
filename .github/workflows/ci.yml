@@ -1,4 +1,5 @@
-# Runs `make check`, the worker tests and the web build on every push and PR.
+# On every push and PR: `make check` on the engine, lint, types and tests on the worker,
+# and the web typecheck and build.
 name: ci
 
 on:

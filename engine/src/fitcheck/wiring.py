@@ -4,6 +4,7 @@ import importlib
 from typing import Any
 
 from fitcheck.engine import Engine, Ports
+from fitcheck.ports import TryOnRenderer
 from fitcheck.settings import Settings
 from fitcheck.tryon.fallback import FallbackRenderer
 
@@ -72,9 +73,9 @@ def build_engine(settings: Settings | None = None) -> Engine:
     )
 
 
-def _build_renderer(settings: Settings) -> Any:
+def _build_renderer(settings: Settings) -> TryOnRenderer:
     """Return the try-on adapter, wrapped with its fallback when one is set."""
-    primary = _build("tryon", settings.tryon, settings)
+    primary: TryOnRenderer = _build("tryon", settings.tryon, settings)
     if settings.tryon_fallback in ("none", settings.tryon):
         return primary
     backup = _build("tryon", settings.tryon_fallback, settings)

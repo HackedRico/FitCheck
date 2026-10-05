@@ -8,9 +8,11 @@ import {
   type PipelineStep,
   type TryOnRegion,
 } from "../api/client";
-import { framePerson } from "../lib/framePerson";
+import { encodeCanvas } from "../lib/canvas";
+import { framedForRender } from "../lib/framePerson";
 import { extractGarment, extractWornGarment, type GarmentSprite } from "../lib/garmentSprite";
 import { garmentName, regionFor } from "../lib/garments";
+import { once } from "../lib/once";
 import type { Candidate } from "./candidate";
 import type { PipelineKind } from "./pipelines";
 
@@ -169,7 +171,8 @@ export async function wearablesFromPhoto(photo: Blob, record: RecordPipeline): P
   const otherRegion: TryOnRegion = region === "upper" ? "lower" : "upper";
   const other = await extractWornGarment(photo, otherRegion);
   if (other === null) return [main];
-  const otherImage = await canvasPng(other.canvas);
+  const otherImage = await encodeCanvas(other.canvas, "image/png");
+  if (otherImage === null) throw new Error("This browser cannot export the garment.");
   return [
     main,
     {
@@ -193,13 +196,9 @@ export async function wearablesFromPhoto(photo: Blob, record: RecordPipeline): P
  * Returns `null` when the renderer is only standing in, so the caller keeps its on-device image.
  */
 export async function renderOutfit(person: Blob, worn: readonly Wearable[], record: RecordPipeline): Promise<Blob | null> {
-  // Try-on models need one person filling a portrait; a wide room shot makes them erase you
-  const framed = await framePerson(person).catch((error: unknown) => {
-    console.warn("[outfit] Could not frame the person photo; sending it as is.", error);
-    return { image: person, found: true };
-  });
-  if (!framed.found) throw new Error("No one is visible in that frame. Step back so your whole body shows.");
-  let current = framed.image;
+  const framed = await framedForRender(person);
+  if (framed === null) throw new Error("No one is visible in that frame. Step back so your whole body shows.");
+  let current = framed;
   for (const item of byLayer(worn)) {
     const out = await api.render(current, await item.image(), item.region);
     record("render", out.pipeline);
@@ -207,26 +206,4 @@ export async function renderOutfit(person: Blob, worn: readonly Wearable[], reco
     current = pngFromBase64(out.image_png_base64);
   }
   return current;
-}
-
-// =============================================================================
-// Helpers
-// =============================================================================
-
-/** Run `work` on the first call and hand every later call the same promise; a failure is retried. */
-function once<T>(work: () => Promise<T>): () => Promise<T> {
-  let pending: Promise<T> | null = null;
-  return () => {
-    pending ??= work().catch((error: unknown) => {
-      pending = null;
-      throw error;
-    });
-    return pending;
-  };
-}
-
-function canvasPng(canvas: HTMLCanvasElement): Promise<Blob> {
-  return new Promise((resolve, reject) =>
-    canvas.toBlob((blob) => (blob ? resolve(blob) : reject(new Error("This browser cannot export the garment."))), "image/png"),
-  );
 }

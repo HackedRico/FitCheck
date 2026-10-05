@@ -6,8 +6,10 @@ import type { TryOnRegion } from "../api/client";
 // Pure geometry for the live preview (ADR 0004). `placeGarment` turns MediaPipe
 // Pose landmarks into a `Placement`: where the cutout's top centre sits, how it
 // is rotated and how big it is, so the garment follows shoulders and hips (upper),
-// hips and ankles (lower), or shoulders and knees (a dress). `smoothPlacement`
-// damps landmark jitter between frames.
+// hips and ankles (lower), or shoulders and knees (a dress). `jointPair` reads
+// the shoulders (or hips) a worn garment is pinned by, for the live preview and
+// for stills alike. `smoothPlacement` and `smoothJoints` damp landmark jitter
+// between frames.
 
 /** A pose landmark in frame-normalised coordinates, as MediaPipe reports it. */
 export interface Landmark {
@@ -16,9 +18,16 @@ export interface Landmark {
   visibility?: number;
 }
 
-interface Point {
+/** A point in pixels of the frame or image it belongs to. */
+export interface Point {
   x: number;
   y: number;
+}
+
+/** A wearer's left and right joint: shoulders, or hips for a lower garment. */
+export interface JointPair {
+  left: Point;
+  right: Point;
 }
 
 /** Where to draw the cutout, in frame pixels; `angle` rotates about the top centre. */
@@ -31,16 +40,34 @@ export interface Placement {
 }
 
 // MediaPipe Pose landmark indices
-const LEFT_SHOULDER = 11;
-const RIGHT_SHOULDER = 12;
-const LEFT_HIP = 23;
-const RIGHT_HIP = 24;
+export const LEFT_SHOULDER = 11;
+export const RIGHT_SHOULDER = 12;
+export const LEFT_HIP = 23;
+export const RIGHT_HIP = 24;
 const LEFT_KNEE = 25;
 const RIGHT_KNEE = 26;
-const LEFT_ANKLE = 27;
-const RIGHT_ANKLE = 28;
+export const LEFT_ANKLE = 27;
+export const RIGHT_ANKLE = 28;
 
+// Landmarks below this are guesses about joints the model cannot see
 const MIN_VISIBILITY = 0.5;
+
+type Frame = { width: number; height: number };
+
+/** Landmark `index` in `frame` pixels, or `null` when the pose lacks it or barely sees it. */
+export function landmarkPoint(landmarks: readonly Landmark[] | undefined, index: number, frame: Frame): Point | null {
+  const mark = landmarks?.[index];
+  if (!mark || (mark.visibility ?? 1) < MIN_VISIBILITY) return null;
+  return { x: mark.x * frame.width, y: mark.y * frame.height };
+}
+
+/** The shoulders, or the hips for a lower garment, in `frame` pixels; `null` when either is out of view. */
+export function jointPair(landmarks: readonly Landmark[], region: TryOnRegion, frame: Frame): JointPair | null {
+  const lower = region === "lower";
+  const left = landmarkPoint(landmarks, lower ? LEFT_HIP : LEFT_SHOULDER, frame);
+  const right = landmarkPoint(landmarks, lower ? RIGHT_HIP : RIGHT_SHOULDER, frame);
+  return left && right ? { left, right } : null;
+}
 
 interface RegionShape {
   // Fraction of the anchor span the garment reaches above the top anchor and below the bottom one
@@ -62,14 +89,10 @@ const SHAPES: Record<TryOnRegion, RegionShape> = {
 export function placeGarment(
   landmarks: readonly Landmark[],
   region: TryOnRegion,
-  frame: { width: number; height: number },
+  frame: Frame,
   aspect: number,
 ): Placement | null {
-  const px = (index: number): Point | null => {
-    const mark = landmarks[index];
-    if (!mark || (mark.visibility ?? 1) < MIN_VISIBILITY) return null;
-    return { x: mark.x * frame.width, y: mark.y * frame.height };
-  };
+  const px = (index: number): Point | null => landmarkPoint(landmarks, index, frame);
 
   const anchors = region === "lower" ? lowerAnchors(px) : upperAnchors(px, region);
   if (anchors === null) return null;
@@ -138,6 +161,13 @@ export function smoothPlacement(previous: Placement | null, next: Placement, alp
     width: mix(previous.width, next.width),
     height: mix(previous.height, next.height),
   };
+}
+
+/** Move each joint of `previous` toward `next` by `alpha`; `null` resets the track. */
+export function smoothJoints(previous: JointPair | null, next: JointPair, alpha: number): JointPair {
+  if (previous === null) return next;
+  const mix = (a: Point, b: Point): Point => ({ x: a.x + (b.x - a.x) * alpha, y: a.y + (b.y - a.y) * alpha });
+  return { left: mix(previous.left, next.left), right: mix(previous.right, next.right) };
 }
 
 // -----------------------------------------------------------------

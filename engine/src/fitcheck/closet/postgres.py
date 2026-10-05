@@ -3,11 +3,11 @@ from __future__ import annotations
 import re
 from collections.abc import Iterator
 from contextlib import contextmanager
-from datetime import UTC
 from importlib import resources
 from typing import TYPE_CHECKING
 
-from fitcheck.domain import AdapterInfo, Garment, GarmentTags, RunsOn
+from fitcheck.closet.rows import FIELDS, flatten, unflatten
+from fitcheck.domain import AdapterInfo, Garment, RunsOn
 from fitcheck.errors import AdapterUnavailable, InvalidInput
 from fitcheck.settings import Settings
 
@@ -21,25 +21,7 @@ _CONNECT_TIMEOUT_S = 5
 # A one-letter substring matches nearly every garment, so the fallback skips those
 _MIN_SUBSTRING_LEN = 2
 
-# Column order of every SELECT and INSERT; mirrors `Garment` with its tags flattened
-_FIELDS = (
-    "owner",
-    "id",
-    "source",
-    "category",
-    "color_family",
-    "pattern",
-    "warmth",
-    "waterproof",
-    "formality",
-    "description",
-    "price",
-    "wears",
-    "image_ref",
-    "source_url",
-    "created_at",
-)
-_COLUMNS = ", ".join(_FIELDS)
+_COLUMNS = ", ".join(FIELDS)
 # Same text the generated `search` column indexes in postgres.sql
 _SEARCH_TEXT = "(category || ' ' || color_family || ' ' || pattern || ' ' || description)"
 # The id breaks created_at ties so every listing comes back in one stable order
@@ -47,9 +29,9 @@ _OLDEST_FIRST = "created_at, id"
 
 _SELECT_CLOSET = f"SELECT {_COLUMNS} FROM garments WHERE owner = %s ORDER BY {_OLDEST_FIRST}"
 _SELECT_ONE = f"SELECT {_COLUMNS} FROM garments WHERE owner = %s AND id = %s"
-_PLACEHOLDERS = ", ".join(f"%({f})s" for f in _FIELDS)
+_PLACEHOLDERS = ", ".join(f"%({f})s" for f in FIELDS)
 # owner and id are the key, so a replace rewrites every other column
-_REPLACEMENTS = ", ".join(f"{f} = EXCLUDED.{f}" for f in _FIELDS if f not in ("owner", "id"))
+_REPLACEMENTS = ", ".join(f"{f} = EXCLUDED.{f}" for f in FIELDS if f not in ("owner", "id"))
 _UPSERT = (
     f"INSERT INTO garments ({_COLUMNS}) VALUES ({_PLACEHOLDERS}) "
     f"ON CONFLICT (owner, id) DO UPDATE SET {_REPLACEMENTS}"
@@ -113,19 +95,19 @@ class PostgresClosetStore:
         """Return every garment `owner` has, oldest first."""
         with self._cursor() as cur:
             cur.execute(_SELECT_CLOSET, (owner,))
-            return [_to_garment(row) for row in cur.fetchall()]
+            return [unflatten(row) for row in cur.fetchall()]
 
     def get(self, owner: str, garment_id: str) -> Garment | None:
         """Return one garment, or `None` if `owner` has no garment with that id."""
         with self._cursor() as cur:
             cur.execute(_SELECT_ONE, (owner, garment_id))
             row = cur.fetchone()
-        return None if row is None else _to_garment(row)
+        return None if row is None else unflatten(row)
 
     def save(self, garment: Garment) -> None:
         """Insert or replace `garment`, keyed by its owner and id."""
         with self._cursor() as cur:
-            cur.execute(_UPSERT, _to_params(garment))
+            cur.execute(_UPSERT, flatten(garment))
 
     def search(self, owner: str, query: str, limit: int = 8) -> list[Garment]:
         """Return up to `limit` of `owner`'s garments ranked by relevance to `query`."""
@@ -145,7 +127,7 @@ class PostgresClosetStore:
             if not rows and patterns:
                 cur.execute(_SUBSTRING_SEARCH, params | {"patterns": patterns})
                 rows = cur.fetchall()
-        return [_to_garment(row) for row in rows]
+        return [unflatten(row) for row in rows]
 
     def forget(self, owner: str) -> int:
         """Delete everything stored for `owner` and return how many garments went."""
@@ -179,57 +161,6 @@ class PostgresClosetStore:
                 "Table `garments` is missing, likely after a database reset; "
                 "restart the engine so `ensure_schema` recreates it."
             ) from exc
-
-
-# =============================================================================
-# Row mapping
-# =============================================================================
-
-
-def _to_params(garment: Garment) -> dict[str, object]:
-    """Flatten `garment` and its tags into the named parameters of `_UPSERT`."""
-    tags = garment.tags
-    return {
-        "owner": garment.owner,
-        "id": garment.id,
-        "source": garment.source.value,
-        "category": tags.category.value,
-        "color_family": tags.color_family.value,
-        "pattern": tags.pattern.value,
-        "warmth": tags.warmth,
-        "waterproof": tags.waterproof,
-        "formality": tags.formality,
-        "description": tags.description,
-        "price": garment.price,
-        "wears": garment.wears,
-        "image_ref": garment.image_ref,
-        "source_url": garment.source_url,
-        "created_at": garment.created_at,
-    }
-
-
-def _to_garment(row: DictRow) -> Garment:
-    """Rebuild a `Garment` from one `garments` row."""
-    return Garment(
-        id=row["id"],
-        owner=row["owner"],
-        source=row["source"],
-        tags=GarmentTags(
-            category=row["category"],
-            color_family=row["color_family"],
-            pattern=row["pattern"],
-            warmth=row["warmth"],
-            waterproof=row["waterproof"],
-            formality=row["formality"],
-            description=row["description"],
-        ),
-        price=row["price"],
-        wears=row["wears"],
-        image_ref=row["image_ref"],
-        source_url=row["source_url"],
-        # Postgres answers in the session's zone; normalise so every store hands back UTC
-        created_at=row["created_at"].astimezone(UTC),
-    )
 
 
 def build(settings: Settings) -> PostgresClosetStore:

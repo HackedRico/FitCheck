@@ -7,29 +7,6 @@
    purpose: black type on warm white, hairlines instead of boxes, and colour only
    in the verdict, which arrives through `data-decision` as `--accent`. */
 
-/* ---------- base overrides for the older shared styles ---------- */
-
-body {
-  background: var(--bg);
-  color: var(--fg);
-}
-
-.display {
-  font-family: var(--sans);
-  font-weight: 600;
-  letter-spacing: -0.02em;
-  text-transform: none;
-}
-
-.kicker,
-.fc-kicker {
-  margin: 0;
-  color: var(--fog);
-  font: 600 12px/1.2 var(--sans);
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
-}
-
 /* ---------- shell ---------- */
 
 .fc {
@@ -78,6 +55,7 @@ body {
   background: transparent;
   color: var(--fg);
   font: 600 16px/1 var(--sans);
+  white-space: nowrap;
   cursor: pointer;
   transition:
     transform var(--fast) var(--ease-out),
@@ -238,7 +216,10 @@ body {
   overflow: hidden;
 }
 
-.fc-avatar img {
+.fc-avatar img,
+.fc-last img,
+.fc-specimen img,
+.fc-portrait img {
   width: 100%;
   height: 100%;
   object-fit: cover;
@@ -448,12 +429,6 @@ body {
   cursor: pointer;
 }
 
-.fc-last img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-}
-
 .fc-last span {
   position: absolute;
   inset: auto 0 0;
@@ -615,8 +590,10 @@ body {
   text-transform: uppercase;
 }
 
-/* A light page over the dark camera, so the snapped outfit reads like a result */
-.fc-snap {
+/* Light surfaces over the dark camera: the snapped outfit reads like a result and the
+   add sheet like the rest of the app */
+.fc-snap,
+.fc-addsheet-card {
   --bg: #f7f6f2;
   --bg-1: #ffffff;
   --bg-2: #efede7;
@@ -625,7 +602,9 @@ body {
   --fg: #141412;
   --fg-2: #2b2b28;
   --fog: #6e6c66;
+}
 
+.fc-snap {
   position: fixed;
   inset: 0;
   z-index: 30;
@@ -792,12 +771,6 @@ body {
   background: var(--bg-2);
 }
 
-.fc-specimen img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-}
-
 .fc-specimen[data-state="running"] img {
   opacity: 0.75;
 }
@@ -850,7 +823,7 @@ body {
 
 .fc-check[data-status="running"] .fc-check-mark {
   border-color: var(--fg) transparent var(--fg) var(--fg);
-  animation: fc-spin 0.8s linear infinite;
+  animation: spin 0.8s linear infinite;
 }
 
 .fc-check[data-status="done"] .fc-check-mark {
@@ -881,12 +854,6 @@ body {
 
 .fc-check-retry {
   padding-top: 14px;
-}
-
-@keyframes fc-spin {
-  to {
-    transform: rotate(360deg);
-  }
 }
 
 .fc-verdict {
@@ -922,7 +889,6 @@ body {
 }
 
 .fc-onyou .compare {
-  overflow: hidden;
   border-radius: 18px;
 }
 
@@ -1221,12 +1187,6 @@ body {
   color: var(--fg-muted);
 }
 
-.fc-portrait img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-}
-
 .fc-portrait svg {
   width: 56px;
   height: 56px;
@@ -1319,10 +1279,6 @@ body {
   text-transform: none;
 }
 
-.fc-btn {
-  white-space: nowrap;
-}
-
 /* ---------- add a garment: shop link or photo ---------- */
 
 .fc-addsheet {
@@ -1349,17 +1305,7 @@ body {
   opacity: 1;
 }
 
-/* A light card even over the dark camera, so it reads like the rest of the app */
 .fc-addsheet-card {
-  --bg: #f7f6f2;
-  --bg-1: #ffffff;
-  --bg-2: #efede7;
-  --line: rgba(20, 20, 18, 0.09);
-  --line-strong: rgba(20, 20, 18, 0.18);
-  --fg: #141412;
-  --fg-2: #2b2b28;
-  --fog: #6e6c66;
-
   position: absolute;
   inset: auto 0 0;
   display: grid;

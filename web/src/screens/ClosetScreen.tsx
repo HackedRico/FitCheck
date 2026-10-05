@@ -1,10 +1,11 @@
-import { useCallback, useEffect, useState, type ReactNode } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 
 import { api, errorMessage, type Garment } from "../api/client";
 import { AddGarmentSheet } from "../components/AddGarmentSheet";
 import { CameraCapture } from "../components/CameraCapture";
 import { GarmentThumb } from "../components/GarmentThumb";
 import { Icon } from "../components/Icons";
+import { garmentCount } from "../lib/garments";
 import { useApp } from "../state/app";
 import { closetWearable, type Wearable } from "../state/outfit";
 
@@ -28,16 +29,24 @@ export function ClosetScreen(): ReactNode {
   const [scanning, setScanning] = useState(false);
   const [notice, setNotice] = useState<string | null>(null);
   const [shooting, setShooting] = useState(false);
+  const [attempt, setAttempt] = useState(0);
 
-  const load = useCallback(() => {
+  useEffect(() => {
+    // A switch of owner mid-load must not show the last owner's closet under the new name
+    let cancelled = false;
     setError(null);
     api
       .closet(owner)
-      .then(setGarments)
-      .catch((cause: unknown) => setError(errorMessage(cause)));
-  }, [owner]);
-
-  useEffect(load, [load]);
+      .then((loaded) => {
+        if (!cancelled) setGarments(loaded);
+      })
+      .catch((cause: unknown) => {
+        if (!cancelled) setError(errorMessage(cause));
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [owner, attempt]);
 
   const add = async (image: Blob, sourceUrl?: string): Promise<void> => {
     setSheetOpen(false);
@@ -66,7 +75,7 @@ export function ClosetScreen(): ReactNode {
       setNotice(
         out.garments.length === 0
           ? "No garments stood out in that photo. Try closer, with the clothes spread out."
-          : `Added ${out.garments.length} ${out.garments.length === 1 ? "garment" : "garments"} from that photo.`,
+          : `Added ${garmentCount(out.garments.length)} from that photo.`,
       );
     } catch (cause) {
       setError(errorMessage(cause));
@@ -112,7 +121,7 @@ export function ClosetScreen(): ReactNode {
         <div>
           <h1 className="closet-title">{owner}'s closet</h1>
           <p className="fc-muted">
-            {garments === null ? "Loading" : `${garments.length} ${garments.length === 1 ? "garment" : "garments"}`}
+            {garments === null ? "Loading" : garmentCount(garments.length)}
           </p>
         </div>
         <div className="closet-actions">
@@ -142,7 +151,7 @@ export function ClosetScreen(): ReactNode {
       {error && (
         <p className="fc-error">
           {error}
-          <button type="button" onClick={load}>
+          <button type="button" onClick={() => setAttempt((n) => n + 1)}>
             Retry
           </button>
         </p>
@@ -175,7 +184,7 @@ export function ClosetScreen(): ReactNode {
         onClose={() => setSheetOpen(false)}
         onGarment={(image, sourceUrl) => void add(image, sourceUrl)}
         title="Add to your closet"
-        linkLabel="Bought it online? Paste the product link"
+        linkLabel="Bought it online? Paste the shop link"
         busy={adding}
       />
       {shooting && (

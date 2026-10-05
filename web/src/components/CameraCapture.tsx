@@ -1,7 +1,7 @@
 import { useRef, useState, type ChangeEvent, type ReactNode } from "react";
 import { createPortal } from "react-dom";
 
-import { captureFrame, shrinkImage, useCamera, type Facing } from "../lib/camera";
+import { captureFrame, pickedPhoto, useCamera, type Facing } from "../lib/camera";
 import { Icon } from "./Icons";
 
 // =============================================================================
@@ -38,9 +38,8 @@ export function CameraCapture({ title, hint, onPhoto, onCancel }: CameraCaptureP
   };
 
   const pick = async (event: ChangeEvent<HTMLInputElement>): Promise<void> => {
-    const file = event.target.files?.[0];
-    event.target.value = "";
-    if (file) onPhoto(await shrinkImage(file));
+    const photo = await pickedPhoto(event.target);
+    if (photo) onPhoto(photo);
   };
 
   // A portal, because a sheet's slide transform would pin a fixed overlay to the sheet instead of the screen
